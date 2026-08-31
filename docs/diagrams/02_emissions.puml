@@ -1,0 +1,62 @@
+@startuml Emission Classes
+
+title Emission Classes
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam ArrowColor #4a6fa5
+skinparam ClassBorderColor #4a6fa5
+skinparam ClassBackgroundColor #e8f0fe
+skinparam ClassHeaderBackgroundColor #c5d8f5
+
+abstract class BaseEmission {
+    + {abstract} density(t, ys, xs)
+    + {abstract} step(t, ys, xs)
+    + {abstract} cdf(t, ys, xs)
+    + update_param(name, value, index)
+}
+
+class GaussEmission {
+    + mu0 : ndarray
+    + log_mu_diff : ndarray
+    + log_sigma : ndarray
+    --
+    + {static} from_params(mu, sigma)
+    + density(t, ys, xs)
+    + cdf(t, ys, xs)
+    + step(t, ys, xs)
+    + mu(t, ys, xs)
+    + sigma(t, ys, xs)
+}
+
+note right of GaussEmission
+  Means are monotonically ordered:
+  mu[k] = mu[k-1] + exp(log_mu_diff[k])
+end note
+
+class AutoregressiveGaussEmission {
+    + mu0 : ndarray
+    + log_mu_diff : ndarray
+    + log_sigma : ndarray
+    + phi_tilde : ndarray
+    --
+    + {static} from_params(mu, sigma, phi)
+    + density(t, ys, xs)
+    + cdf(t, ys, xs)
+    + step(t, ys, xs)
+    + mu(t, ys, xs)
+    + mu_vals(t, ys, xs)
+    + sigma(t, ys, xs)
+    + phi()
+}
+
+note right of AutoregressiveGaussEmission
+  AR coefficients constrained to (-1, 1)
+  via tanh(phi_tilde) for stationarity.
+  mu_ar = base_mu + sum(phi * (lag - base_mu))
+end note
+
+BaseEmission <|-- GaussEmission
+BaseEmission <|-- AutoregressiveGaussEmission
+
+@enduml

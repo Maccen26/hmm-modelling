@@ -1,0 +1,71 @@
+\section{Appendix}
+
+\subsection{Source Code Repository} \label{section:app:repo}
+The repository is hosted on GitHub and the source code can be found there with the data as well:
+\url{https://github.com/Maccen26/hmm-project}
+
+\subsection{Source code \& Envoriment} \label{section:app:env}
+This code was written with Python (version 3.11) and \texttt{uv} (version 0.9.7) \citep{astral_uv_docs} was used as a package manager.
+The libraries used are listed in Table~\ref{tab:libraries}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Library} & \textbf{Version} \\
+        \midrule
+        \texttt{dotenv}      & $\geq$ 0.9.9 \\
+        \texttt{equinox}     & $\geq$ 0.13.7 \\
+        \texttt{jax}         & $\geq$ 0.9.0.1 \\
+        \texttt{matplotlib}  & $\geq$ 3.10.8 \\
+        \texttt{numpy}       & $\geq$ 1.23.5, $<$ 2.3 \\
+        \texttt{optax}       & $\geq$ 0.2.8 \\
+        \texttt{pandas}      & $\geq$ 3.0.0 \\
+        \texttt{seaborn}     & $\geq$ 0.13.2 \\
+        \texttt{statsmodels} & $\geq$ 0.14.6 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Python libraries used in this project.}
+    \label{tab:libraries}
+\end{table}
+
+The source code is organized in a way such that the directory \texttt{src} contains the source code for the project,
+the directory \texttt{data} contains the data used for training and testing the model,
+the directory \texttt{tests} contains tests for the source code and
+the directory \texttt{drivers} contains scripts for running the model and generating the results used in the report.
+
+\subsection{CO\textsubscript{2} Data} \label{section:app:co2_data}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../results/plots/co2_data.png}
+    \caption{Observed CO\textsubscript{2} concentration (ppm) over time.}
+    \label{fig:app:co2_data}
+\end{figure}
+
+\subsection{Class Diagrams} \label{section:app:diagrams}
+
+\input{sections/diagrams/fig_01_composition}
+\input{sections/diagrams/fig_02_emissions}
+\input{sections/diagrams/fig_03_transitions}
+\input{sections/diagrams/fig_04_inference}
+\input{sections/diagrams/fig_05_solvers}
+
+\subsection{Class Design} \label{section:app:class_design}
+
+The \texttt{HMM} class (\ref{fig:diagram:composition}) is the main entry point of the system.
+Its responsibility is to act as a wrapper for the other components and to provide a simple interface for training and inference.
+It is dependent on \texttt{Emissions}, \texttt{Transitions}, \texttt{HMMParams}, and \texttt{Solvers}, which are composed together to form a complete HMM.
+
+The \texttt{Emissions} (\ref{fig:diagram:emissions}) and \texttt{Transitions} (\ref{fig:diagram:transitions}) classes are abstract interfaces whose concrete implementations must be provided at runtime.
+This design choice is motivated by the structure of HMM variants: the differences between models in this project lie in how the density of an observation given a state is computed (emissions) and how the transition probabilities between states are computed (transitions).
+By separating these concerns into abstract interfaces, different HMM models can be composed without changing the rest of the system.
+
+The \texttt{HMMParams} class acts as a container for the model parameters and as a wrapper for the methods implemented in the \texttt{Emissions} and \texttt{Transitions} classes.
+This is required by how \texttt{JAX} and \texttt{Equinox} work: parameters must be stored as pytrees to support automatic differentiation.
+
+The \texttt{Inference} class (\ref{fig:diagram:inference}) is an abstract interface responsible for implementing inference algorithms such as the forward algorithm, the backward algorithm, and the Viterbi algorithm.
+In this project, only the forward algorithm is implemented, but the design allows easy extension to other inference algorithms without modifying existing code.
+
+The \texttt{Solvers} class (\ref{fig:diagram:solvers}) implements the optimization algorithms and depends on a loss function that takes the \texttt{HMMParams} and \texttt{Inference} classes as arguments.
+This dependency injection of the loss function decouples the optimizer from the objective, making it straightforward to change the loss function without altering the optimization algorithm.

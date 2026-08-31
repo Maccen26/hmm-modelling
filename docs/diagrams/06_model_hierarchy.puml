@@ -1,0 +1,23 @@
+@startuml Model Hierarchy
+
+title HMM Model Hierarchy
+
+skinparam rectangleFontSize 14
+skinparam ArrowColor #4a6fa5
+skinparam RectangleBorderColor #4a6fa5
+skinparam RectangleBackgroundColor #e8f0fe
+skinparam shadowing false
+
+rectangle "HMM(1)" as M0
+rectangle "AR(1), HMM(1)" as M1
+rectangle "AR(2), HMM(1)" as M2
+rectangle "AR(1), HMM(2)" as M3
+rectangle "AR(2), HMM(2)" as M4
+
+M0 --> M1
+M1 --> M2
+M1 --> M3
+M2 --> M4
+M3 --> M4
+
+@enduml

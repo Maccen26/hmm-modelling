@@ -1,0 +1,11 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../docs/diagrams/04_inference_output}
+    \caption{Inference and output class hierarchy. \texttt{BaseInference.run()} iterates
+             \texttt{step()} across the time axis using \texttt{jax.lax.scan}.
+             \texttt{ForwardAlgorithm} implements the forward filtering pass and produces
+             a \texttt{ForwardOutput} storing the scaling factors $f_t$, filtered state
+             probabilities $u_{t|t}$, and predicted state probabilities $u_t$.
+             The log-likelihood is computed as $\sum_t \log f_t$.}
+    \label{fig:diagram:inference}
+\end{figure}

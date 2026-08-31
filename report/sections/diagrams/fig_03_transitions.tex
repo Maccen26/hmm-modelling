@@ -1,0 +1,10 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../docs/diagrams/03_transitions}
+    \caption{Transition class hierarchy. Both implementations store parameters as
+             logits and convert them to a row-stochastic matrix via row-wise softmax.
+             \texttt{StaticTransition} uses a constant $K \times K$ matrix, while
+             \texttt{StaticTransitionHigherOrder} augments the state space to
+             $K^{\text{order}}$ states to represent a higher-order Markov chain.}
+    \label{fig:diagram:transitions}
+\end{figure}

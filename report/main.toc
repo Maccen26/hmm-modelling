@@ -1,0 +1,35 @@
+\babel@toc {danish}{}\relax 
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Software}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Class overview}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Design Principles}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Primary Libraries}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Generel Theory}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Forward Algorithm}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Forecast Pseudo Residuals}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Test Statistics}{6}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Models \& Results}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Ordinary HMM model}{8}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Theory}{8}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Results}{9}{subsubsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.2}AR(1)-HMM}{10}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Theory}{10}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Results}{10}{subsubsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.3}AR(2)-HMM}{12}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Theory}{12}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Results}{12}{subsubsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.4}AR(1)-HMM(2)}{13}{subsection.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.1}Theory}{13}{subsubsection.4.4.1}%
+\contentsline {subsubsection}{\numberline {4.4.2}Results}{13}{subsubsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.5}AR(2)-HMM(2)}{16}{subsection.4.5}%
+\contentsline {subsubsection}{\numberline {4.5.1}Theory}{16}{subsubsection.4.5.1}%
+\contentsline {subsubsection}{\numberline {4.5.2}Results}{16}{subsubsection.4.5.2}%
+\contentsline {section}{\numberline {5}Model Comparison}{19}{section.5}%
+\contentsline {section}{\numberline {6}Conclusion}{20}{section.6}%
+\contentsline {section}{\numberline {7}Future Work}{21}{section.7}%
+\contentsline {section}{\numberline {8}Appendix}{23}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Source Code Repository}{23}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Source code \& Envoriment}{23}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}CO\textsubscript {2} Data}{24}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Class Diagrams}{25}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}Class Design}{27}{subsection.8.5}%

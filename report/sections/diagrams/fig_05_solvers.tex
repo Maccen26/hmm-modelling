@@ -1,0 +1,12 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../docs/diagrams/05_solvers}
+    \caption{Solver class hierarchy. \texttt{BaseSolver} partitions parameters into
+             trainable and frozen subsets and wraps the negative log-likelihood as the
+             loss function. The three concrete solvers share the same interface but
+             differ in their optimization backend: \texttt{GradientSolver} uses
+             first-order gradient descent via \texttt{optax}, \texttt{LBFGSSolver}
+             uses quasi-Newton L-BFGS via \texttt{optax}, and \texttt{Minimizer}
+             wraps \texttt{jax.scipy.optimize.minimize}.}
+    \label{fig:diagram:solvers}
+\end{figure}

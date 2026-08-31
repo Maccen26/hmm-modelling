@@ -1,0 +1,74 @@
+\section{Generel Theory}
+In this section, we will present the type of forward algorithm used to compute the likelihood 
+and the pseudo residuals used to evaluate the model fit.
+
+
+\subsection{Forward Algorithm} 
+The forward algorithm implemented is called recursive filtering 
+\citep{moler2024statistical} as it constructs the current 
+statedistribution $p(X_t \mid Y_{1:t})$ recursively from the previous 
+state distribution $p(X_t \mid Y_{1:t-1})$.
+\input{sections/forward_algorithm.tex}
+where $\odot$ denotes element-wise multiplication of vectos. 
+\newline
+
+The log-likelihood is obtained by summing the log of the step likelihoods:
+\begin{equation}
+    \mathcal{L}(\theta) = \sum_{t=1}^{T} \log f_t
+    \label{eq:log_likelihood}
+\end{equation}
+
+\subsection{Forecast Pseudo Residuals}
+A method to access the goodness-of-fit of the HMM is to compute the 
+pseudo residuals. For a introduction to pseudo residuals, see chapter 6.2 in \citep{zucchini2016hidden}. \newline
+The Forecast Pseudo Residuals used is the standard normal inverse of 
+the cummulative distribution function (CDF) of
+the one-step-ahead predictive distribution. If the model is is good, 
+the pseudo residuals should be approximately standard normally distributed. 
+
+
+Briefly desribed, a forecast pseudo residual for a HMM is defined as
+\begin{equation}
+    z_{t+1} = \Phi^{-1} (F_Y(y_{t+1}\mid Y_{1:t}))
+    \label{eq:pseudo_residual}
+\end{equation}
+
+where $\Phi^{-1}$ is the inverse CDF of the standard normal distribution
+and $F_Y$ is the predictive CDF of $y_{t+1}$ given $Y_{1:t}$, defined as
+\begin{equation}
+    F_Y(y_{t+1}\mid Y_{1:t}) = \sum_{i=1}^{N} u_{t+1 \mid t}^i F_i(y_{t+1} \mid X_t = i)
+    \label{eq:predictive_cdf}
+\end{equation}
+where $X_t$ is the hidden state. \newline
+Because $z_{t+1}$ now should follow a standard normal distribution, 
+we can use normality tests to assess the goodness-of-fit of the model. \newline
+In this project, we use the QQ-plot to visually assess the normality of the pseudo residuals. 
+
+\subsection{Test Statistics}
+Other methods to assess the goodness of fit of the HMM model 
+include the AIC \citep{wiki:aic} and BIC \citep{wiki:bic} test statistics. These are defined as
+\begin{equation}
+    \text{AIC} = 2k - 2\mathcal{L}
+    \label{eq:aic}
+\end{equation}
+\begin{equation}
+    \text{BIC} = k \log(n) - 2\mathcal{L}
+    \label{eq:bic}
+\end{equation}
+where $k$ is the number of parameters in the model, $n$ is the number of observations and $\mathcal{L}$ is the log-likelihood of the model. \newline
+The AIC and BIC test statistics are used to compare different models,
+where a lower value initiates a better fit. \newline
+However, a lot of the models implemented are nested models, so a Likelihood Ratio Test (LRT) \citep{wiki:lrt} can also be
+used to compare the models. The LRT test statistic is defined as
+\begin{equation}
+    \text{LRT} = 2(\mathcal{L}_1 - \mathcal{L}_0)
+    \label{eq:lrt}
+\end{equation}
+where $\mathcal{L}_1$ is the log-likelihood of the more complex
+model and $\mathcal{L}_0$ is the log-likelihood of the simpler model. \newline
+The LRT test statistic follows a chi-squared distribution with degrees of freedom equal 
+to the difference in the number of parameters between the two models. \newline
+
+
+
+
