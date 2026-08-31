@@ -1,0 +1,23 @@
+\section{Model Comparison}
+
+We compare the five models in the hierarchy of Figure~\ref{fig:diagram:model_hierarchy} using a likelihood ratio test (LRT) for each edge, 
+as well as comparing the AIC and BIC.
+
+Table~\ref{tab:model_stats} reports the per-model statistics for all five
+models in the hierarchy of Figure~\ref{fig:diagram:model_hierarchy}.
+Table~\ref{tab:lrt_comparison} reports the LRT, $p$-value, $\Delta\text{AIC}$
+and $\Delta\text{BIC}$ for each edge of the hierarchy, where the difference
+is taken as expanded minus base so that negative values favour the expanded
+model.
+
+\input{model_results/comparison/model_stats}
+In the table, we see that the cost of increasing to second order markov chain
+introduces a lot of parameters, which is reflected in the AIC and BIC.
+
+
+\input{model_results/comparison/lrt_comparison}
+We see that for almost all edges, all test statiscs favour the more complex model, 
+and the $p$-values are all 0. Only for the edge between 
+the AR(2)-HMM(1) and the AR(2)-HMM(2) 
+do the BIC favour the simpler model, 
+while the LRT still favours the more complex model.  

@@ -1,0 +1,11 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../docs/diagrams/02_emissions}
+    \caption{Emission class hierarchy. \texttt{GaussEmission} models state-dependent
+             Gaussian distributions with monotonically ordered means enforced via
+             cumulative exponentiation of \texttt{log\_mu\_diff}.
+             \texttt{AutoregressiveGaussEmission} extends this with AR($p$) dynamics,
+             where coefficients are stored unconstrained (\texttt{phi\_tilde}) and
+             mapped to $(-1, 1)$ via $\tanh$ to guarantee stationarity.}
+    \label{fig:diagram:emissions}
+\end{figure}

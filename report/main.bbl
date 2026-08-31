@@ -1,0 +1,63 @@
+\begin{thebibliography}{10}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[{Astral Software Inc.}(2024)]{astral_uv_docs}
+{Astral Software Inc.}
+\newblock uv: An ultra-fast python package installer and resolver.
+\newblock \url{https://docs.astral.sh/uv/}, 2024.
+\newblock Accessed: 2026-05-30.
+
+\bibitem[Bradbury et~al.(2018)Bradbury, Frostig, Hawkins, Johnson, Katariya, Leary, Maclaurin, Necula, Paszke, Vander{P}las, Wanderman-{M}ilne, and Zhang]{jax2018github}
+James Bradbury, Roy Frostig, Peter Hawkins, Matthew~James Johnson, Yash Katariya, Chris Leary, Dougal Maclaurin, George Necula, Adam Paszke, Jake Vander{P}las, Skye Wanderman-{M}ilne, and Qiao Zhang.
+\newblock {JAX}: composable transformations of {P}ython+{N}um{P}y programs, 2018.
+\newblock URL \url{http://github.com/jax-ml/jax}.
+
+\bibitem[Hessel et~al.(2020)Hessel, Budden, Viola, Rosca, Sezener, and Hennigan]{optax2020github}
+Matteo Hessel, David Budden, Fabio Viola, Mihaela Rosca, Eren Sezener, and Tom Hennigan.
+\newblock Optax: composable gradient transformation and optimisation, in jax!, 2020.
+\newblock URL \url{http://github.com/deepmind/optax}.
+
+\bibitem[Kidger and Garcia(2021)]{kidger2021equinox}
+Patrick Kidger and Cristian Garcia.
+\newblock {E}quinox: neural networks in {JAX} via callable {P}y{T}rees and filtered transformations.
+\newblock \emph{Differentiable Programming workshop at Neural Information Processing Systems 2021}, 2021.
+
+\bibitem[M{\o}ller et~al.(2024)M{\o}ller, Schweiker, Andersen, Gunay, Yilmaz, Barthelmes, and Madsen]{moler2024statistical}
+Jan~Kloppenborg M{\o}ller, Marcel Schweiker, Rune~Korsholm Andersen, Burak Gunay, Selin Yilmaz, Verena~Marie Barthelmes, and Henrik Madsen.
+\newblock \emph{Statistical Modelling of Occupant Behaviour}.
+\newblock A Chapman \& Hall Book. Chapman and Hall/CRC, 1st edition, 2024.
+
+\bibitem[{Ultralytics LLC}(2024)]{ultralytics_hmm_glossary}
+{Ultralytics LLC}.
+\newblock Hidden markov model (hmm) - real-world applications.
+\newblock \url{https://www.ultralytics.com/glossary/hidden-markov-model-hmm#real-world-applications}, 2024.
+\newblock Accessed: 2026-05-30.
+
+\bibitem[{Wikipedia contributors}(2026{\natexlab{a}})]{wiki:aic}
+{Wikipedia contributors}.
+\newblock {Akaike information criterion} --- {Wikipedia}{,} the free encyclopedia, 2026{\natexlab{a}}.
+\newblock URL \url{https://en.wikipedia.org/wiki/Akaike_information_criterion}.
+\newblock [Online; accessed 31-May-2026].
+
+\bibitem[{Wikipedia contributors}(2026{\natexlab{b}})]{wiki:bic}
+{Wikipedia contributors}.
+\newblock {Bayesian information criterion} --- {Wikipedia}{,} the free encyclopedia, 2026{\natexlab{b}}.
+\newblock URL \url{https://en.wikipedia.org/wiki/Bayesian_information_criterion}.
+\newblock [Online; accessed 31-May-2026].
+
+\bibitem[{Wikipedia contributors}(2026{\natexlab{c}})]{wiki:lrt}
+{Wikipedia contributors}.
+\newblock {Likelihood-ratio test} --- {Wikipedia}{,} the free encyclopedia, 2026{\natexlab{c}}.
+\newblock URL \url{https://en.wikipedia.org/wiki/Likelihood-ratio_test}.
+\newblock [Online; accessed 31-May-2026].
+
+\bibitem[Zucchini et~al.(2016)Zucchini, MacDonald, and Langrock]{zucchini2016hidden}
+Walter Zucchini, Iain~L. MacDonald, and Roland Langrock.
+\newblock \emph{Hidden Markov Models for Time Series: An Introduction Using R}.
+\newblock Number 150 in Monographs on Statistics and Applied Probability. CRC Press, second edition, 2016.
+
+\end{thebibliography}

@@ -1,0 +1,10 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../docs/diagrams/01_system_composition}
+    \caption{System composition overview. The user-facing \texttt{HMM} class owns an
+             \texttt{HMMParams} instance composed of a \texttt{BaseTransition} and a
+             \texttt{BaseEmission}. Fitting is delegated to a \texttt{BaseSolver} subclass
+             and state inference is handled by \texttt{ForwardAlgorithm}, producing
+             \texttt{HMMResults} and \texttt{StateResults}.}
+    \label{fig:diagram:composition}
+\end{figure}

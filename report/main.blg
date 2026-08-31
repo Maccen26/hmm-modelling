@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2025)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: plainnat.bst
+Database file #1: references.bib
+Warning--entry type for "jax2018github" isn't style-file defined
+--line 21 of file references.bib
+Warning--entry type for "optax2020github" isn't style-file defined
+--line 36 of file references.bib
+You've used 10 entries,
+            2773 wiz_defined-function locations,
+            643 strings with 6871 characters,
+and the built_in function-call counts, 4413 in all, are:
+= -- 361
+> -- 335
+< -- 7
++ -- 117
+- -- 105
+* -- 344
+:= -- 712
+add.period$ -- 37
+call.type$ -- 10
+change.case$ -- 65
+chr.to.int$ -- 8
+cite$ -- 20
+duplicate$ -- 168
+empty$ -- 323
+format.name$ -- 117
+if$ -- 903
+int.to.chr$ -- 3
+int.to.str$ -- 1
+missing$ -- 5
+newline$ -- 63
+num.names$ -- 40
+pop$ -- 156
+preamble$ -- 1
+purify$ -- 55
+quote$ -- 0
+skip$ -- 151
+stack$ -- 0
+substring$ -- 20
+swap$ -- 14
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 100
+warning$ -- 0
+while$ -- 30
+width$ -- 0
+write$ -- 141
+(There were 2 warnings)

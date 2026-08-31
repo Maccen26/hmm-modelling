@@ -1,0 +1,31 @@
+\section{Conclusion}
+
+This project investigated whether room occupancy can be inferred from a single
+$\text{CO}_2$ sensor by modelling the observed series with a Hidden Markov
+Model. Five nested 4-state Gaussian HMMs were fitted, organised along the
+hierarchy of Figure~\ref{fig:diagram:model_hierarchy}. A
+baseline HMM(1), an
+AR(1) and AR(2) emission extension, a second-order latent chain with AR(1)
+emissions, and the fully combined AR(2), HMM(2) model. All models were
+implemented and fitted using \texttt{JAX}, \texttt{EQUINOX} and \texttt{Optax}.
+
+The likelihood-ratio tests in
+Table~\ref{tab:lrt_comparison} reject every base model in favour of its
+expanded counterpart at $p \approx 0$, confirming that both adding
+autoregressive structure to the emissions and making the Markov
+chain second-order produce statistically significant gains in fit.
+The single largest
+improvement is the introduction of an AR(1) emission on top of the ordinary
+HMM, with a likelihood-ratio statistic of $\Lambda \approx 2058$ on four
+degrees of freedom and a drop in AIC of more than two thousand units. This
+indicates that there indeed is a strong autocorrelation structure in the data that the plain HMM cannot
+capture it. 
+
+By looking at the ACF plots for all the models, we have seen
+that the lags are still significant for all models. This tells us, 
+that there is still some temporal structure in the data we have not captured with the 
+models we have implemented.
+
+Overall, we have seen that extending the ordinary with 
+higher order markov chains or autoregressive emissions gives a significant improvement in fit, 
+and tells us that there is indeed temporal structure in the data. However, there is still some temporal structure in the data that we have not captured with the models we have implemented, so there is still room for improvement.

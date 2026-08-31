@@ -1,0 +1,31 @@
+\begin{algorithm}[H]
+\caption{Recursive Filtering Forward Algorithm}
+\label{alg:forward}
+\begin{algorithmic}[1]
+\Require Observations $\mathbf{y} = (y_1, \ldots, y_T)$,
+         covariates $\mathbf{x} = (x_1, \ldots, x_T)$,
+         initial state distribution $\mathbf{u}_0 \in \mathbb{R}^{1 \times N}$,
+         HMM parameters $\theta$
+\Ensure Predicted distributions $\{\mathbf{u}_t\}$,
+        filtered distributions $\{\mathbf{u}_{t|t}\}$,
+        step likelihoods $\{f_t\}$
+
+\For{$t = 1, \ldots, T$}
+    \State $\Gamma_t \leftarrow \textsc{TransitionMatrix}(\theta,\, t,\, y_t,\, x_t)$
+    \Comment{$N \times N$ transition matrix}
+    \State $\mathbf{u}_{t \mid t - 1} \leftarrow \mathbf{u}_{t-1 \mid t-1} \cdot \Gamma_t$
+    \Comment{Predicted state distribution, $1 \times N$}
+    \State $\mathbf{g}_t \leftarrow \textsc{Density}(\theta,\, t,\, y_t,\, x_t)$
+    \Comment{Emission densities for all states, $1 \times N$}
+    \State $f_t \leftarrow \displaystyle\sum_{i=1}^{N} [\mathbf{u}_t \odot \mathbf{g}_t]_i$
+    \Comment{Marginal likelihood at time $t$}
+    \State $f_t \leftarrow \max(f_t,\; 10^{-10})$
+    \Comment{Clip to avoid division by zero}
+    \State $\mathbf{u}_{t \mid t} \leftarrow \dfrac{\mathbf{u}_t \odot \mathbf{g}_t}{f_t}$
+    \Comment{Filtered state distribution (normalized)}
+\EndFor
+\State \Return $\{\mathbf{u}_t\},\; \{\mathbf{u}_{t \mid t}\},\; \{f_t\}$
+\end{algorithmic}
+\end{algorithm}
+
+

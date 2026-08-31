@@ -1,0 +1,71 @@
+@startuml System Composition
+
+title System Composition (Overview)
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam ArrowColor #4a6fa5
+skinparam ClassBorderColor #4a6fa5
+skinparam ClassBackgroundColor #e8f0fe
+skinparam ClassHeaderBackgroundColor #c5d8f5
+
+class HMM {
+    + params : HMMParams
+    + u_pre : ndarray
+    + ll_fits : list
+    + hmm_results : HMMResults
+    + state_results : StateResults
+    --
+    + fit(ys, xs, solver)
+    + log_likelihood(ys, xs)
+    + pseudo_residuals(ys, xs)
+    + update_param(name, value, index)
+}
+
+class HMMParams {
+    + transition : BaseTransition
+    + emission : BaseEmission
+    --
+    + transition_matrix(t, ys, xs)
+    + density(t, ys, xs)
+    + cdf(t, ys, xs)
+}
+
+class HMMResults <<dataclass>> {
+    + convergence : bool
+    + log_likelihood : float
+    + num_params : int
+}
+
+class StateResults <<dataclass>> {
+    + utt : list
+    + ut : list
+    + time_index : ndarray
+    + pseudo_residuals : ndarray
+}
+
+abstract class BaseTransition {
+}
+
+abstract class BaseEmission {
+}
+
+abstract class BaseSolver {
+    + {abstract} fit(hmm_params, ys, xs, ...)
+}
+
+class ForwardAlgorithm {
+    + step(hmm_params, carry, t, ys, xs)
+    + run(hmm_params, carry_pre, ys, xs)
+}
+
+HMM *-- HMMParams : params
+HMM *-- HMMResults : hmm_results
+HMM *-- StateResults : state_results
+HMM ..> BaseSolver : uses
+HMM ..> ForwardAlgorithm : uses
+HMMParams *-- BaseTransition : transition
+HMMParams *-- BaseEmission : emission
+ForwardAlgorithm ..> HMMParams : reads
+
+@enduml

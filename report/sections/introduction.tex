@@ -1,0 +1,28 @@
+
+\section{Introduction}
+Hidden Markov Models (HMMs) are a powerful tool for modeling sequential data, where the underlying states of the system are not directly observable. 
+They have been widely used in various fields such as speech recognition, natural language processing, and bioinformatics. \citep{ultralytics_hmm_glossary}. \\
+The goal of this project is to inference if a person is in a room based on $\text{CO}_2$ data collected from a sensor in the room. 
+To do this, we will use a Hidden Markov Model to model the relationship between the observed $\text{CO}_2$ levels and the hidden states of whether a person is in the room or not and if a window is open or not. 
+When training the models, we will use \texttt{JAX} \citep{jax2018github}  and \texttt{EQUINOX} \citep{kidger2021equinox} for automatic differentiation and optimization,
+and we will use \texttt{Optax} \citep{optax2020github} as our optimization library. \newline
+
+
+In this report, we will implement 5 nested HMM's to best describe the state of the room 
+given the $\text{CO}_2$ data, and we will compare the models using test statistics such as AIC, BIC and Likelihood Ratio Tests. \newline
+We find that the best model is the AR(2) second-order HMM, which has both autoregressive emissions and a second-order latent chain and in
+all cases, the more complex model is favoured over the simpler model. \newline
+By looking at the ACF plot of the pseudo residuals, 
+we can see that the AR(2) second-order HMM still doesn't capture all of the 
+temporal structure in the data, which suggests that there is still room for improvement in the model. \newline
+
+
+This report is written for the purpose of given a concise outline of the projects achivements, 
+design choices, model results and interpretaiton. The report is written for future students 
+to be able to easily carry on the the project and extend it in some way. \newline 
+%The report wil first go trough the software, where design choices, libraries, optimizers and preformance statiscs will be presented. 
+%Then we will briefly go trough some generel theory and present the Hidden Markov Models. 
+%Herafter we will present the results of the project, test statistics and interpretation of the results.
+%Finally we will give some suggestions for future work and possible extensions of the project.
+
+  

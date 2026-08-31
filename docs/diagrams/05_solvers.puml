@@ -1,0 +1,72 @@
+@startuml Solver Classes
+
+title Solver Classes
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam ArrowColor #4a6fa5
+skinparam ClassBorderColor #4a6fa5
+skinparam ClassBackgroundColor #e8f0fe
+skinparam ClassHeaderBackgroundColor #c5d8f5
+
+abstract class BaseSolver {
+    + {abstract} fit(hmm_params, ys, xs, u_pre, frozen, loss_fn)
+    + parse_frozen(frozen)
+    + build_filter_spec(params, frozen)
+    + freeze_elements(params, element_frozen, original)
+    + restore_frozen_elements(params, element_frozen, original)
+    + build_loss_fn(static, u_pre, ys, xs, loss_fn)
+}
+
+note top of BaseSolver
+  Partitions parameters into trainable / frozen,
+  then wraps negative_log_likelihood as the loss.
+end note
+
+class GradientSolver {
+    + optimizer
+    + n_iter : int
+    + verbose : bool
+    + params
+    + opt_loss_val
+    --
+    + fit(hmm_params, ys, xs, u_pre, frozen, loss_fn)
+}
+
+note right of GradientSolver
+  Backend: optax (default: Adam, lr=1e-3)
+  First-order gradient descent.
+end note
+
+class LBFGSSolver {
+    + n_iter : int
+    + params
+    + opt_loss_val
+    --
+    + fit(hmm_params, ys, xs, u_pre, frozen, loss_fn)
+}
+
+note right of LBFGSSolver
+  Backend: optax L-BFGS
+  Quasi-Newton second-order method.
+end note
+
+class Minimizer {
+    + method : str
+    + n_iter : int
+    + params
+    + opt_loss_val
+    --
+    + fit(hmm_params, ys, xs, u_pre, frozen, loss_fn)
+}
+
+note right of Minimizer
+  Backend: jax.scipy.optimize.minimize
+  Default method: BFGS
+end note
+
+BaseSolver <|-- GradientSolver
+BaseSolver <|-- LBFGSSolver
+BaseSolver <|-- Minimizer
+
+@enduml
