@@ -6,12 +6,12 @@ assignee: null
 epic: null
 dueDate: "2026-09-05"
 created: "2026-08-31T07:41:01.090Z"
-modified: "2026-08-31T07:53:36.641Z"
+modified: "2026-08-31T08:13:11.533Z"
 completedAt: null
 labels: []
 order: "a0"
 ---
 # Pull Code & Clean up codebase
 
-1. Remove old notebooks 
-2. 
+1. Remove old notebooks
+2. Create Small To Dos. 
