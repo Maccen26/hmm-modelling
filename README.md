@@ -1,4 +1,4 @@
-# $\text{CO}_2$ Modelling with Hidden Markov Models
+# HMM 
 
 This project is a special course at the Technical University of Denmark (DTU) exploring how to model $\text{CO}_2$ data with Hidden Markov Models. It was conducted in the Spring Semester 2026 (5 ECTS) and leads up to a Bachelor Project. The focus is on designing flexible HMM software, exploring and interpreting HMM states, and testing different HMM variants (ordinary, AR, second-order) on $\text{CO}_2$ time series data.
 
@@ -18,7 +18,7 @@ The `src/api/` directory contains four iterations of the modelling API (`v1`, `v
 ## AI disclosure
 
 1. Copilot chat completion has been used.
-2. No agents have written code.
+2. No agents have written source code inside the directory /src/.
 3. Agents have been used to debug JAX modules (sometimes).
 4. Claude has been used to find sources and explain concepts.
-5. Claude Code has been used to generate documentation about the code.
+5. Claude Code has been used to generate documentation about the code and code for plotting. 
