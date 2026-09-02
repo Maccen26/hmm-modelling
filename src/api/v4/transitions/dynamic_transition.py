@@ -1,11 +1,12 @@
+from dataclasses import fields
+from typing import Any
 from matplotlib.pylab import beta
 #from src.base import BaseTransition 
 import jax.numpy as jnp
 import jax 
 from src.base.utils import logits_to_transition_matrix 
 import equinox as eqx
-
-class DynamicTransition:
+class DynamicTransition(eqx.Module):
     """
     Static transition model for an HMM. The transition matrix does not depend on the covariates at time step t. 
 
@@ -15,24 +16,24 @@ class DynamicTransition:
     """
     beta: jax.Array 
     transition_logits: jax.Array
-    num_states: int = eqx.field(static=True)
 
 
     def __init__(self, transition_logits, beta):
         self.transition_logits = jnp.asarray(transition_logits, dtype=float)
         self.beta = jnp.asarray(beta, dtype=float)
-        self.num_states = transition_logits.shape[0] + 1  #transition_logits is of shape (num_states, num_states - 1)
 
-        if (self.beta.shape != self.transition_logits.shape):
+        b,n,m = self.beta.shape
+        if ((n,m) != self.transition_logits.shape):
             raise ValueError(f"beta and transition_logits must have the same shape. Got beta shape: {self.beta.shape}, transition_logits shape: {self.transition_logits.shape}") 
 
-    def step(self, t: int, xs: jnp.ndarray) -> jnp.ndarray:
+    def step(self, t: int, xs: jnp.ndarray, ys: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         computes new transtions logits based on the covariates at time step t. 
 
         
         :param self: Description
         :param xt: Description
+        :param ys: Description
         :return: Description
         :rtype: ndarray
         """
@@ -43,7 +44,7 @@ class DynamicTransition:
 
         return transition_logits
     
-    def transition_matrix(self, t:int, xs: jnp.ndarray) -> jnp.ndarray: 
+    def transition_matrix(self, t:int, xs: jnp.ndarray, ys: jnp.ndarray | None = None) -> jnp.ndarray: 
         """
         Builds the transition matrix at time step t given the covariates at time step t.
         
@@ -51,7 +52,17 @@ class DynamicTransition:
 
         :return: transition matrix at time step t of dim (num_states, num_states) 
         """
-        logits = self.step(t, xs)
-        return logits_to_transition_matrix(logits)
+        logits = self.step(t, xs, ys=None) #Get the transition logits at time step t.
+        return logits_to_transition_matrix(logits) 
     
+    def base_transition_matrix(self) -> jnp.ndarray:
+        """
+        Returns the base transition matrix without any covariate effects. 
+        This is useful for computing the stationary distribution of the HMM. 
+        """
+        return logits_to_transition_matrix(self.transition_logits)
+
+    def __iter__(self) -> Any:
+        """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""
+        return ((f.name, getattr(self, f.name)) for f in fields(self))
 

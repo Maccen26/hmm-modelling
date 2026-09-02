@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from src.deprecated.base.hmm import HMM
-from src.deprecated.base.hmm_params import HMMParams
+from src.base.base_hmm import BaseHMM
+from src.api.v4.hmm_models.hmm_params import HMMParams
 import jax.numpy as jnp
 
 
@@ -99,7 +99,7 @@ def plot_filtered_states(df, u_norm):
 
 #Loading and saving models using pickle
 
-def save_model(modelname: str, tag: str, run: int, model: HMM):
+def save_model(modelname: str, tag: str, run: int, model: BaseHMM):
     load_dotenv()
     PATH = os.getenv("MODEL_PATH")
 
@@ -172,7 +172,7 @@ def load_experiment_data(data_name: str, tag: str, run: int):
         return y, X
     
 
-def save_model_and_data(modelname: str, tag: str, run: int, model: HMM, y : jnp.ndarray, X: jnp.ndarray | None = None):
+def save_model_and_data(modelname: str, tag: str, run: int, model: BaseHMM, y : jnp.ndarray, X: jnp.ndarray | None = None):
     save_model(modelname=modelname, tag=tag, run=run, model=model)
     save_experiment_data(data_name=modelname, tag=tag, run=run, y=y, X=X)
 
