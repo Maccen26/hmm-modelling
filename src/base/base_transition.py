@@ -12,6 +12,7 @@ class BaseTransition(eqx.Module, ABC):
 
     transition_logits: jnp.ndarray
 
+
     def __init__(self, transition_logits):
         self.transition_logits = jnp.asarray(transition_logits, dtype=float)  # Cast to double for numerical stability
 

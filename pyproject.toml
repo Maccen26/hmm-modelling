@@ -20,3 +20,8 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["src"]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+]

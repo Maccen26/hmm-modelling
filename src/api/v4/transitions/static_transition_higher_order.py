@@ -83,6 +83,7 @@ class StaticTransitionHigherOrder(BaseTransition):
 
     transition_matrix_: jnp.ndarray is of dim (num_states, num_states - 1) and contains the off-diagonal elements of the transition matrix. 
     """
+
     order: int = eqx.field(static=True, default=2)  # Order of the Markov chain, static field since it doesn't change during training
 
     def __init__(self, transition_logits, order=2, num_states = 2):
