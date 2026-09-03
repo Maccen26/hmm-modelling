@@ -22,6 +22,7 @@ class HMM:
         self.negative_log_likelihood : Callable = negative_log_likelihood 
         self.hmm_results: HMMResults | None = None
         self.state_results: StateResults | None = None 
+        self.no_of_free_params = len(self.params)  # Store the number of free parameters
 
     def set_negative_log_likelihood(self, loss_fn: Callable):
         self.negative_log_likelihood = loss_fn
@@ -93,6 +94,8 @@ class HMM:
 
         convergence = False
         prev_ll = float('-inf')
+        if (frozen is not None):
+            self.no_of_free_params = self.no_of_free_params - len(frozen)
 
         for _ in range(num_iters):
             solver.fit(self.params, ys, xs, u_pre=self.u_pre,
@@ -151,6 +154,7 @@ class HMM:
             z_list.append(z_t)
         
         return jnp.array(z_list)
+    
 
 
     
