@@ -44,8 +44,10 @@ class HMMParams(BaseHMM):
     def __len__(self):
         """Returns the number of trainable parameters in the model."""
         #num_transition_params = self.transition.transition_logits.size
-        num_transition_params = sum(param.size for _, param in self.transition.__iter__())
-        num_emission_params = sum(param.size for _, param in self.emission.__iter__())
+        # Skip static/non-array fields (e.g. the higher-order transition's `order` int),
+        # which are not trainable parameters and have no `.size`.
+        num_transition_params = sum(param.size for _, param in self.transition.__iter__() if hasattr(param, "size"))
+        num_emission_params = sum(param.size for _, param in self.emission.__iter__() if hasattr(param, "size"))
         return num_transition_params + num_emission_params
 
 
