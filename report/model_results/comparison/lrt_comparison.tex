@@ -1,0 +1,17 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lcccccc}
+\hline
+Base Model & Expanded Model & LRT & df & $p$-value & $\Delta$AIC & $\Delta$BIC \\
+\hline
+HMM(1) & AR(1), HMM(1) & 2058.28 & 5 & 0.0000 & -2050.28 & -2028.61 \\
+AR(1), HMM(1) & AR(2), HMM(1) & 173.07 & 5 & 0.0000 & -165.07 & -143.40 \\
+AR(1), HMM(1) & AR(1), HMM(2) & 457.65 & 61 & 0.0000 & -337.65 & -12.60 \\
+AR(2), HMM(1) & AR(2), HMM(2) & 455.59 & 73 & 0.0000 & -311.59 & 78.43 \\
+AR(1), HMM(2) & AR(2), HMM(2) & 171.01 & 17 & 0.0000 & -139.01 & -52.34 \\
+HMM(1) & HMM(1) + covariates & 318.32 & 25 & 0.0000 & -270.32 & -140.29 \\
+\hline
+\end{tabular}
+\caption{Likelihood-ratio tests for each nested pair from the model hierarchy (Figure~\ref{fig:diagram:model_hierarchy}). Negative $\Delta$AIC/$\Delta$BIC favour the expanded model.}
+\label{tab:lrt_comparison}
+\end{table}
