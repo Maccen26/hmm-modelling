@@ -29,7 +29,6 @@ class DynamicTransition(eqx.Module):
     def step(self, t: int, xs: jnp.ndarray, ys: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         computes new transtions logits based on the covariates at time step t. 
-
         
         :param self: Description
         :param xt: Description
