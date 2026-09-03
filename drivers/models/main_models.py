@@ -7,6 +7,8 @@ from drivers.models.ar_2_hmm import run_ar_2_hmm
 from drivers.models.second_order_hmm import run_ar_1_second_order_hmm
 from drivers.models.ar_2_second_order_hmm import run_ar_2_second_order_hmm
 from drivers.models.covariate_hmm import run_covariate_hmm
+from drivers.models.ar_1_covariate_hmm import run_ar_1_covariate_hmm
+from drivers.models.ar_2_covariate_hmm import run_ar_2_covariate_hmm
 from drivers.utils import save_model
 
 
@@ -20,6 +22,8 @@ def main_models():
         "second_order_hmm": run_ar_1_second_order_hmm,
         "ar_2_second_order_hmm": run_ar_2_second_order_hmm,
         "covariate_hmm": run_covariate_hmm,
+        "ar_1_covariate_hmm": run_ar_1_covariate_hmm,
+        "ar_2_covariate_hmm": run_ar_2_covariate_hmm,
     }
 
     for model_name, model_function in models.items():

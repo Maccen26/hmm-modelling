@@ -10,6 +10,8 @@ def main_plots():
         "second_order_hmm",
         "ar_2_second_order_hmm",
         "covariate_hmm",
+        "ar_1_covariate_hmm",
+        "ar_2_covariate_hmm",
     ]
 
     for model_name in model_names:
