@@ -107,3 +107,9 @@ def professor_init_4state_hmm_params():
 
 
 
+def load_model(path: str):
+    """Load a model from a pickle file."""
+    import pickle
+    with open(path, "rb") as f:
+        model = pickle.load(f)
+    return model

@@ -82,7 +82,8 @@ class HMM:
             return ForwardAlgorithm()
         raise ValueError(f"Inference method {inference} could not be set")
 
-    def fit(self, ys: jnp.ndarray,
+    def fit(self, 
+            ys: jnp.ndarray,
             xs: jnp.ndarray | None = None,
             solver=None,
             frozen=None,
@@ -136,6 +137,7 @@ class HMM:
         output = inference_alg.run(self.params, self.u_pre, ys, xs)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
+        #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
     
 
     def update_param(self, param_name: str, new_value: jax.Array, index: Tuple|float|None = None) -> None:

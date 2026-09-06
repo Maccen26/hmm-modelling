@@ -110,6 +110,8 @@ def main_test_statistics():
         ("ordinary_hmm", "covariate_hmm", 0),
         ("covariate_hmm", "ar_1_covariate_hmm", 1),
         ("ar_1_covariate_hmm", "ar_2_covariate_hmm", 2),
+        ("ar_hmm", "ar_1_covariate_hmm", 1),  # AR(1) HMM nests AR(1) Covariate HMM
+        ("ar_2_hmm", "ar_2_covariate_hmm", 2),  # AR(2) HMM nests AR(2) Covariate HMM
     ]
 
     stats_df = build_model_stats_df(models)
