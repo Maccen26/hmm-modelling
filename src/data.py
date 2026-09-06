@@ -33,19 +33,17 @@ def load_and_aggregate_data(no_of_days: int |None = None ) -> pd.DataFrame:
     else: 
         df = df[df["day"] < no_of_days] 
 
-
-
     # Compute HalfHour: (day + Time) * 24 * 2, rounded to nearest int
     df["HalfHour"] = ((df["day"] + df["Time"]) * 24 * 2).round().astype(int)
 
     # Aggregate: mean of these columns, grouped by HalfHour
-    agg = df.groupby("HalfHour")[["CO2C", "WindowClosed", "Time", "Day", "Month"]].mean().reset_index()
+    agg = df.groupby("HalfHour")[["CO2C", "WindowClosed", "Time", "Day", "Month", "Hour"]].mean().reset_index()
 
     # HalfHour mod 48 (to get position within day)
     agg["HalfHour"] = agg["HalfHour"] % 48
 
     # Hour of day
-    agg["Hour"] = agg["HalfHour"] / 2
+    #agg["Hour"] = agg["HalfHour"] / 2
 
     # Time as fraction of days elapsed
     agg["Time"] = (pd.RangeIndex(1, len(agg) + 1)) / 2 / 24

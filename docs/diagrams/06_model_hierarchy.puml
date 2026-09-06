@@ -1,0 +1,55 @@
+@startuml
+' HMM model hierarchy.
+'
+' Each arrow points from a base model to an expanded model that nests it
+' (the base is recovered by fixing the added parameters to zero). These are
+' exactly the nested pairs compared with a likelihood-ratio test in
+' drivers/test_statistics.py -> build_lrt_comparison_df(edges). The edge label
+' names the parameters added by the expansion (the LRT degrees of freedom).
+'
+' Model labels follow MODEL_LABELS in drivers/test_statistics.py:
+'   HMM(1)  = first-order (static) transition, Gaussian emission
+'   AR(k)   = order-k autoregressive Gaussian emission
+'   HMM(2)  = second-order (static) transition
+'   Covariates-HMM(1) = dynamic transition driven by time-of-day covariates
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam rectangle {
+    BackgroundColor #EAF1FB
+    BorderColor #4A75B0
+    BorderThickness 1
+    FontColor #1A1A1A
+    RoundCorner 8
+}
+skinparam ArrowColor #4A75B0
+
+' --- Autoregressive / second-order branch ---
+rectangle "HMM(1)" as H1
+rectangle "AR(1), HMM(1)" as AR1
+rectangle "AR(2), HMM(1)" as AR2
+rectangle "AR(1), HMM(2)" as SO1
+rectangle "AR(2), HMM(2)" as AR2SO
+
+' --- Covariate branch ---
+rectangle "Covariates-HMM(1)" as COV
+rectangle "AR(1), Covariates-HMM(1)" as ARCOV1
+rectangle "AR(2), Covariates-HMM(1)" as ARCOV2
+
+H1    --> AR1
+AR1   --> AR2
+AR1   --> SO1
+AR2   --> AR2SO
+SO1   --> AR2SO
+
+H1    --> COV
+COV   --> ARCOV1
+ARCOV1 --> ARCOV2
+
+' --- Cross-branch: an AR HMM nests the covariate HMM of the same AR order ---
+AR1   --> ARCOV1
+AR2   --> ARCOV2
+
+@enduml
