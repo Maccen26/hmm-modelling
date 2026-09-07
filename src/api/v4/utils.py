@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-from src.data import load_and_aggregate_data
 import jax 
 
 def load_y_data(no_of_days: int | None = None) -> jnp.ndarray:
@@ -7,6 +6,7 @@ def load_y_data(no_of_days: int | None = None) -> jnp.ndarray:
     Loads the y data from the csv file and returns it as a jnp array. 
     If no_of_days is not None, it returns only the first no_of_days of data. 
     """ 
+    from src.data import load_and_aggregate_data
     df = load_and_aggregate_data(no_of_days=no_of_days)
     y_data = jnp.array(df["CO2C"].values)
     return jnp.asarray(y_data) 

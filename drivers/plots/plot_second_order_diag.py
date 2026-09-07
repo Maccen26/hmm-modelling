@@ -1,4 +1,4 @@
-from drivers.utils import plot_hmm_diagnostics, load_model 
+from drivers.utils import plot_hmm_diagnostics, load_model
 import matplotlib.pyplot as plt
 
 

@@ -1,0 +1,16 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lcccc}
+\hline
+Model & \#Params & LogLik & AIC & BIC \\
+\hline
+HMM(1) & 20 & -10388.87 & 20817.73 & 20926.10 \\
+AR(1), HMM(1) & 24 & -9359.73 & 18767.45 & 18897.47 \\
+AR(2), HMM(1) & 28 & -9273.19 & 18602.38 & 18754.06 \\
+AR(1), HMM(2) & 84 & -9130.90 & 18429.80 & 18884.88 \\
+AR(2), HMM(2) & 100 & -9045.40 & 18290.79 & 18832.49 \\
+\hline
+\end{tabular}
+\caption{Per-model log-likelihood, AIC and BIC for the five fitted HMMs.}
+\label{tab:model_stats}
+\end{table}

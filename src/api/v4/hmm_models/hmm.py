@@ -22,6 +22,7 @@ class HMM:
         self.negative_log_likelihood : Callable = negative_log_likelihood 
         self.hmm_results: HMMResults | None = None
         self.state_results: StateResults | None = None 
+        self.no_of_free_params = len(self.params)  # Store the number of free parameters
 
     def set_negative_log_likelihood(self, loss_fn: Callable):
         self.negative_log_likelihood = loss_fn
@@ -81,7 +82,8 @@ class HMM:
             return ForwardAlgorithm()
         raise ValueError(f"Inference method {inference} could not be set")
 
-    def fit(self, ys: jnp.ndarray,
+    def fit(self, 
+            ys: jnp.ndarray,
             xs: jnp.ndarray | None = None,
             solver=None,
             frozen=None,
@@ -93,6 +95,8 @@ class HMM:
 
         convergence = False
         prev_ll = float('-inf')
+        if (frozen is not None):
+            self.no_of_free_params = self.no_of_free_params - len(frozen)
 
         for _ in range(num_iters):
             solver.fit(self.params, ys, xs, u_pre=self.u_pre,
@@ -133,6 +137,7 @@ class HMM:
         output = inference_alg.run(self.params, self.u_pre, ys, xs)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
+        #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
     
 
     def update_param(self, param_name: str, new_value: jax.Array, index: Tuple|float|None = None) -> None:
@@ -151,6 +156,7 @@ class HMM:
             z_list.append(z_t)
         
         return jnp.array(z_list)
+    
 
 
     

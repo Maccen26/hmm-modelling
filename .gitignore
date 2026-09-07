@@ -227,3 +227,5 @@ __marimo__/
 
 
 /docs/litterature/*
+# PlantUML jar downloaded by docs/diagrams/render_diagrams.py
+docs/diagrams/plantuml.jar
