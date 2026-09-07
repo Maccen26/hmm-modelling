@@ -1,5 +1,6 @@
-from drivers.utils import plot_hmm_diagnostics, load_model 
+from drivers.utils import plot_hmm_diagnostics, load_model
 import matplotlib.pyplot as plt
+
 
 def plot_ordinary_hmm_diagnostics():
     model_path = "results/models/ordinary_hmm.pkl"

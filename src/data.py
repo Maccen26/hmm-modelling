@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from src.deprecated.base.hmm import HMM
-from src.deprecated.base.hmm_params import HMMParams
+from src.base.base_hmm import BaseHMM
+from src.api.v4.hmm_models.hmm_params import HMMParams
 import jax.numpy as jnp
 
 
@@ -33,19 +33,17 @@ def load_and_aggregate_data(no_of_days: int |None = None ) -> pd.DataFrame:
     else: 
         df = df[df["day"] < no_of_days] 
 
-
-
     # Compute HalfHour: (day + Time) * 24 * 2, rounded to nearest int
     df["HalfHour"] = ((df["day"] + df["Time"]) * 24 * 2).round().astype(int)
 
     # Aggregate: mean of these columns, grouped by HalfHour
-    agg = df.groupby("HalfHour")[["CO2C", "WindowClosed", "Time", "Day", "Month"]].mean().reset_index()
+    agg = df.groupby("HalfHour")[["CO2C", "WindowClosed", "Time", "Day", "Month", "Hour"]].mean().reset_index()
 
     # HalfHour mod 48 (to get position within day)
     agg["HalfHour"] = agg["HalfHour"] % 48
 
     # Hour of day
-    agg["Hour"] = agg["HalfHour"] / 2
+    #agg["Hour"] = agg["HalfHour"] / 2
 
     # Time as fraction of days elapsed
     agg["Time"] = (pd.RangeIndex(1, len(agg) + 1)) / 2 / 24
@@ -99,7 +97,7 @@ def plot_filtered_states(df, u_norm):
 
 #Loading and saving models using pickle
 
-def save_model(modelname: str, tag: str, run: int, model: HMM):
+def save_model(modelname: str, tag: str, run: int, model: BaseHMM):
     load_dotenv()
     PATH = os.getenv("MODEL_PATH")
 
@@ -172,7 +170,7 @@ def load_experiment_data(data_name: str, tag: str, run: int):
         return y, X
     
 
-def save_model_and_data(modelname: str, tag: str, run: int, model: HMM, y : jnp.ndarray, X: jnp.ndarray | None = None):
+def save_model_and_data(modelname: str, tag: str, run: int, model: BaseHMM, y : jnp.ndarray, X: jnp.ndarray | None = None):
     save_model(modelname=modelname, tag=tag, run=run, model=model)
     save_experiment_data(data_name=modelname, tag=tag, run=run, y=y, X=X)
 

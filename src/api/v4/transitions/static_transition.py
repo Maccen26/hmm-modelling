@@ -10,7 +10,7 @@ class StaticTransition(BaseTransition):
 
     transition_matrix_: jnp.ndarray is of dim (num_states, num_states - 1) and contains the off-diagonal elements of the transition matrix. 
     """
-    
+
     def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         computes new transtions logits based on the covariates at time step t. 

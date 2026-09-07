@@ -1,0 +1,81 @@
+\begin{titlepage} % Suppresses displaying the page number on the title page and the subsequent page counts as page 1
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for horizontal lines, change thickness here
+	
+	\center % Centre everything on the page
+	%------------------------------------------------
+	%	READ ME
+	%------------------------------------------------
+	   
+	    %This version of the title page contains both signatures and pictures of participants, this version is best suited for larger reports and or projects. 
+	
+	%------------------------------------------------
+	%	Headings
+	%------------------------------------------------
+	
+	\textsc{\LARGE Danmarks Tekniske Universitet}\\[1.5cm] % Main heading such as the name of your university/college
+	
+    \includegraphics[scale=0.15]{graphs/DTULogo.png}\\
+	%\textsc{\Large Major Heading}\\[0.5cm] % Major heading such as course name
+	
+	%\textsc{\large Minor Heading}\\[0.5cm] % Minor heading such as course title
+	
+	%------------------------------------------------
+	%	Title
+	%------------------------------------------------
+	
+	\HRule\\[0.5cm]
+	
+	{\large\bfseries \kursusnavn}\\[0.4cm] % Title of your document
+{\normalsize \kursusnummer}\\[0.2cm]
+
+	\HRule\\[0.5cm]
+	%\textsc{\Large Danmarks Tekniske Universitet}\\[0.5cm] % Major heading such as course name
+	
+	\textsc{\Large \afleveringnavn}\\[1cm] % Minor heading such as course title
+	
+	%------------------------------------------------
+	%	Author(s)
+	%------------------------------------------------
+    \begin{minipage}{0.4\textwidth}
+		\begin{flushleft}
+            \centering
+            \large
+            \authorone \\ 
+            \authoroneID \\ [0.2cm]
+            %\authortwo \\
+            %\authortwoID \\ [0.2cm]
+            %\authorthree \\
+            %\authorthreeID \\ [0.2cm]
+            %\authorfour \\
+            %\authorfourID \\ [0.8cm]
+            
+		\end{flushleft}
+	\end{minipage} 
+    \\[1cm]
+
+    %------------------------------------------------
+    %	Supervisor
+    %------------------------------------------------
+    \begin{minipage}{0.4\textwidth}
+        \begin{center}
+            \large
+            \textit{Supervisor}\\
+            \supervisor
+        \end{center}
+    \end{minipage}
+    \\[1cm]
+    \vfill \vfill
+
+
+
+	%------------------------------------------------
+	%	Date
+	%------------------------------------------------
+	
+	\vfill\vfill\vfill % Position the date 3/4 down the remaining page
+	
+	{\large\today} % Date, change the \today to a set date if you want to be precise
+	
+	\vfill % Push the date up 1/4 of the remaining page
+	
+\end{titlepage}

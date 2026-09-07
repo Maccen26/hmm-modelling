@@ -16,7 +16,7 @@ def lrt(model0: HMM, model1: HMM):
 
 
 def aic(model: HMM):
-    k = len(model.params)
+    k = (model.no_of_free_params)
     ll = model.log_likelihood()
     return 2 * k - 2 * ll
 
@@ -24,7 +24,7 @@ def aic(model: HMM):
 def bic(model: HMM, lag: int = 0):
     num_samples = len(load_y_data())
     num_samples = num_samples - lag if lag > 0 else num_samples
-    k = len(model.params)
+    k = (model.no_of_free_params)
     ll = model.log_likelihood()
     return float(k * jnp.log(num_samples) - 2 * ll)
 
@@ -40,6 +40,10 @@ MODEL_LABELS = {
     "ar_2_hmm": "AR(2), HMM(1)",
     "second_order_hmm": "AR(1), HMM(2)",
     "ar_2_second_order_hmm": "AR(2), HMM(2)",
+    "covariate_hmm": "Covariates-HMM(1)",
+    "ar_1_covariate_hmm": "AR(1), Covariates-HMM(1)",
+    "ar_2_covariate_hmm": "AR(2), Covariates-HMM(1)",
+
 }
 
 
@@ -49,7 +53,7 @@ def build_model_stats_df(models):
         model = load_model(f"results/models/{model_name}.pkl")
         rows.append({
             "Model": MODEL_LABELS.get(model_name, model_name),
-            "#Params": int(len(model.params)),
+            "#Params": int((model.no_of_free_params)),
             "LogLik": float(model.log_likelihood()),
             "AIC": float(aic(model)),
             "BIC": float(bic(model, lag=lag)),
@@ -62,7 +66,7 @@ def build_lrt_comparison_df(edges):
     for base_name, expanded_name, lag in edges:
         base = load_model(f"results/models/{base_name}.pkl")
         expanded = load_model(f"results/models/{expanded_name}.pkl")
-        df = int(len(expanded.params) - len(base.params))
+        df = int(expanded.no_of_free_params - base.no_of_free_params)
         test_stat = float(lrt(base, expanded))
         pval = p_value(test_stat, df) if df > 0 else float("nan")
         d_aic = float(aic(expanded) - aic(base))
@@ -86,16 +90,28 @@ def main_test_statistics():
         ("ar_2_hmm", 2),
         ("second_order_hmm", 1),
         ("ar_2_second_order_hmm", 2),
+        ("covariate_hmm", 0),
+        ("ar_1_covariate_hmm", 1),
+        ("ar_2_covariate_hmm", 2),
     ]
     # Edges follow the hierarchy diagram (docs/diagrams/06_model_hierarchy.puml).
     # Lag for ΔBIC is the larger of the two so both BIC values are computed on
     # the same sample size.
+    #
+    # covariate_hmm nests the ordinary HMM (setting beta=0 recovers the static
+    # transition), so it is a valid LRT against ordinary_hmm. Both use a plain
+    # Gaussian emission (no AR lag), so lag=0.
     edges = [
         ("ordinary_hmm", "ar_hmm", 1),
         ("ar_hmm", "ar_2_hmm", 2),
         ("ar_hmm", "second_order_hmm", 1),
         ("ar_2_hmm", "ar_2_second_order_hmm", 2),
         ("second_order_hmm", "ar_2_second_order_hmm", 2),
+        ("ordinary_hmm", "covariate_hmm", 0),
+        ("covariate_hmm", "ar_1_covariate_hmm", 1),
+        ("ar_1_covariate_hmm", "ar_2_covariate_hmm", 2),
+        ("ar_hmm", "ar_1_covariate_hmm", 1),  # AR(1) HMM nests AR(1) Covariate HMM
+        ("ar_2_hmm", "ar_2_covariate_hmm", 2),  # AR(2) HMM nests AR(2) Covariate HMM
     ]
 
     stats_df = build_model_stats_df(models)
@@ -112,7 +128,7 @@ def main_test_statistics():
     write_latex_table(
         stats_df,
         "report/model_results/comparison/model_stats.tex",
-        caption="Per-model log-likelihood, AIC and BIC for the five fitted HMMs.",
+        caption="Per-model log-likelihood, AIC and BIC for the fitted HMMs.",
         label="tab:model_stats",
     )
     write_latex_table(
@@ -126,6 +142,7 @@ def main_test_statistics():
         label="tab:lrt_comparison",
         float_cols_4dp=["P-val"],
     )
+
 
 if __name__ == "__main__":
     main_test_statistics()

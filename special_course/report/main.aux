@@ -1,0 +1,149 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\catcode `"\active 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\babel@aux{danish}{}
+\HyPL@Entry{1<</S/D>>}
+\citation{ultralytics_hmm_glossary}
+\citation{jax2018github}
+\citation{kidger2021equinox}
+\citation{optax2020github}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
+\citation{jax2018github}
+\citation{kidger2021equinox}
+\citation{optax2020github}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Software}{4}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Class overview}{4}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Design Principles}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Primary Libraries}{4}{subsection.2.3}\protected@file@percent }
+\citation{moler2024statistical}
+\citation{zucchini2016hidden}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Generel Theory}{5}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Forward Algorithm}{5}{subsection.3.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Recursive Filtering Forward Algorithm}}{5}{algorithm.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{alg:forward}{{1}{5}{Recursive Filtering Forward Algorithm}{algorithm.1}{}}
+\newlabel{eq:log_likelihood}{{1}{5}{Forward Algorithm}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Forecast Pseudo Residuals}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{eq:pseudo_residual}{{2}{5}{Forecast Pseudo Residuals}{equation.2}{}}
+\newlabel{eq:predictive_cdf}{{3}{5}{Forecast Pseudo Residuals}{equation.3}{}}
+\citation{wiki:aic}
+\citation{wiki:bic}
+\citation{wiki:lrt}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Test Statistics}{6}{subsection.3.3}\protected@file@percent }
+\newlabel{eq:aic}{{4}{6}{Test Statistics}{equation.4}{}}
+\newlabel{eq:bic}{{5}{6}{Test Statistics}{equation.5}{}}
+\newlabel{eq:lrt}{{6}{6}{Test Statistics}{equation.6}{}}
+\citation{zucchini2016hidden}
+\citation{moler2024statistical}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Models \& Results}{7}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Hierarchy of the HMM models considered in this section. Each extension adds either an autoregressive emission component (AR order) or a higher-order latent chain (HMM order), culminating in the AR(2) second-order HMM.}}{7}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:diagram:model_hierarchy}{{1}{7}{Hierarchy of the HMM models considered in this section. Each extension adds either an autoregressive emission component (AR order) or a higher-order latent chain (HMM order), culminating in the AR(2) second-order HMM}{figure.caption.3}{}}
+\citation{zucchini2016hidden}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Ordinary HMM model}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Theory}{8}{subsubsection.4.1.1}\protected@file@percent }
+\newlabel{eq:stationary_dist}{{7}{8}{Theory}{equation.7}{}}
+\newlabel{eq:sigma_reparam}{{8}{8}{Theory}{equation.8}{}}
+\newlabel{eq:gamma_softmax}{{10}{8}{Theory}{equation.10}{}}
+\newlabel{eq:mu_reparam}{{11}{8}{Theory}{equation.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Results}{9}{subsubsection.4.1.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Estimated transition matrix for the ordinary 4-state HMM.}}{9}{table.caption.4}\protected@file@percent }
+\newlabel{tab:ordinary_hmm_transition}{{1}{9}{Estimated transition matrix for the ordinary 4-state HMM}{table.caption.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Estimated emission parameters (Gaussian) for the ordinary 4-state HMM.}}{9}{table.caption.5}\protected@file@percent }
+\newlabel{tab:ordinary_hmm_emissions}{{2}{9}{Estimated emission parameters (Gaussian) for the ordinary 4-state HMM}{table.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Diagnostic plots for the ordinary 4-state HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals.}}{10}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:ordinary_hmm_diagnostics}{{2}{10}{Diagnostic plots for the ordinary 4-state HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}AR(1)-HMM}{10}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Theory}{10}{subsubsection.4.2.1}\protected@file@percent }
+\newlabel{eq:ar1_emission}{{12}{10}{Theory}{equation.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Results}{10}{subsubsection.4.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Estimated transition matrix for the AR-HMM.}}{11}{table.caption.7}\protected@file@percent }
+\newlabel{tab:ar_hmm_transition}{{3}{11}{Estimated transition matrix for the AR-HMM}{table.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Estimated emission parameters for the AR-HMM (Gaussian with AR(1) residuals).}}{11}{table.caption.8}\protected@file@percent }
+\newlabel{tab:ar_hmm_emissions}{{4}{11}{Estimated emission parameters for the AR-HMM (Gaussian with AR(1) residuals)}{table.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Diagnostic plots for the AR-HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals.}}{11}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:ar_hmm_diagnostics}{{3}{11}{Diagnostic plots for the AR-HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}AR(2)-HMM}{12}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Theory}{12}{subsubsection.4.3.1}\protected@file@percent }
+\newlabel{eq:ar2_emission}{{13}{12}{Theory}{equation.13}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Results}{12}{subsubsection.4.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Estimated transition matrix for the AR(2)-HMM.}}{12}{table.caption.10}\protected@file@percent }
+\newlabel{tab:ar_2_hmm_transition}{{5}{12}{Estimated transition matrix for the AR(2)-HMM}{table.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Estimated emission parameters for the AR(2)-HMM (Gaussian with AR(2) residuals).}}{12}{table.caption.11}\protected@file@percent }
+\newlabel{tab:ar_2_hmm_emissions}{{6}{12}{Estimated emission parameters for the AR(2)-HMM (Gaussian with AR(2) residuals)}{table.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Diagnostic plots for the AR(2)-HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals.}}{13}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:ar_2_hmm_diagnostics}{{4}{13}{Diagnostic plots for the AR(2)-HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}AR(1)-HMM(2)}{13}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.1}Theory}{13}{subsubsection.4.4.1}\protected@file@percent }
+\newlabel{eq:second_order_transition}{{14}{13}{Theory}{equation.14}{}}
+\newlabel{eq:augmented_transition}{{15}{13}{Theory}{equation.15}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.2}Results}{13}{subsubsection.4.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Estimated transition probabilities for the AR(1) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; columns give the next-state probability $P(s_{t+1} \mid s_{t-1}, s_t)$. A dash ($-$) indicates zero or negligible probability.}}{14}{table.caption.13}\protected@file@percent }
+\newlabel{tab:second_order_hmm_transition}{{7}{14}{Estimated transition probabilities for the AR(1) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; columns give the next-state probability $P(s_{t+1} \mid s_{t-1}, s_t)$. A dash ($-$) indicates zero or negligible probability}{table.caption.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Estimated emission parameters for the AR(1) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; $\hat  {\mu }$ and $\hat  {\sigma }$ are the Gaussian mean and standard deviation of the residual and $\hat  {\phi }$ is the AR(1) coefficient.}}{15}{table.caption.14}\protected@file@percent }
+\newlabel{tab:second_order_hmm_emissions}{{8}{15}{Estimated emission parameters for the AR(1) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; $\hat {\mu }$ and $\hat {\sigma }$ are the Gaussian mean and standard deviation of the residual and $\hat {\phi }$ is the AR(1) coefficient}{table.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Diagnostic plots for the second-order HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals.}}{15}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:second_order_hmm_diagnostics}{{5}{15}{Diagnostic plots for the second-order HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}AR(2)-HMM(2)}{16}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.1}Theory}{16}{subsubsection.4.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.2}Results}{16}{subsubsection.4.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Estimated transition probabilities for the AR(2) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; columns give the next-state probability $P(s_{t+1} \mid s_{t-1}, s_t)$. A dash ($-$) indicates zero or negligible probability.}}{16}{table.caption.16}\protected@file@percent }
+\newlabel{tab:ar_2_second_order_hmm_transition}{{9}{16}{Estimated transition probabilities for the AR(2) second-order HMM. Each row is a state pair $(s_{t-1}, s_t)$; columns give the next-state probability $P(s_{t+1} \mid s_{t-1}, s_t)$. A dash ($-$) indicates zero or negligible probability}{table.caption.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Estimated emission parameters for the AR(2) second-order HMM. $\hat  {\sigma }$ and the AR(2) coefficients $\hat  {\phi }_1$, $\hat  {\phi }_2$ depend on $(s_{t-1}, s_t)$. A sum $\hat  {\phi }_1 + \hat  {\phi }_2 > 1$ indicates a non-stationary AR process for that state pair.}}{17}{table.caption.17}\protected@file@percent }
+\newlabel{tab:ar_2_second_order_hmm_emissions}{{10}{17}{Estimated emission parameters for the AR(2) second-order HMM. $\hat {\sigma }$ and the AR(2) coefficients $\hat {\phi }_1$, $\hat {\phi }_2$ depend on $(s_{t-1}, s_t)$. A sum $\hat {\phi }_1 + \hat {\phi }_2 > 1$ indicates a non-stationary AR process for that state pair}{table.caption.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Diagnostic plots for the AR(2) second-order HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals.}}{18}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:ar_2_second_order_hmm_diagnostics}{{6}{18}{Diagnostic plots for the AR(2) second-order HMM. Left: log-likelihood per iteration. Centre: normal Q--Q plot of pseudo-residuals. Right: ACF of pseudo-residuals}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Model Comparison}{19}{section.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Per-model log-likelihood, AIC and BIC for the five fitted HMMs.}}{19}{table.caption.19}\protected@file@percent }
+\newlabel{tab:model_stats}{{11}{19}{Per-model log-likelihood, AIC and BIC for the five fitted HMMs}{table.caption.19}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Likelihood-ratio tests for each nested pair from the model hierarchy (Figure~\ref {fig:diagram:model_hierarchy}). Negative $\Delta $AIC/$\Delta $BIC favour the expanded model.}}{19}{table.caption.20}\protected@file@percent }
+\newlabel{tab:lrt_comparison}{{12}{19}{Likelihood-ratio tests for each nested pair from the model hierarchy (Figure~\ref {fig:diagram:model_hierarchy}). Negative $\Delta $AIC/$\Delta $BIC favour the expanded model}{table.caption.20}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{20}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Future Work}{21}{section.7}\protected@file@percent }
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{astral_uv_docs}{{1}{2024}{{Astral Software Inc.}}{{}}}
+\bibcite{jax2018github}{{2}{2018}{{Bradbury et~al.}}{{Bradbury, Frostig, Hawkins, Johnson, Katariya, Leary, Maclaurin, Necula, Paszke, Vander{P}las, Wanderman-{M}ilne, and Zhang}}}
+\bibcite{optax2020github}{{3}{2020}{{Hessel et~al.}}{{Hessel, Budden, Viola, Rosca, Sezener, and Hennigan}}}
+\bibcite{kidger2021equinox}{{4}{2021}{{Kidger and Garcia}}{{}}}
+\bibcite{moler2024statistical}{{5}{2024}{{M{\o }ller et~al.}}{{M{\o }ller, Schweiker, Andersen, Gunay, Yilmaz, Barthelmes, and Madsen}}}
+\bibcite{ultralytics_hmm_glossary}{{6}{2024}{{Ultralytics LLC}}{{}}}
+\bibcite{wiki:aic}{{7}{2026{a}}{{Wikipedia contributors}}{{}}}
+\bibcite{wiki:bic}{{8}{2026{b}}{{Wikipedia contributors}}{{}}}
+\bibcite{wiki:lrt}{{9}{2026{c}}{{Wikipedia contributors}}{{}}}
+\bibcite{zucchini2016hidden}{{10}{2016}{{Zucchini et~al.}}{{Zucchini, MacDonald, and Langrock}}}
+\citation{astral_uv_docs}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Appendix}{23}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Source Code Repository}{23}{subsection.8.1}\protected@file@percent }
+\newlabel{section:app:repo}{{8.1}{23}{Source Code Repository}{subsection.8.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Source code \& Envoriment}{23}{subsection.8.2}\protected@file@percent }
+\newlabel{section:app:env}{{8.2}{23}{Source code \& Envoriment}{subsection.8.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Python libraries used in this project.}}{23}{table.caption.22}\protected@file@percent }
+\newlabel{tab:libraries}{{13}{23}{Python libraries used in this project}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}CO\textsubscript  {2} Data}{24}{subsection.8.3}\protected@file@percent }
+\newlabel{section:app:co2_data}{{8.3}{24}{CO\textsubscript {2} Data}{subsection.8.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Observed CO\textsubscript  {2} concentration (ppm) over time.}}{24}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:app:co2_data}{{7}{24}{Observed CO\textsubscript {2} concentration (ppm) over time}{figure.caption.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Class Diagrams}{25}{subsection.8.4}\protected@file@percent }
+\newlabel{section:app:diagrams}{{8.4}{25}{Class Diagrams}{subsection.8.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces System composition overview. The user-facing \texttt  {HMM} class owns an \texttt  {HMMParams} instance composed of a \texttt  {BaseTransition} and a \texttt  {BaseEmission}. Fitting is delegated to a \texttt  {BaseSolver} subclass and state inference is handled by \texttt  {ForwardAlgorithm}, producing \texttt  {HMMResults} and \texttt  {StateResults}.}}{25}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:diagram:composition}{{8}{25}{System composition overview. The user-facing \texttt {HMM} class owns an \texttt {HMMParams} instance composed of a \texttt {BaseTransition} and a \texttt {BaseEmission}. Fitting is delegated to a \texttt {BaseSolver} subclass and state inference is handled by \texttt {ForwardAlgorithm}, producing \texttt {HMMResults} and \texttt {StateResults}}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Emission class hierarchy. \texttt  {GaussEmission} models state-dependent Gaussian distributions with monotonically ordered means enforced via cumulative exponentiation of \texttt  {log\_mu\_diff}. \texttt  {AutoregressiveGaussEmission} extends this with AR($p$) dynamics, where coefficients are stored unconstrained (\texttt  {phi\_tilde}) and mapped to $(-1, 1)$ via $\tanh $ to guarantee stationarity.}}{25}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:diagram:emissions}{{9}{25}{Emission class hierarchy. \texttt {GaussEmission} models state-dependent Gaussian distributions with monotonically ordered means enforced via cumulative exponentiation of \texttt {log\_mu\_diff}. \texttt {AutoregressiveGaussEmission} extends this with AR($p$) dynamics, where coefficients are stored unconstrained (\texttt {phi\_tilde}) and mapped to $(-1, 1)$ via $\tanh $ to guarantee stationarity}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Transition class hierarchy. Both implementations store parameters as logits and convert them to a row-stochastic matrix via row-wise softmax. \texttt  {StaticTransition} uses a constant $K \times K$ matrix, while \texttt  {StaticTransitionHigherOrder} augments the state space to $K^{\text  {order}}$ states to represent a higher-order Markov chain.}}{26}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:diagram:transitions}{{10}{26}{Transition class hierarchy. Both implementations store parameters as logits and convert them to a row-stochastic matrix via row-wise softmax. \texttt {StaticTransition} uses a constant $K \times K$ matrix, while \texttt {StaticTransitionHigherOrder} augments the state space to $K^{\text {order}}$ states to represent a higher-order Markov chain}{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Inference and output class hierarchy. \texttt  {BaseInference.run()} iterates \texttt  {step()} across the time axis using \texttt  {jax.lax.scan}. \texttt  {ForwardAlgorithm} implements the forward filtering pass and produces a \texttt  {ForwardOutput} storing the scaling factors $f_t$, filtered state probabilities $u_{t|t}$, and predicted state probabilities $u_t$. The log-likelihood is computed as $\DOTSB \sum@ \slimits@ _t \log f_t$.}}{26}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:diagram:inference}{{11}{26}{Inference and output class hierarchy. \texttt {BaseInference.run()} iterates \texttt {step()} across the time axis using \texttt {jax.lax.scan}. \texttt {ForwardAlgorithm} implements the forward filtering pass and produces a \texttt {ForwardOutput} storing the scaling factors $f_t$, filtered state probabilities $u_{t|t}$, and predicted state probabilities $u_t$. The log-likelihood is computed as $\sum _t \log f_t$}{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Solver class hierarchy. \texttt  {BaseSolver} partitions parameters into trainable and frozen subsets and wraps the negative log-likelihood as the loss function. The three concrete solvers share the same interface but differ in their optimization backend: \texttt  {GradientSolver} uses first-order gradient descent via \texttt  {optax}, \texttt  {LBFGSSolver} uses quasi-Newton L-BFGS via \texttt  {optax}, and \texttt  {Minimizer} wraps \texttt  {jax.scipy.optimize.minimize}.}}{27}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:diagram:solvers}{{12}{27}{Solver class hierarchy. \texttt {BaseSolver} partitions parameters into trainable and frozen subsets and wraps the negative log-likelihood as the loss function. The three concrete solvers share the same interface but differ in their optimization backend: \texttt {GradientSolver} uses first-order gradient descent via \texttt {optax}, \texttt {LBFGSSolver} uses quasi-Newton L-BFGS via \texttt {optax}, and \texttt {Minimizer} wraps \texttt {jax.scipy.optimize.minimize}}{figure.caption.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Class Design}{27}{subsection.8.5}\protected@file@percent }
+\newlabel{section:app:class_design}{{8.5}{27}{Class Design}{subsection.8.5}{}}
+\xdef \mintedoldcachechecksum{\detokenize{\minted@cachechecksum }}
+\gdef\svg@ink@ver@settings{{\m@ne }{inkscape}{\m@ne }}
+\newlabel{LastPage}{{8.5}{27}{Class Design}{page.27}{}}
+\gdef\lastpage@lastpage{27}
+\gdef\lastpage@lastpageHy{27}
+\gdef \@abspage@last{28}

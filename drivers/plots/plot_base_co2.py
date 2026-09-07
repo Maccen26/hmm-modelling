@@ -1,7 +1,8 @@
-from src.api.v4.utils import load_y_data 
+from src.api.v4.utils import load_y_data
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import os
+
 
 def plot_co2_data(save_path: str | None = None):
     ys = load_y_data()
@@ -19,11 +20,5 @@ def plot_co2_data(save_path: str | None = None):
     plt.show()
 
 
-
 if __name__ == "__main__":
-
     plot_co2_data(save_path=os.path.join("results/plots", "co2_data.png"))
-
-
-
-
