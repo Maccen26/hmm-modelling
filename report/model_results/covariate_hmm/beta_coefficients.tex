@@ -1,0 +1,26 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{cccc}
+\hline
+From & To & $\beta_{\cos}$ & $\beta_{\sin}$ \\
+\hline
+State 1 & State 2 & 0.8186 & 2.4047 \\
+State 1 & State 3 & 31.3649 & 3.1998 \\
+State 1 & State 4 & 0.8771 & 4.2476 \\
+\hline
+State 2 & State 1 & $-0.1781$ & 0.1902 \\
+State 2 & State 3 & 1.9664 & 2.6533 \\
+State 2 & State 4 & 0.3837 & 1.6636 \\
+\hline
+State 3 & State 1 & $-31.5003$ & $-5.3664$ \\
+State 3 & State 2 & $-0.7677$ & 0.6256 \\
+State 3 & State 4 & 2.5595 & 1.1320 \\
+\hline
+State 4 & State 1 & $-1.2404$ & $-5.8053$ \\
+State 4 & State 2 & $-11.2206$ & $-32.3030$ \\
+State 4 & State 3 & $-9.0565$ & 6.1797 \\
+\hline
+\end{tabular}
+\caption{Estimated covariate coefficients $\beta$ for the covariate HMM. Each row is an off-diagonal transition State $i \to$ State $j$; columns give the effect of the time-of-day covariates $x_{\cos}$ and $x_{\sin}$ on that transition's logit.}
+\label{tab:covariate_hmm_beta}
+\end{table}
