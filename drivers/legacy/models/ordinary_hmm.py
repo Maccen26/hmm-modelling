@@ -4,9 +4,9 @@ import jax.numpy as jnp
 from drivers.utils import save_model, format_transition_matrix
 
 
-def run_ordinary_hmm(model_name: str, ys: jnp.Array, Xs: jnp.Array):
+def run_ordinary_hmm(model_name: str):
     print(f"Starting {model_name} model run...")
-
+    ys = load_y_data()
     # Initiating parameters
     mu0 = 400
     q = jnp.quantile(ys, jnp.array([0.40, 0.60, 0.80]))

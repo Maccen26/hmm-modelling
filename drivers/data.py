@@ -119,8 +119,8 @@ def aggregate_df(df:pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
 if __name__ == "__main__":
     create_train_test_data(
         name="b1.csv", 
-        train_size=0.8, 
-        tag="train-test", 
+        train_size=0.46047540077390825, 
+        tag="jans-split", 
         data_func=aggregate_df
         )
 
