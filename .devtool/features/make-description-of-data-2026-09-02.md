@@ -1,15 +1,15 @@
 ---
 id: "make-description-of-data-2026-09-02"
-status: "backlog"
+status: "in-progress"
 priority: "medium"
 assignee: null
 epic: null
 dueDate: null
 created: "2026-09-02T15:13:37.691Z"
-modified: "2026-09-07T09:50:13.710Z"
+modified: "2026-09-09T09:29:35.854Z"
 completedAt: null
 labels: []
-order: "a7"
+order: "a0"
 ---
 # Make description of data
 
