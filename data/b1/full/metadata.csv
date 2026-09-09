@@ -1,0 +1,2 @@
+data_name,tag,train_size,y_shape,X_shape,y_train_shape,y_test_shape,X_train_shape,X_test_shape
+b1.csv,full,1.0,"(3618,)","(3618, 2)","(3618, 1)","(0,)","(3618, 2)","(0,)"

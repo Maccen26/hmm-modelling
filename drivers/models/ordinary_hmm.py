@@ -4,9 +4,8 @@ import jax.numpy as jnp
 from drivers.utils import save_model, format_transition_matrix
 
 
-def run_ordinary_hmm(model_name: str):
+def run_ordinary_hmm(model_name: str, ys: jnp.Array, Xs: jnp.Array):
     print(f"Starting {model_name} model run...")
-    ys = load_y_data()
 
     # Initiating parameters
     mu0 = 400
@@ -27,6 +26,7 @@ def run_ordinary_hmm(model_name: str):
     frozen_params = {
         "mu0": False
     }
+
     print("Fitting ordinary HMM model...")
     model.fit(ys=ys, frozen=frozen_params)
     print("Finished fitting ordinary HMM model! The following parameters were found")

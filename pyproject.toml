@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["src", "drivers"]
 
 [dependency-groups]
 dev = [
