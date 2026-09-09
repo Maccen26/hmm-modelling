@@ -54,7 +54,7 @@ def load_and_aggregate_data(no_of_days: int |None = None ) -> pd.DataFrame:
 
 def load_data_path(file) -> str:
     load_dotenv()  # Load environment variables from .env file
-    return os.path.join(os.getenv("DATA_PATH"), file)  # Get the DATA_PATH variable and join with file name
+    return os.path.join(os.getenv("DATA_PATH"), f"raw/{file}")  # Get the DATA_PATH variable and join with file name
 
 
 
