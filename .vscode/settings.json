@@ -1,6 +1,26 @@
 {
     "latex-workshop.latex.autoBuild.run": "onSave",
     "latex-workshop.synctex.afterBuild.enabled": true,
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk-xelatex",
+            "command": "latexmk",
+            "args": [
+                "-xelatex",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%"
+            ],
+            "env": { "PATH": "/Library/TeX/texbin:/usr/bin:/bin" }
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "XeLaTeX → PDF",
+            "tools": ["latexmk-xelatex"]
+        }
+    ],
     "python.testing.unittestArgs": [
         "-v",
         "-s",
