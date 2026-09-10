@@ -155,9 +155,51 @@ class HMM:
             z_t = norm.ppf(jnp.sum(ut[t+1] * G_t))
             z_list.append(z_t)
         
-        return jnp.array(z_list)
+        return jnp.array(z_list) 
     
 
+    def predict_emission(self, n_steps: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Predict the next n_steps observations based on the fitted model and given observations, observed covariates, and optional future covariates. 
+        The prediction is based on the expected value of the emission distribution at each step, weighted by the state probabilities.
+        """
+        self.check_predict_args(n_steps=n_steps, ys=ys, xs=xs, x_pred=x_pred)
+        # Get the last state probabilities from the fitted model
+        state_results = self._compute_state_results(ys, xs) 
+        utt = state_results.utt[-1]  # shape (T, num_states)
+        self.prediction: jnp.ndarray = self._run_prediction(n_steps=n_steps, utt=utt, ys=ys, x_pred=x_pred)
+        return self.prediction  # shape (n_steps,)
 
+    def check_predict_args(self, n_steps: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None) -> None:
+        if n_steps <= 0:
+            raise ValueError(f"n_steps must be a positive integer, got {n_steps}.")
+        if ys.ndim != 1:
+            raise ValueError(f"ys must be a 1-D array, got {ys.ndim}-D array.")
+        if xs is not None and xs.shape[0] != ys.shape[0]:
+            raise ValueError(f"xs must have the same number of samples as ys. Got xs shape {xs.shape} and ys shape {ys.shape}.")
+        if x_pred is not None and x_pred.shape[0] != n_steps:
+            raise ValueError(f"x_pred must have the same number of samples as n_steps. Got x_pred shape {x_pred.shape} and n_steps {n_steps}.") 
+        if hasattr(self.emission, "phi_tilde") and self.emission.phi_tilde is not None:
+            k = len(self.emission.phi_tilde)
+            if ys.shape[0] < k:
+                raise ValueError(f"ys must have at least {k} samples for the autoregressive emission. Got ys shape {ys.shape}.")
+            
+    def _run_prediction(self, n_steps: int, utt: jnp.ndarray, ys: jnp.ndarray, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
+        predictions = []
+        current_ys = ys.copy()
+        N = len(current_ys) - 1  # Last index of the current observations
+
+        for step in range(n_steps):
+            # Predict the next state probabilities
+            next_state_probs = utt @ self.transition.transition_matrix(t = step, ys=current_ys, xs=x_pred)  # shape
+            # Predict the next observation based on the emission model
+            next_obs = jnp.sum(next_state_probs * self.emission.mu(t=N + step, ys=current_ys, xs=x_pred))  # Expected value of the emission
+            predictions.append(next_obs)
+            # Update current_ys and current_xs for the next iteration
+            current_ys = jnp.append(current_ys, next_obs)
+            utt = next_state_probs  # Update utt for the next step
+    
+
+        return jnp.array(predictions)
     
 

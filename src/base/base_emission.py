@@ -21,6 +21,16 @@ class BaseEmission(eqx.Module, ABC):
         ...  
 
     @abstractmethod
+    def mu(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        ys is the observations sequence. 
+        xs is the covariates sequence.
+        t is the time step. 
+        Returns the mean of the emission distribution at time step t with dimensions (num_states,).
+        """
+        ...
+
+    @abstractmethod
     def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None) -> Any:
         """
         ys is the observations sequence. 

@@ -1,7 +1,7 @@
 import jax 
 jax.config.update("jax_enable_x64", True)
 
-from drivers.models.ordinary_hmm import run_ordinary_hmm 
+from drivers.models.legacy.ordinary_hmm import run_ordinary_hmm 
 from drivers.models.ar_hmm import run_ar_hmm 
 from drivers.models.ar_2_hmm import run_ar_2_hmm
 from drivers.models.second_order_hmm import run_ar_1_second_order_hmm
