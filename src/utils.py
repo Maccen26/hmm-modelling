@@ -5,6 +5,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def load_model(model_name, data_name, tag):
+    """Load a model from a pickle file."""
+    import pickle
+    path = load_base_model_path(data_name, tag, model_name)
+    with open(path, "rb") as f:
+        model = pickle.load(f)
+    return model 
+
+def load_base_model_path(data_name: str, tag: str, model_name: str) -> str:
+    import os 
+    from dotenv import load_dotenv
+    load_dotenv()
+    base_path = os.getenv("MODEL_PATH")
+    if base_path is None:
+        raise ValueError("MODEL_PATH environment variable is not set.")
+    return os.path.join(base_path, f"{data_name}/{tag}/{model_name}.pkl")
+
 def plot_likelihood(
     param_values: jnp.ndarray,
     log_like: jnp.ndarray,
@@ -107,9 +124,3 @@ def professor_init_4state_hmm_params():
 
 
 
-def load_model(path: str):
-    """Load a model from a pickle file."""
-    import pickle
-    with open(path, "rb") as f:
-        model = pickle.load(f)
-    return model
