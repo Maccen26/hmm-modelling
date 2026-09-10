@@ -5,8 +5,20 @@ from typing import Callable
 import numpy as np
 from drivers.utils import load_base_data_path
 
-
 def create_train_test_data(
+        name: list|str, 
+        tag: str, 
+        train_size: float = 0.8, 
+        data_func: Callable|None = None
+        ): 
+    
+    if (isinstance(name, str)):
+        name = [name]  # Convert to list for uniform processing
+
+    for n in name:
+        create_single_train_test_data(name=n, tag=tag, train_size=train_size, data_func=data_func)
+
+def create_single_train_test_data(
         name: str, 
         tag: str, 
         train_size: float = 0.8, 
@@ -120,7 +132,7 @@ if __name__ == "__main__":
     create_train_test_data(
         name="b1.csv", 
         train_size=0.46047540077390825, 
-        tag="jans-split", 
+        tag="test", 
         data_func=aggregate_df
         )
 
