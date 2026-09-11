@@ -1,15 +1,15 @@
 ---
 id: "create-method-for-predicting-2026-09-07"
-status: "in-progress"
+status: "done"
 priority: "medium"
 assignee: null
 epic: null
 dueDate: null
 created: "2026-09-07T13:28:06.094Z"
-modified: "2026-09-09T09:29:41.852Z"
-completedAt: null
+modified: "2026-09-10T12:22:09.781Z"
+completedAt: "2026-09-10T12:22:09.781Z"
 labels: []
-order: "a1"
+order: "ZxV"
 ---
 # Create method for predicting
 

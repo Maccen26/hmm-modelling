@@ -13,3 +13,12 @@ Data:
 1. Data is CO^2 from a single bedroom in a residential building. 
 Link: 
 https://www2.imm.dtu.dk/~jkmo/ 
+
+
+2. Data recievned from DTU. 
+Link is: https://gitlab.compute.dtu.dk/users/sign_in
+Link to holiday data for both 2023 and 2024: https://www.generalblue.com/calendar/denmark/denmark-holidays-2024
+
+Description: 
+Data is from rooms at DTU. The data is collected from k (1 or 2?) sensors in each working rooms for the professors. It has been collected in 2023 and there is a weather data set. The average time interval between the measurements is 10 minutes (around 600 seconds). 
+Holiday data is from kaggle, a platform for data science and machine learning. The holiday data is used to identify the holidays in Denmark, which can affect occupancy patterns in the rooms.
