@@ -9,17 +9,19 @@ def create_train_test_data(
         name: list|str, 
         tag: str, 
         train_size: float = 0.8, 
-        data_func: Callable|None = None
+        data_func: Callable|None = None,
+        data_path: str|None = None
         ): 
     
     if (isinstance(name, str)):
         name = [name]  # Convert to list for uniform processing
 
     for n in name:
-        create_single_train_test_data(name=n, tag=tag, train_size=train_size, data_func=data_func)
+        create_single_train_test_data(name=n, data_path=data_path, tag=tag, train_size=train_size, data_func=data_func)
 
 def create_single_train_test_data(
         name: str, 
+        data_path: str|None,
         tag: str, 
         train_size: float = 0.8, 
         data_func: Callable|None = None
@@ -28,9 +30,9 @@ def create_single_train_test_data(
     if (data_func is None):
         raise ValueError("data_func must be provided to create_b1_train_test_data.")
     load_dotenv()
-    PATH = load_data_path(name=name)  
+    PATH = load_data_path(name=name, data_path=data_path)  
     df = load_df(data_path=PATH) 
-    ys, Xs = data_func(df=df) 
+    ys, Xs = data_func(df=df, data_path=data_path)  # Use the provided data_func to process the DataFrame into ys and Xs
     meta = {}
     for arr_name,arr in zip(["y", "X"],[ys, Xs]): 
         arr_train, arr_test = split_arr(arr=arr, train_size=train_size)
@@ -45,7 +47,9 @@ def create_single_train_test_data(
     save_path = os.path.join(base_path, f"{data_name}/{tag}/metadata.csv") 
     df.to_csv(save_path, index=False, sep=",")
 
-def load_data_path(name: str) -> str:
+def load_data_path(name: str, data_path:str|None) -> str:
+    if (data_path is not None):
+        return os.path.join(data_path, name)
     base_path = load_base_data_path() 
     return os.path.join(base_path, f"raw/{name}") 
 
@@ -100,7 +104,7 @@ def build_metadata_df(ys: np.ndarray, Xs: np.ndarray, name: str, tag: str, train
 
 
 
-def aggregate_df(df:pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+def aggregate_b1(df:pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
 
     df = df[df["WindowClosed"].notna()]
     df = df[df["Room"] == "Bedroom"]
@@ -123,8 +127,13 @@ def aggregate_df(df:pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
     cos = np.cos(2 * np.pi * t / 48)
     sin = np.sin(2 * np.pi * t / 48)
     Xs = np.column_stack((cos, sin))
-
     return ys, Xs
+
+
+    
+
+
+
 
 
 
@@ -133,6 +142,6 @@ if __name__ == "__main__":
         name="b1.csv", 
         train_size=0.46047540077390825, 
         tag="test", 
-        data_func=aggregate_df
+        data_func=None
         )
 

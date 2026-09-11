@@ -1,15 +1,15 @@
 ---
 id: "make-description-of-data-2026-09-02"
-status: "in-progress"
+status: "done"
 priority: "medium"
 assignee: null
 epic: null
 dueDate: null
 created: "2026-09-02T15:13:37.691Z"
-modified: "2026-09-09T09:29:35.854Z"
-completedAt: null
+modified: "2026-09-10T12:22:11.117Z"
+completedAt: "2026-09-10T12:22:11.117Z"
 labels: []
-order: "a0"
+order: "ZxG"
 ---
 # Make description of data
 
