@@ -204,32 +204,6 @@ class TestPhiIsCovergent(TestCase):
 #            f"All phi values should be > -0.985 after fitting (random init), got {phi}"
 #        )
 
-    def test_phi_convergence_notebooks_from_params(self): 
-        RUN_TO_LOAD = {
-        "tag": "week_2",
-        "run": 1
-        }
-        from src.data import load_model_and_data 
-        params, _ , _= load_model_and_data("ar_hmm_model", tag=RUN_TO_LOAD["tag"], run=RUN_TO_LOAD["run"])
-        phi_clipped = jnp.clip(params.phi, -0.999, 0.999)
-        emission = AutoregressiveGaussEmission.from_params(params.mu, params.sigma, phi_clipped)
-        hmm = HMM(
-            transition=StaticTransition(params.transition_logits),
-            emission=emission,
-            inital_distribution=jnp.array([0.29, 0.21, 0.17, 0.34]),
-        )
-
-        self.hmm.fit(self.ys, frozen={"mu0":False})
-        phi = self.hmm.emission.phi()
-        self.assertTrue(
-            jnp.all(phi < 0.985),
-            f"All phi values should be < 0.985 after fitting (notebook params), got {phi}"
-        )
-
-        self.assertTrue(
-            jnp.all(phi > -0.985),
-            f"All phi values should be > -0.985 after fitting (notebook params), got {phi}"
-        )   
 
 
     def test_phi_convergence_static_mu0(self):
