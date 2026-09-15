@@ -1,14 +1,14 @@
 ---
 id: "compare-results-with-indicator-variable-2026-08-31"
-status: "todo"
+status: "done"
 priority: "medium"
 assignee: null
 epic: null
 dueDate: null
 created: "2026-08-31T07:43:37.041Z"
-modified: "2026-09-02T15:14:57.837Z"
-completedAt: null
+modified: "2026-09-07T09:49:34.972Z"
+completedAt: "2026-09-07T09:49:34.972Z"
 labels: []
-order: "a0"
+order: "a1V"
 ---
 # Compare results with Indicator variable
