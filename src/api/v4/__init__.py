@@ -1,4 +1,4 @@
-from src.api.v4.transitions import StaticTransition, StaticTransitionHigherOrder
+from src.api.v4.transitions import StaticTransition, StaticTransitionHigherOrder, DynamicTransition
 from src.api.v4.emissions import GaussEmission, AutoregressiveGaussEmission
 from src.api.v4.hmm_models import HMMParams, HMM
 from src.api.v4.algorithms import ForwardAlgorithm
@@ -19,5 +19,6 @@ __all__ = [
     "Minimizer",
     "StaticTransitionHigherOrder", 
     "AIC",
-    "BIC"
+    "BIC", 
+    "DynamicTransition"
 ]
