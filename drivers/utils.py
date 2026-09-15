@@ -3,6 +3,40 @@ import pickle
 
 import jax.numpy as jnp
 import numpy as np
+from dotenv import load_dotenv
+import numpy as np
+
+def load_train_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
+    y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="train")
+    ys = load_csv_to_jnp(y_path)
+    ys = ys.flatten()  # Ensure ys is a 1D array
+    Xs = load_csv_to_jnp(X_path)
+    return ys, Xs
+
+def load_test_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
+    y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="test")
+    ys = load_csv_to_jnp(y_path)
+    ys.flatten()  # Ensure ys is a 1D array
+    Xs = load_csv_to_jnp(X_path)
+    return ys, Xs
+
+def load_data_path(data_name: str, tag: str, arr_type: str) -> tuple[str, str]:
+    base_path = load_base_data_path()
+    y_path = os.path.join(base_path, f"{data_name}/{tag}/y_{arr_type}.csv")
+    X_path = os.path.join(base_path, f"{data_name}/{tag}/X_{arr_type}.csv")
+    return y_path, X_path
+
+def load_csv_to_jnp(path) -> jnp.ndarray:
+    arr = np.loadtxt(path, delimiter=",")
+    arr = jnp.asarray(arr)
+    return arr
+
+def load_base_data_path() -> str:
+    load_dotenv()
+    PATH = os.getenv("DATA_PATH")
+    if (PATH is None):
+        raise ValueError("DATA_PATH environment variable is not set.")
+    return PATH
 
 
 def save_model(model, save_path: str):
@@ -130,3 +164,7 @@ def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=No
     )
     with open(path, "w") as f:
         f.write(tex)
+
+
+if __name__ == "__main__":
+    print(load_train_data("b1", "train-test"))
