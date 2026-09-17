@@ -11,8 +11,14 @@ class BaseSolver(ABC):
     """
 
     @abstractmethod
-    def fit(self, hmm_params, ys, xs=None, u_pre=None,
-            frozen=None, loss_fn: Callable | None = None) -> None:
+    def fit(self, 
+            hmm_params, 
+            ys, 
+            ts=None,
+            xs=None, 
+            u_pre=None,
+            frozen=None, 
+            loss_fn: Callable | None = None) -> None:
         """Fit hmm_params to data. Result is stored in self.params."""
         ...
 

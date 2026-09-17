@@ -90,8 +90,8 @@ class HMM:
             num_iters: int = 200,
             tol: float = 1e-6) -> None:
         if solver is None:
-            from src.api.v4.solvers import GradientSolver
-            solver = GradientSolver()
+            from src.api.v4.solvers import LBFGSSolver
+            solver = LBFGSSolver()
 
         convergence = False
         prev_ll = float('-inf')
