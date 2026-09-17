@@ -84,11 +84,13 @@ class HMM:
 
     def fit(self, 
             ys: jnp.ndarray,
+            ts: jnp.ndarray | None = None,
             xs: jnp.ndarray | None = None,
             solver=None,
             frozen=None,
             num_iters: int = 200,
             tol: float = 1e-6) -> None:
+        
         if solver is None:
             from src.api.v4.solvers import LBFGSSolver
             solver = LBFGSSolver()
@@ -98,12 +100,14 @@ class HMM:
         if (frozen is not None):
             self.no_of_free_params = self.no_of_free_params - len(frozen)
 
-        for _ in range(num_iters):
-            solver.fit(self.params, ys, xs, u_pre=self.u_pre,
+        for i in range(num_iters):
+            solver.fit(self.params, ys, ts, xs, u_pre=self.u_pre,
                    frozen=frozen, loss_fn=self.negative_log_likelihood)
             self.params = solver.params
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
+    
+            print(f"Iteration {i}: Log-Likelihood = {current_ll:.6f}")
 
             if abs(current_ll - prev_ll) / (abs(prev_ll) + 1e-10) < tol:
                 convergence = True

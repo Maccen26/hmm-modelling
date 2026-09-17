@@ -22,7 +22,7 @@ class BaseTransition(eqx.Module, ABC):
         return cls(transition_logits)
     
     @abstractmethod
-    def transition_matrix(self, t:float| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
         """
         Builds the transition matrix at time step t given the covariates at time step t.
         

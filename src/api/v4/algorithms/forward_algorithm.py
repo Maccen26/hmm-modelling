@@ -16,7 +16,7 @@ def normalize_probs(probs: jax.Array) -> jax.Array:
 class ForwardAlgorithm(BaseInference):
 
 
-    def step(self, hmm_params: Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> Any:
+    def step(self, hmm_params: Any, carry: Any, t: float, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> Any:
         ut_prev = carry
 
         Gamma = hmm_params.transition_matrix(t, ys, xs)  # shape (num_states, num_states)
