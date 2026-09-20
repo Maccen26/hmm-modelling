@@ -16,10 +16,16 @@ class HMMParams(BaseHMM):
 
         :return: transition matrix at time step t of dim (num_states, num_states) 
         """
-        return self.transition.transition_matrix(t=t, ys=ys, xs=xs) 
-    
+        return self.transition.transition_matrix(t=t, ys=ys, xs=xs)
 
-    
+    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Builds the transition matrix for every time value in `ts` in one call.
+        Returns an array of shape (len(ts), num_states, num_states).
+        """
+        return self.transition.transition_matrices(ts, ys=ys, xs=xs)
+
+
     def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
         """
         y is the observation at time step t. 

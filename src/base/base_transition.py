@@ -33,6 +33,16 @@ class BaseTransition(eqx.Module, ABC):
         ...
         
 
+    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Builds the transition matrix for every time value in `ts` in one call.
+
+        Returns an array of shape (len(ts), num_states, num_states). The default
+        implementation just vmaps the per-step `transition_matrix`; subclasses can
+        override it with a cheaper batched computation.
+        """
+        return jax.vmap(lambda t: self.transition_matrix(t=t, ys=ys, xs=xs))(ts)
+
     @abstractmethod
     def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None) -> jnp.ndarray:
         """

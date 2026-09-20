@@ -37,7 +37,8 @@ def get_Q_from_logits(logits: jnp.ndarray) -> jnp.ndarray:
     m = logits.shape[0]
     Q = jnp.zeros((m, m)) 
     rows, cols = jnp.where(~jnp.eye(m, dtype=bool), size=m * (m - 1))
-    Q = Q.at[rows, cols].set(logits.flatten()) 
+    logits = jnp.exp(logits.flatten())
+    Q = Q.at[rows, cols].set(logits) 
 
     row_sums = jnp.sum(Q, axis=1)
     Q = Q.at[jnp.arange(m), jnp.arange(m)].set(-row_sums)
@@ -67,13 +68,19 @@ def transition_matrix_to_logits(Gamma: jnp.ndarray) -> jnp.ndarray:
 
 def transtion_matrix_to_logits_continuous(Gamma: jnp.ndarray, t: int) -> jnp.ndarray:
     """
-    Maps a continuous transition matrix to unconstrained logit parameters
-    by computing log(gamma_ij / gamma_ii) for off-diagonal entries.
-    """ 
+    Inverse of `get_Q_from_logits`: maps a continuous transition matrix to the
+    unconstrained logits.
+
+    Since the generator's off-diagonal rates are parameterized as
+    q_ij = exp(logit_ij) (enforcing non-negativity), the inverse takes the log of
+    the off-diagonal entries of Q = logm(Gamma). The matrix log of a stochastic
+    matrix may have slightly-negative off-diagonals (the CTMC embeddability issue),
+    so we clamp to a tiny positive value before the log.
+    """
     eigvals, eigvecs = jnp.linalg.eig(Gamma)
-    Q = (eigvecs @ jnp.diag(jnp.log(eigvals)) @ jnp.linalg.inv(eigvecs)).real 
+    Q = (eigvecs @ jnp.diag(jnp.log(eigvals)) @ jnp.linalg.inv(eigvecs)).real
     m = Q.shape[0]
     mask = ~jnp.eye(m, dtype=bool)
-    off_diag = Q[mask] 
-    return off_diag.reshape(m, m - 1)
+    off_diag = jnp.clip(Q[mask], a_min=1e-8)
+    return jnp.log(off_diag).reshape(m, m - 1)
 
