@@ -11,27 +11,31 @@ class BaseEmission(eqx.Module, ABC):
     """
 
     @abstractmethod
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        ys is the observations sequence. 
+        ys is the observations sequence.
         xs is the covariates sequence.
-        t is the time step. 
+        t is the time step.
+        ts is the optional per-observation waiting-time sequence (e.g. for a
+        continuous-time emission whose mean depends on the gap ts[t]). Emissions
+        that don't need it ignore this argument.
         Returns the emission density p(y_t | z_t, x_t) at time step t with dimensions (num_states,).
         """
-        ...  
+        ...
 
     @abstractmethod
-    def mu(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def mu(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        ys is the observations sequence. 
+        ys is the observations sequence.
         xs is the covariates sequence.
-        t is the time step. 
+        t is the time step.
+        ts is the optional per-observation waiting-time sequence.
         Returns the mean of the emission distribution at time step t with dimensions (num_states,).
         """
         ...
 
     @abstractmethod
-    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None) -> Any:
+    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None, ts: jnp.ndarray | None = None) -> Any:
         """
         ys is the observations sequence. 
         xs is the covariates sequence.
@@ -45,11 +49,12 @@ class BaseEmission(eqx.Module, ABC):
         ...
     
     @abstractmethod
-    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        ys is the observations sequence. 
+        ys is the observations sequence.
         xs is the covariates sequence.
-        t is the time step. 
+        t is the time step.
+        ts is the optional per-observation waiting-time sequence.
 
         Returns the emission cdf P(Y_t <= y | z_t, x_t) at time step t with dimensions (num_states,).
         """

@@ -26,21 +26,24 @@ class HMMParams(BaseHMM):
         return self.transition.transition_matrices(ts, ys=ys, xs=xs)
 
 
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
+    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
         """
-        y is the observation at time step t. 
-        x is the covariates at time step t. 
+        y is the observation at time step t.
+        x is the covariates at time step t.
+        ts is the optional per-observation waiting-time sequence, forwarded to the
+        emission (used by continuous-time emissions; ignored by the others).
         Returns the emission density p(y_t | z_t, x_t) at time step t with dimensions (num_states,).
         """
-        return self.emission.density(t, ys, xs) 
-    
-    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
+        return self.emission.density(t, ys, xs, ts)
+
+    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
         """
-        y is the observation at time step t. 
-        x is the covariates at time step t. 
+        y is the observation at time step t.
+        x is the covariates at time step t.
+        ts is the optional per-observation waiting-time sequence, forwarded to the emission.
         Returns the emission cdf P(Y_t <= y | z_t, x_t) at time step t with dimensions (num_states,).
         """
-        return self.emission.cdf(t, ys, xs)  
+        return self.emission.cdf(t, ys, xs, ts)
     
     def __iter__(self):
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""

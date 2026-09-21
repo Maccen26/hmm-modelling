@@ -7,6 +7,17 @@ from src.base.utils import (
     transtion_matrix_to_logits_continuous,
 )
 
+# Upper bound on the covariate-shifted log-rates. The generator rates are
+# q_ij = exp(logit_ij + beta . x); with an unbounded exponent a large beta and
+# an out-of-range covariate blow the rate up until expm(Q * dt) turns into NaN.
+# Empirically jax's expm stops returning a valid stochastic matrix once the
+# generator norm * dt gets large: with all off-diagonals maxed and the largest
+# waiting time in the data (dt ~ 15), the worst case is still safe up to a
+# log-rate of ~8 but breaks by ~10. We cap at 6 (rate ~400 per step) for margin
+# -- already effectively instantaneous mixing relative to the ~1-step waiting
+# times, so the clamp never bites in any regime the data can actually reach.
+MAX_LOG_RATE = 6.0
+
 
 class ContinuousDynamicTransition(BaseTransition):
     """
@@ -68,7 +79,11 @@ class ContinuousDynamicTransition(BaseTransition):
         """
         if xs is None:
             return self.transition_logits
-        return self.transition_logits + self._covariate_effect(xs[t])
+        logits = self.transition_logits + self._covariate_effect(xs[t])
+        # Clamp so exp() in get_Q_from_logits can't overflow to +inf (which would
+        # make expm(Q * dt) NaN) when beta is large and the covariate is out of
+        # the training range.
+        return jnp.minimum(logits, MAX_LOG_RATE)
 
     def get_Q(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """Generator matrix Q at time step `t` given its covariates."""

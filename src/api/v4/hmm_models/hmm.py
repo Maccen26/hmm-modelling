@@ -107,7 +107,7 @@ class HMM:
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
     
-            print(f"Iteration {i}: Log-Likelihood = {current_ll:.6f}")
+            #print(f"Iteration {i}: Log-Likelihood = {current_ll:.6f}")
 
             if abs(current_ll - prev_ll) / (abs(prev_ll) + 1e-10) < tol:
                 convergence = True
@@ -123,7 +123,7 @@ class HMM:
         output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
         z_list = []
         for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs)  # shape (1, num_states)
+            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
             # ut[t] is the one-step-ahead predictive state distribution for obs t,
             # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
             # Clip into the open interval so float saturation at the tails (cdf ~0/1)
@@ -159,7 +159,7 @@ class HMM:
         ut = output.ut  # shape (T, num_states)
         z_list = []
         for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs)  # shape (1, num_states)
+            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
             # ut[t] is the one-step-ahead predictive state distribution for obs t,
             # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
             # Clip into the open interval so float saturation at the tails (cdf ~0/1)
@@ -215,15 +215,21 @@ class HMM:
         integer gap power.
         """
         from src.api.v4.transitions.continuous_static_transition import ContinuousStaticTransition
-        is_continuous = isinstance(self.transition, ContinuousStaticTransition)
+        from src.api.v4.transitions.continuous_dynamic_transition import ContinuousDynamicTransition
+        is_continuous_dynamic = isinstance(self.transition, ContinuousDynamicTransition)
+        is_continuous_static = isinstance(self.transition, ContinuousStaticTransition)
 
         predictions = []
         u = utt  # last filtered state distribution, shape (num_states,)
         prev_t = 0.0
 
-        for t_abs in t_pred:
+        for i, t_abs in enumerate(t_pred):
             gap = t_abs - prev_t
-            if is_continuous:
+            if is_continuous_dynamic:
+                # Covariate-driven generator: x_pred[i] holds the covariates at
+                # this forecast step and `gap` is the waiting time in expm(Q * gap).
+                Gamma = self.transition.transition_matrix(t=i, ys=ys, xs=x_pred, dt=gap)
+            elif is_continuous_static:
                 # expm(Q * gap); chaining the gaps reproduces expm(Q * t_abs).
                 Gamma = self.transition.transition_matrix(t=gap, ys=ys, xs=x_pred)
             else:

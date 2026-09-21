@@ -36,18 +36,20 @@ class ForwardAlgorithm(BaseInference):
 
         def scan_fn(carry, step_input):
             i, Gamma = step_input
-            return self.step(hmm_params, carry, i, ys, xs, Gamma)
+            # `ts` (the full waiting-time array) is threaded so a continuous-time
+            # emission can read the gap ts[i]; time-independent emissions ignore it.
+            return self.step(hmm_params, carry, i, ys, xs, Gamma, ts)
 
         carry_final, outputs = jax.lax.scan(scan_fn, carry_pre, (indices, Gammas))
         return self.postprocess(carry_pre, carry_final, outputs)
 
-    def step(self, hmm_params: Any, carry: Any, t: float, ys: jnp.ndarray, xs: jnp.ndarray | None = None, Gamma: jnp.ndarray | None = None) -> Any:
+    def step(self, hmm_params: Any, carry: Any, t: float, ys: jnp.ndarray, xs: jnp.ndarray | None = None, Gamma: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> Any:
         ut_prev = carry
 
         if Gamma is None:
             Gamma = hmm_params.transition_matrix(t, ys, xs)  # shape (num_states, num_states)
         u_t = ut_prev @ Gamma
-        g_t = hmm_params.density(t, ys, xs)  # shape (1, num_states)
+        g_t = hmm_params.density(t, ys, xs, ts)  # shape (1, num_states)
 
         f_t = jnp.sum(u_t * g_t)
         

@@ -16,7 +16,7 @@ class BaseInference(ABC):
 
 
     @abstractmethod
-    def step(self, hmm_params:Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> Any:
+    def step(self, hmm_params:Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> Any:
         """
         Single iteration of the algorithm.
         
