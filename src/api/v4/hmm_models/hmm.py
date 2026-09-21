@@ -84,26 +84,30 @@ class HMM:
 
     def fit(self, 
             ys: jnp.ndarray,
+            ts: jnp.ndarray | None = None,
             xs: jnp.ndarray | None = None,
             solver=None,
             frozen=None,
             num_iters: int = 200,
             tol: float = 1e-6) -> None:
+        
         if solver is None:
-            from src.api.v4.solvers import GradientSolver
-            solver = GradientSolver()
+            from src.api.v4.solvers import LBFGSSolver
+            solver = LBFGSSolver()
 
         convergence = False
         prev_ll = float('-inf')
         if (frozen is not None):
             self.no_of_free_params = self.no_of_free_params - len(frozen)
 
-        for _ in range(num_iters):
-            solver.fit(self.params, ys, xs, u_pre=self.u_pre,
+        for i in range(num_iters):
+            solver.fit(self.params, ys, ts, xs, u_pre=self.u_pre,
                    frozen=frozen, loss_fn=self.negative_log_likelihood)
             self.params = solver.params
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
+    
+            #print(f"Iteration {i}: Log-Likelihood = {current_ll:.6f}")
 
             if abs(current_ll - prev_ll) / (abs(prev_ll) + 1e-10) < tol:
                 convergence = True
@@ -111,30 +115,34 @@ class HMM:
             prev_ll = current_ll
 
         self.hmm_results = HMMResults(convergence=convergence, log_likelihood=self.ll_fits[-1], num_params=len(self.params))
-        self.state_results = self._compute_state_results(ys, xs) 
+        self.state_results = self._compute_state_results(ys, xs, ts)
 
-    def _compute_state_results(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> StateResults:
+    def _compute_state_results(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> StateResults:
         from jax.scipy.stats import norm
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys, xs)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
         z_list = []
-        for t in range(0, len(ys) - 1):
-            G_t = self.emission.cdf(t, ys, xs)  # shape (1, num_states)
-            z_t = norm.ppf(jnp.sum(output.ut[t+1] * G_t))
-            z_list.append(z_t)
-        
+        for t in range(0, len(ys)):
+            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
+            # ut[t] is the one-step-ahead predictive state distribution for obs t,
+            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
+            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
+            # yields large-but-finite residuals instead of +/-inf/NaN.
+            u_t = jnp.clip(jnp.sum(output.ut[t] * G_t), 1e-6, 1.0 - 1e-6)
+            z_list.append(norm.ppf(u_t))
+
         return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=jnp.asarray(z_list))
 
-    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None) -> float:
+    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
         if (ys is None):
             return self.ll_fits[-1] if self.ll_fits else float('-inf')
-        ll = self._compute_log_likelihood(ys, xs)
+        ll = self._compute_log_likelihood(ys, xs, ts)
         return ll
 
 
-    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> float:
+    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys, xs)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
         #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
@@ -144,61 +152,97 @@ class HMM:
         self.params = self.params.update_param(param_name, new_value, index) 
 
     # Todo: Refactor this method to be part of fit maybe 
-    def pseudo_residuals(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def pseudo_residuals(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray|None = None) -> jnp.ndarray:
         from jax.scipy.stats import norm
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys, xs) 
-        ut = output.ut  # shape (T, num_states) 
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts) 
+        ut = output.ut  # shape (T, num_states)
         z_list = []
-        for t in range(0, len(ys) - 1):
-            G_t = self.emission.cdf(t, ys, xs)  # shape (1, num_states)
-            z_t = norm.ppf(jnp.sum(ut[t+1] * G_t))
-            z_list.append(z_t)
-        
-        return jnp.array(z_list) 
+        for t in range(0, len(ys)):
+            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
+            # ut[t] is the one-step-ahead predictive state distribution for obs t,
+            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
+            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
+            # yields large-but-finite residuals instead of +/-inf/NaN.
+            u_t = jnp.clip(jnp.sum(ut[t] * G_t), 1e-6, 1.0 - 1e-6)
+            z_list.append(norm.ppf(u_t))
+
+        return jnp.array(z_list)
     
 
-    def predict_emission(self, n_steps: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
+    def predict_emission(self, t_pred: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Predict the next n_steps observations based on the fitted model and given observations, observed covariates, and optional future covariates. 
+        Predict the next n_steps observations based on the fitted model and given observations, observed covariates, and optional future covariates.
         The prediction is based on the expected value of the emission distribution at each step, weighted by the state probabilities.
+        `ts` are the waiting times of the observed sequence `ys`; they must be
+        supplied for a continuous model so the anchor filtered state is computed
+        with the correct spacing (otherwise the forward pass assumes unit steps).
         """
-        self.check_predict_args(n_steps=n_steps, ys=ys, xs=xs, x_pred=x_pred)
+        self.check_predict_args(t_pred = t_pred, ys=ys, xs=xs, x_pred=x_pred)
         # Get the last state probabilities from the fitted model
-        state_results = self._compute_state_results(ys, xs) 
-        utt = state_results.utt[-1]  # shape (T, num_states)
-        self.prediction: jnp.ndarray = self._run_prediction(n_steps=n_steps, utt=utt, ys=ys, x_pred=x_pred)
-        return self.prediction  # shape (n_steps,)
+        state_results = self._compute_state_results(ys, xs, ts)
+        utt = state_results.utt[-1]  # shape (num_states,)
+        self.prediction: jnp.ndarray = self._run_prediction(utt=utt, ys=ys, x_pred=x_pred, t_pred = t_pred)
+        return self.prediction  # shape (len(t_pred),)
 
-    def check_predict_args(self, n_steps: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None) -> None:
-        if n_steps <= 0:
-            raise ValueError(f"n_steps must be a positive integer, got {n_steps}.")
+    def check_predict_args(self, t_pred: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None) -> None:
+        if (t_pred is None) or (len(t_pred) == 0):
+            raise ValueError("t_pred must be provided and cannot be empty.")
+        if (t_pred.ndim != 1):
+            raise ValueError(f"t_pred must be a 1-D array, got {t_pred.ndim}-D array.")
+        # t_pred are absolute distances from the last observation (anchor = 0),
+        # so every value must be positive and strictly increasing for the
+        # per-step gaps (obtained by differencing) to be positive.
+        if bool(jnp.any(t_pred <= 0)):
+            raise ValueError(f"t_pred must contain only positive values, got {t_pred}.")
+        if bool(jnp.any(jnp.diff(t_pred) <= 0)):
+            raise ValueError(f"t_pred must be strictly increasing, got {t_pred}.")
         if ys.ndim != 1:
             raise ValueError(f"ys must be a 1-D array, got {ys.ndim}-D array.")
         if xs is not None and xs.shape[0] != ys.shape[0]:
             raise ValueError(f"xs must have the same number of samples as ys. Got xs shape {xs.shape} and ys shape {ys.shape}.")
-        if x_pred is not None and x_pred.shape[0] != n_steps:
-            raise ValueError(f"x_pred must have the same number of samples as n_steps. Got x_pred shape {x_pred.shape} and n_steps {n_steps}.") 
         if hasattr(self.emission, "phi_tilde") and self.emission.phi_tilde is not None:
             k = len(self.emission.phi_tilde)
             if ys.shape[0] < k:
                 raise ValueError(f"ys must have at least {k} samples for the autoregressive emission. Got ys shape {ys.shape}.")
-            
-    def _run_prediction(self, n_steps: int, utt: jnp.ndarray, ys: jnp.ndarray, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
-        predictions = []
-        current_ys = ys.copy()
-        N = len(current_ys) - 1  # Last index of the current observations
 
-        for step in range(n_steps):
-            # Predict the next state probabilities
-            next_state_probs = utt @ self.transition.transition_matrix(t = step, ys=current_ys, xs=x_pred)  # shape
-            # Predict the next observation based on the emission model
-            next_obs = jnp.sum(next_state_probs * self.emission.mu(t=N + step, ys=current_ys, xs=x_pred))  # Expected value of the emission
+    def _run_prediction(self, utt: jnp.ndarray,  t_pred: jnp.ndarray , ys: jnp.ndarray, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Forecast the emission mean at each absolute time in `t_pred`, measured
+        from the last observation (anchor = 0). The per-step gap drives the
+        transition: for a continuous model the gap is the waiting time fed to
+        expm(Q * gap); for a discrete model the fixed matrix is raised to the
+        integer gap power.
+        """
+        from src.api.v4.transitions.continuous_static_transition import ContinuousStaticTransition
+        from src.api.v4.transitions.continuous_dynamic_transition import ContinuousDynamicTransition
+        is_continuous_dynamic = isinstance(self.transition, ContinuousDynamicTransition)
+        is_continuous_static = isinstance(self.transition, ContinuousStaticTransition)
+
+        predictions = []
+        u = utt  # last filtered state distribution, shape (num_states,)
+        prev_t = 0.0
+
+        for i, t_abs in enumerate(t_pred):
+            gap = t_abs - prev_t
+            if is_continuous_dynamic:
+                # Covariate-driven generator: x_pred[i] holds the covariates at
+                # this forecast step and `gap` is the waiting time in expm(Q * gap).
+                Gamma = self.transition.transition_matrix(t=i, ys=ys, xs=x_pred, dt=gap)
+            elif is_continuous_static:
+                # expm(Q * gap); chaining the gaps reproduces expm(Q * t_abs).
+                Gamma = self.transition.transition_matrix(t=gap, ys=ys, xs=x_pred)
+            else:
+                # Discrete: Gamma ignores time, so bridge the gap with Gamma^gap.
+                base = self.transition.transition_matrix(ys=ys, xs=x_pred)
+                Gamma = jnp.linalg.matrix_power(base, int(gap))
+
+            u = u @ Gamma
+            # Plain Gaussian mean ignores t; state-weighted expectation.
+            mu = self.emission.mu(t=int(t_abs), ys=ys, xs=x_pred)
+            next_obs = jnp.sum(u * mu)
             predictions.append(next_obs)
-            # Update current_ys and current_xs for the next iteration
-            current_ys = jnp.append(current_ys, next_obs)
-            utt = next_state_probs  # Update utt for the next step
-    
+            prev_t = t_abs
 
         return jnp.array(predictions)
     

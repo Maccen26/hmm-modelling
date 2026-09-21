@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 import equinox as eqx
 import jax
+from jaxtyping import Int, Array
 
 
 class BaseSolver(ABC):
@@ -11,8 +12,14 @@ class BaseSolver(ABC):
     """
 
     @abstractmethod
-    def fit(self, hmm_params, ys, xs=None, u_pre=None,
-            frozen=None, loss_fn: Callable | None = None) -> None:
+    def fit(self,
+            hmm_params,
+            ys,
+            ts: Int[Array, " n"] | None = None,
+            xs=None,
+            u_pre=None,
+            frozen=None,
+            loss_fn: Callable | None = None) -> None:
         """Fit hmm_params to data. Result is stored in self.params."""
         ...
 
@@ -116,7 +123,12 @@ class BaseSolver(ABC):
         return jax.tree_util.tree_map_with_path(
             replace_fn, params, original_params)
 
-    def _build_loss_fn(self, static, u_pre, ys, xs,
+    def _build_loss_fn(self,
+                       static,
+                       u_pre,
+                       ys,
+                       ts: Int[Array, " n"] | None,
+                       xs,
                        loss_fn: Callable | None = None,
                        element_frozen=None,
                        original_params=None) -> Callable:
@@ -130,7 +142,7 @@ class BaseSolver(ABC):
         def loss(trainable):
             full_params = eqx.combine(trainable, static)
             full_params = _freeze(full_params, element_frozen, original_params)
-            output = ForwardAlgorithm().run(full_params, u_pre, ys, xs)
+            output = ForwardAlgorithm().run(full_params, u_pre, ys, ts, xs)
             return _loss(output, full_params)
 
         return loss

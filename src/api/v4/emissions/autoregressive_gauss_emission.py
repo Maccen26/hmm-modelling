@@ -31,18 +31,18 @@ class AutoregressiveGaussEmission(BaseEmission):
         return cls(log_mu_diff, mu0, log_sigma, phi_tilde)
     
 
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         mu, sigma = self.step(t, ys, xs)
         yt = ys[t]
         density = stats.norm.pdf(jnp.atleast_1d(yt)[:, None], loc=mu, scale=sigma)
         k = len(self.phi_tilde)  # no of lags
         return_val = jnp.where(t < k, jnp.ones_like(density), density)  #Density of 1 gives a log like of 0
         return return_val
-    
-    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
-        return self.mu(t, ys, xs), self.sigma(t, ys, xs) 
-    
-    def mu(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
+
+    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+        return self.mu(t, ys, xs), self.sigma(t, ys, xs)
+
+    def mu(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
         base_mu = self.mu_vals(t, ys, xs)
         k = len(self.phi_tilde)
         
@@ -53,7 +53,7 @@ class AutoregressiveGaussEmission(BaseEmission):
         ar = jnp.sum(self.phi() * (lags[:, None] - base_mu[None, :]), axis=0)
         return jnp.where(t < k, base_mu, base_mu + ar)
     
-    def mu_vals(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
+    def mu_vals(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
         base = jnp.concatenate([
             jnp.array([self.mu0]),
             self.mu0 + jnp.cumsum(jnp.exp(self.log_mu_diff)),
@@ -61,13 +61,13 @@ class AutoregressiveGaussEmission(BaseEmission):
         n_tiles = self.log_sigma.shape[0] // base.shape[0]
         return jnp.tile(base, n_tiles)
 
-    def sigma(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None):
-        return jnp.exp(self.log_sigma) 
-    
+    def sigma(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+        return jnp.exp(self.log_sigma)
+
     def phi(self):
         return phi_tilde_to_phi(self.phi_tilde)  # (num_lags, num_states)
-    
-    def cdf(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+
+    def cdf(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         mu = self.mu(t, ys, xs)
         sigma = self.sigma(t, ys, xs)
         return stats.norm.cdf(jnp.atleast_1d(ys[t])[:, None], loc=mu, scale=sigma)

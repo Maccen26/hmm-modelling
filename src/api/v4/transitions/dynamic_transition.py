@@ -54,6 +54,10 @@ class DynamicTransition(eqx.Module):
         logits = self.step(t, xs, ys=None) #Get the transition logits at time step t.
         return logits_to_transition_matrix(logits) 
     
+    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        """Builds a transition matrix for every time value in `ts` in one call."""
+        return jax.vmap(lambda t: self.transition_matrix(t=t, xs=xs, ys=ys))(ts)
+
     def base_transition_matrix(self) -> jnp.ndarray:
         """
         Returns the base transition matrix without any covariate effects. 

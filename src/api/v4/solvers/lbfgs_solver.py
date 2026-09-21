@@ -2,6 +2,7 @@ import optax
 import equinox as eqx
 import jax
 from typing import Callable
+from jaxtyping import Int, Array
 from src.base.base_solver import BaseSolver
 
 
@@ -11,12 +12,19 @@ class LBFGSSolver(BaseSolver):
         self.params = None
         self.opt_loss_val = None
 
-    def fit(self, hmm_params, ys, xs=None, u_pre=None,
-            frozen=None, loss_fn: Callable | None = None) -> None:
+    def fit(self,
+            hmm_params,
+            ys,
+            ts: Int[Array, " n"] | None = None,
+            xs=None,
+            u_pre=None,
+            frozen=None,
+            loss_fn: Callable | None = None) -> None:
+        
         whole_frozen, element_frozen = self._parse_frozen(frozen)
         filter_spec = self._build_filter_spec(hmm_params, whole_frozen)
         trainable, static = eqx.partition(hmm_params, filter_spec)
-        _loss_fn = self._build_loss_fn(static, u_pre, ys, xs, loss_fn=loss_fn,
+        _loss_fn = self._build_loss_fn(static, u_pre, ys, ts, xs, loss_fn=loss_fn,
                                        element_frozen=element_frozen,
                                        original_params=hmm_params)
 

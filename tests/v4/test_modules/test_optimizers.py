@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import jax
 
 from src.api.v4 import HMMParams, StaticTransition, GaussEmission, AutoregressiveGaussEmission, HMM
-from src.api.v4 import GradientSolver, LBFGSSolver, Minimizer
+from src.api.v4 import GradientSolver, LBFGSSolver
 
 
 def _make_hmm():
@@ -42,11 +42,6 @@ class TestHMMOptimizers(TestCase):
         solver = LBFGSSolver(n_iter=5)
         solver.fit(self.hmm.params, self.ys, u_pre=self.hmm.u_pre)
         self.assertIsInstance(solver.params, HMMParams)
-
-    #def test_minimizer_stores_hmm_params(self):
-    #    solver = Minimizer(n_iter=5)
-    #    solver.fit(self.hmm.params, self.ys, u_pre=self.hmm.u_pre)
-    #    self.assertIsInstance(solver.params, HMMParams)
 
     def test_gradient_solver_fit_returns_none(self):
         solver = GradientSolver(n_iter=5)

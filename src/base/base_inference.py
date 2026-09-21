@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 from typing import Any
 import jax.numpy as jnp
 import jax
+from jaxtyping import Int, Array
 from src.base.base_hmm import BaseHMM
 class BaseInference(ABC):
     """
@@ -15,7 +16,7 @@ class BaseInference(ABC):
 
 
     @abstractmethod
-    def step(self, hmm_params:Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> Any:
+    def step(self, hmm_params:Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> Any:
         """
         Single iteration of the algorithm.
         
@@ -33,21 +34,24 @@ class BaseInference(ABC):
 
 
 
-    def run(self, hmm_params:Any, carry_pre: Any, ys: jnp.ndarray, xs: jnp.ndarray | None = None) -> Any:
+    def run(self, hmm_params:Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None) -> Any:
         """
         Run the full algorithm over a sequence using jax.lax.scan.
         """
 
-        self._validate_inputs(hmm_params,ys, xs, carry_pre)
+        self._validate_inputs(hmm_params,ys, ts, xs, carry_pre)
 
         def scan_fn(carry, t):
             return self.step(hmm_params, carry, t, ys, xs)
+        
+        if (ts is None): 
+            ts = jnp.arange(len(ys))
 
-        carry_final, outputs = jax.lax.scan(scan_fn, carry_pre, jnp.arange(0, len(ys)))
+        carry_final, outputs = jax.lax.scan(scan_fn, carry_pre, ts)
         return self.postprocess(carry_pre, carry_final, outputs)
     
 
-    def _validate_inputs(self, hmm_params:Any, ys: jnp.ndarray, xs: jnp.ndarray | None, carry_pre: Any):
+    def _validate_inputs(self, hmm_params:Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
         """Validate that the inputs to run() have compatible shapes and types.
         """
         if carry_pre is None:
@@ -62,6 +66,10 @@ class BaseInference(ABC):
             raise ValueError(f"xs and ys must have the same length, got {len(xs)} and {len(ys)}")
         if not isinstance(hmm_params, BaseHMM):
             raise ValueError(f"hmm_params must be an instance of HMMParams, got {type(hmm_params)}")
+        if ts is not None and len(ts) != len(ys):
+            raise ValueError(f"ts and ys must have the same length, got {len(ts)} and {len(ys)}") 
+        if (ts is not None and not isinstance(ts, jnp.ndarray)):
+            raise ValueError(f"ts must be a jnp.ndarray of floats if provided, got {type(ts)}")
     
     @abstractmethod
     def postprocess(self, carry_0, carry_final, outputs) -> Any:

@@ -87,3 +87,44 @@ class TestForwardAlgorithm(TestCase):
         forward_output = forward_alg.run(self.hmm_params,u0, ys, xs)
 
         self.assertTrue(jnp.all(forward_output.ft > 0))
+
+    # ------------------------------------------------------------------
+    # Passing an explicit ts array of ys indexes
+    # ------------------------------------------------------------------
+
+    def test_forward_run_accepts_ts_index_array(self):
+        """Passing ts = indexes of ys should run without error."""
+        forward_alg = ForwardAlgorithm()
+        ys = jnp.array([[0.0], [1.0], [2.0]])
+        u0 = jnp.array([[1.0, 0.0, 0.0]])
+        ts = jnp.arange(len(ys))  # [0, 1, 2]
+
+        try:
+            forward_output = forward_alg.run(self.hmm_params, u0, ys, ts)
+        except Exception as e:
+            self.fail(f"Forward run failed with explicit ts index array: {e}")
+
+        self.assertTrue(len(forward_output.ft) == len(ys))
+
+    def test_forward_run_ts_indexes_matches_default(self):
+        """Explicit ts of ys indexes must match the ts=None default."""
+        forward_alg = ForwardAlgorithm()
+        ys = jnp.array([[0.0], [1.0], [2.0]])
+        u0 = jnp.array([[1.0, 0.0, 0.0]])
+        ts = jnp.arange(len(ys))
+
+        out_default = forward_alg.run(self.hmm_params, u0, ys, None)
+        out_explicit = forward_alg.run(self.hmm_params, u0, ys, ts)
+
+        self.assertTrue(jnp.allclose(out_default.ft, out_explicit.ft))
+        self.assertTrue(jnp.allclose(out_default.utt, out_explicit.utt))
+
+    def test_forward_run_rejects_mismatched_ts_length(self):
+        """A ts array whose length differs from ys must raise."""
+        forward_alg = ForwardAlgorithm()
+        ys = jnp.array([[0.0], [1.0], [2.0]])
+        u0 = jnp.array([[1.0, 0.0, 0.0]])
+        ts = jnp.arange(len(ys) + 1)  # too long
+
+        with self.assertRaises(ValueError):
+            forward_alg.run(self.hmm_params, u0, ys, ts)
