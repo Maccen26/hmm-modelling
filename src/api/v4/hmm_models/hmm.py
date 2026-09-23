@@ -231,7 +231,7 @@ class HMM:
                 Gamma = self.transition.transition_matrix(t=i, ys=ys, xs=x_pred, dt=gap)
             elif is_continuous_static:
                 # expm(Q * gap); chaining the gaps reproduces expm(Q * t_abs).
-                Gamma = self.transition.transition_matrix(t=gap, ys=ys, xs=x_pred)
+                Gamma = self.transition.transition_matrix(ys=ys, xs=x_pred, dt=gap)
             else:
                 # Discrete: Gamma ignores time, so bridge the gap with Gamma^gap.
                 base = self.transition.transition_matrix(ys=ys, xs=x_pred)

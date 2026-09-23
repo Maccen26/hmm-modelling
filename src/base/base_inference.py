@@ -5,51 +5,44 @@ import jax.numpy as jnp
 import jax
 from jaxtyping import Int, Array
 from src.base.base_hmm import BaseHMM
+
+
 class BaseInference(ABC):
     """
     Base class for inference algorithms for HMMs.
-    
-    Subclasses implement `step` (single iteration) and `run` (full sequence).
-    The HMM is stored as a regular field so gradients flow through it.
+
+    Subclasses implement `run` (which precomputes whatever the whole sequence needs
+    and drives a `jax.lax.scan`) and `step` (a single scan iteration).
+
+    The split is deliberate: everything model-specific — transition matrices,
+    emission densities — is computed up front in `run`, so `step` is left with pure
+    linear algebra over already-materialised arrays.
     """
 
-
-
     @abstractmethod
-    def step(self, hmm_params:Any, carry: Any, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> Any:
+    def step(self, carry: Any, step_input: Any) -> Any:
         """
-        Single iteration of the algorithm.
-        
+        Single iteration of the algorithm, in `jax.lax.scan` form.
+
         Args:
-            hmm_params: The HMM parameters
-            carry: Algorithm-specific state from previous step
-            t: Current time index
-            ys: Full observation sequence (indexed by t inside)
-            xs: Optional full covariate sequence
-            
+            carry: Algorithm-specific state from the previous step
+            step_input: The precomputed quantities for this step, sliced from the
+                arrays `run` scans over (e.g. a transition matrix and a density)
+
         Returns:
             (new_carry, output) tuple compatible with jax.lax.scan
         """
         ...
 
-
-
-    def run(self, hmm_params:Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None) -> Any:
+    @abstractmethod
+    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None) -> Any:
         """
-        Run the full algorithm over a sequence using jax.lax.scan.
+        Run the full algorithm over a sequence.
+
+        Implementations precompute the per-step inputs in batched form, scan `step`
+        over them, and hand the result to `postprocess`.
         """
-
-        self._validate_inputs(hmm_params,ys, ts, xs, carry_pre)
-
-        def scan_fn(carry, t):
-            return self.step(hmm_params, carry, t, ys, xs)
-        
-        if (ts is None): 
-            ts = jnp.arange(len(ys))
-
-        carry_final, outputs = jax.lax.scan(scan_fn, carry_pre, ts)
-        return self.postprocess(carry_pre, carry_final, outputs)
-    
+        ...
 
     def _validate_inputs(self, hmm_params:Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
         """Validate that the inputs to run() have compatible shapes and types.
@@ -76,4 +69,4 @@ class BaseInference(ABC):
         """
         Method to post-process scan outputs (e.g., compute log-likelihood from final carry).
         """
-        ... 
+        ...

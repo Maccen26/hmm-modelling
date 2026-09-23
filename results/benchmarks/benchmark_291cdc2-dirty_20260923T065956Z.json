@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "label": "291cdc2-dirty_20260923T065956Z",
+    "git_sha": "291cdc2e61a713d3f14a6d4b6ffd46837a50c2c4",
+    "git_short_sha": "291cdc2",
+    "git_branch": "week_4",
+    "git_dirty": true,
+    "timestamp_utc": "2026-09-23T07:00:42.722731+00:00",
+    "data_name": "b1",
+    "tag": "jans-split",
+    "num_observations": 1666,
+    "num_covariates": 2,
+    "num_iters": 10,
+    "tol": 0.0,
+    "n_repeats": 11,
+    "python_version": "3.11.15",
+    "jax_version": "0.9.0.1",
+    "x64_enabled": true,
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "results": [
+    {
+      "model": "ordinary_hmm",
+      "fit_seconds": 8.699968166009057,
+      "num_iterations": 10,
+      "final_log_likelihood": -10425.131556606084,
+      "forward_first_call_seconds": 0.07943574999808334,
+      "forward_median_seconds": 9.491597302258015e-05,
+      "grad_first_call_seconds": 0.14774133398896083,
+      "grad_median_seconds": 0.0001695420069154352
+    },
+    {
+      "model": "ar_2_hmm",
+      "fit_seconds": 9.725477957981639,
+      "num_iterations": 10,
+      "final_log_likelihood": -9278.545708285172,
+      "forward_first_call_seconds": 0.08354654102004133,
+      "forward_median_seconds": 0.0001077920023817569,
+      "grad_first_call_seconds": 0.17624958298983984,
+      "grad_median_seconds": 0.00020641699666157365
+    },
+    {
+      "model": "covariate_hmm",
+      "fit_seconds": 8.830249167018337,
+      "num_iterations": 10,
+      "final_log_likelihood": -10279.560913122026,
+      "forward_first_call_seconds": 0.07712979201460257,
+      "forward_median_seconds": 0.00015737497597001493,
+      "grad_first_call_seconds": 0.16911895902012475,
+      "grad_median_seconds": 0.00030100002186372876
+    },
+    {
+      "model": "ar_2_second_order_hmm",
+      "fit_seconds": 15.983713749999879,
+      "num_iterations": 10,
+      "final_log_likelihood": -8866.47816090094,
+      "forward_first_call_seconds": 0.08412120898719877,
+      "forward_median_seconds": 0.00026945798890665174,
+      "grad_first_call_seconds": 0.22107729100389406,
+      "grad_median_seconds": 0.0011464169947430491
+    }
+  ]
+}

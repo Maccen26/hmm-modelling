@@ -118,16 +118,16 @@ class StaticTransitionHigherOrder(BaseTransition):
 
         return _make_transition_logits(self.transition_logits, self.order)
     
-    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix at time step t given the covariates at time step t.
-        
-        :param xt: covarites at time step t. 
+        Builds the augmented transition matrix for the observation at index `t`.
 
-        :return: transition matrix at time step t of dim (num_states, num_states) 
+        Time-homogeneous, so both `t` and the waiting time `dt` are ignored; they
+        are accepted to keep one signature across every transition.
+
+        :return: transition matrix of dim (num_states ** order, num_states ** order)
         """
         logits = self.step(t, ys, xs)
-
 
         return logits_to_transition_matrix_higher_order(logits)
     

@@ -22,26 +22,39 @@ class BaseTransition(eqx.Module, ABC):
         return cls(transition_logits)
     
     @abstractmethod
-    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix at time step t given the covariates at time step t.
-        
-        :param xt: covarites at time step t. 
+        Builds the transition matrix for the observation at index `t`.
 
-        :return: transition matrix at time step t of dim (num_states, num_states) 
+        `t` and `dt` mean different things and must not be conflated:
+
+        :param t: the *observation index*, used to look up the covariate row xs[t].
+            Discrete time-homogeneous transitions ignore it.
+        :param ys: observation sequence.
+        :param xs: covariate sequence of shape (T, num_covariates).
+        :param dt: the *waiting time* since the previous observation, used by the
+            continuous-time transitions in expm(Q * dt). Discrete transitions ignore
+            it; continuous ones default it to a unit step.
+
+        :return: transition matrix of dim (num_states, num_states)
         """
         ...
-        
 
-    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+
+    def transition_matrices(self, indices: jnp.ndarray, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix for every time value in `ts` in one call.
+        Builds one transition matrix per observation in a single batched call.
 
-        Returns an array of shape (len(ts), num_states, num_states). The default
+        :param indices: observation indices, i.e. jnp.arange(T) — used for covariate
+            lookup.
+        :param ts: per-observation waiting times, parallel to `indices` — used by the
+            continuous-time transitions.
+
+        Returns an array of shape (T, num_states, num_states). The default
         implementation just vmaps the per-step `transition_matrix`; subclasses can
         override it with a cheaper batched computation.
         """
-        return jax.vmap(lambda t: self.transition_matrix(t=t, ys=ys, xs=xs))(ts)
+        return jax.vmap(lambda i, dt: self.transition_matrix(t=i, ys=ys, xs=xs, dt=dt))(indices, ts)
 
     @abstractmethod
     def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None) -> jnp.ndarray:

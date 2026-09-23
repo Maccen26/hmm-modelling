@@ -39,27 +39,30 @@ class ContinuousStaticTransition(BaseTransition):
 
         return self.transition_logits
     
-    def transition_matrix(self, t:int|None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix at time step t given the covariates at time step t.
-        
-        :param xt: covarites at time step t. 
+        Builds the transition matrix expm(Q * dt) for a step of waiting time `dt`.
 
-        :return: transition matrix at time step t of dim (num_states, num_states) 
+        :param t: ignored — the generator is covariate-free, so no index is needed.
+        :param dt: waiting time since the previous observation. Defaults to a unit
+            step, which is what the stationary-distribution computation expects.
+        :return: transition matrix of dim (num_states, num_states)
         """
 
         logits = self.step(t, ys, xs)
+        dt = 1.0 if dt is None else dt
 
-        return logits_to_transition_matrix_continuous(logits, t) # type: ignore
+        return logits_to_transition_matrix_continuous(logits, dt)  # type: ignore
 
-    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def transition_matrices(self, indices: jnp.ndarray, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         Batched transition matrices T_i = expm(Q * ts[i]).
 
-        Since Q is constant across time steps, `expm` only depends on the value of
-        ts[i]. Observed waiting times contain very few distinct values, so we compute
-        `expm` once per unique waiting time and gather the result back to full length.
-        This is dramatically cheaper than calling `expm` once per observation.
+        Since Q is constant across time steps, `expm` only depends on the waiting
+        time ts[i] — `indices` is unused. Observed waiting times contain very few
+        distinct values, so we compute `expm` once per unique waiting time and gather
+        the result back to full length. This is dramatically cheaper than calling
+        `expm` once per observation.
         """
         Q = self.get_Q()
         expm = lambda t: jax.scipy.linalg.expm(Q * t.astype(Q.dtype))

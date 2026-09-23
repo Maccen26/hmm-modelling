@@ -23,6 +23,22 @@ class BaseEmission(eqx.Module, ABC):
         """
         ...
 
+    def densities(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Emission densities for every observation in a single batched call.
+
+        :param indices: observation indices, i.e. jnp.arange(T). Only this argument
+            is mapped over; `ys`, `xs` and `ts` are closed over and read whole, so
+            an autoregressive emission can still reach back to earlier lags.
+        :param ts: per-observation waiting times, forwarded unchanged to `density`.
+
+        Returns an array whose leading axis is T, stacking what `density` returns
+        per step. Mirrors `BaseTransition.transition_matrices`: subclasses can
+        override this with a cheaper batched computation, but the vmap default is
+        correct for any emission whose `density` is a pure function of `t`.
+        """
+        return jax.vmap(lambda i: self.density(i, ys, xs, ts))(indices)
+
     @abstractmethod
     def mu(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
         """
