@@ -13,6 +13,13 @@ def load_train_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]
     Xs = load_csv_to_jnp(X_path)
     return ys, Xs
 
+def load_val_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
+    y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="val")
+    ys = load_csv_to_jnp(y_path)
+    ys = ys.flatten()  # Ensure ys is a 1D array
+    Xs = load_csv_to_jnp(X_path)
+    return ys, Xs
+
 def load_test_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
     y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="test")
     ys = load_csv_to_jnp(y_path)

@@ -7,11 +7,13 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "dotenv>=0.9.9",
     "equinox>=0.13.7",
+    "holidays>=0.105",
     "jax>=0.9.0.1",
     "matplotlib>=3.10.8",
     "numpy>=1.23.5,<2.3",
     "openpyxl>=3.1.5",
     "optax>=0.2.8",
+    "optuna>=5.0.0",
     "pandas>=3.0.0",
     "requests>=2.34.2",
     "scikit-learn>=1.9.1",
