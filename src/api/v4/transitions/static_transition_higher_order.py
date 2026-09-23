@@ -69,6 +69,28 @@ def decode_possible_transitions(Gamma, order = 2):
 
 
 
+def offdiag_logits_to_higher_order(logits):
+    """
+    Re-reference first-order logits onto the higher-order convention.
+
+    The two parameterisations pick different reference cells. A first-order row
+    (`src.base.utils.transition_matrix_to_logits`) holds log(p_b / p_s) for b != s,
+    i.e. the *diagonal* is the reference. `_make_transition_logits` instead gives the
+    free logits to the first K-1 valid successors and pins the *last* one at 0, so a
+    row holds log(p_b / p_{K-1}) for b < K-1. Logits are only defined up to a common
+    per-row constant, so the change of reference is exact: fill the diagonal back in
+    at 0 and subtract the last column.
+
+    :param logits: (K, K - 1) off-diagonal logits, diagonal-referenced.
+    :return: (K, K - 1) logits, last-column-referenced.
+    """
+    K = logits.shape[0]
+    full = jnp.zeros((K, K))
+    rows, cols = jnp.where(~jnp.eye(K, dtype=bool), size=K * (K - 1))
+    full = full.at[rows, cols].set(logits.flatten())
+    return full[:, :K - 1] - full[:, K - 1][:, None]
+
+
 def logits_to_transition_matrix_higher_order(logits):
     """
     Expects a 2d build matrix with 0 entries
