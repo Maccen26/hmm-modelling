@@ -20,10 +20,12 @@ Design notes, so the numbers stay comparable across runs:
 * The first call is recorded separately as the compile-inclusive number; the
   steady-state figure is the median of ``N_REPEATS`` further calls.
 
-Caveat when reading ``fit_seconds``: ``HMM.fit`` ends by calling
-``_compute_state_results``, whose per-observation Python ``cdf`` loop is a large
-constant unaffected by the density-batching refactor. The ``forward_*`` and
-``grad_*`` figures isolate the part that does change.
+``fit_seconds`` covers the fit path only. Pseudo-residuals are computed lazily on
+first access to ``model.state_results``, so they are timed separately as
+``state_results_seconds``. Compare ``fit_seconds + state_results_seconds`` against a
+baseline recorded before the diagnostics moved off the fit path; ``fit_seconds``
+alone shows the fit path in isolation. ``schema_version`` in the metadata marks the
+change so old and new records are not mixed up.
 """
 import jax
 
@@ -183,9 +185,17 @@ def benchmark_model(name: str, build, ys, Xs) -> dict:
     fit_model.fit(ys=ys, xs=Xs, frozen=FROZEN, num_iters=NUM_ITERS, tol=TOL)
     fit_seconds = time.perf_counter() - start
 
+    # Diagnostics are lazy, so time them separately rather than letting them hide
+    # inside (or vanish from) the fit number.
+    print(f"  {name}: timing state results...", flush=True)
+    start = time.perf_counter()
+    _block(fit_model.state_results.pseudo_residuals)
+    state_results_seconds = time.perf_counter() - start
+
     record = {
         "model": name,
         "fit_seconds": fit_seconds,
+        "state_results_seconds": state_results_seconds,
         "num_iterations": len(fit_model.ll_fits),
         "final_log_likelihood": float(fit_model.ll_fits[-1]),
         "forward_first_call_seconds": forward_first,
@@ -193,7 +203,8 @@ def benchmark_model(name: str, build, ys, Xs) -> dict:
         "grad_first_call_seconds": grad_first,
         "grad_median_seconds": grad_median,
     }
-    print(f"  {name}: fit {fit_seconds:.2f}s over {record['num_iterations']} iters, "
+    print(f"  {name}: fit {fit_seconds:.2f}s (+{state_results_seconds:.2f}s diagnostics) "
+          f"over {record['num_iterations']} iters, "
           f"LL={record['final_log_likelihood']:.6f}, "
           f"forward {forward_median * 1e3:.2f}ms, grad {grad_median * 1e3:.2f}ms",
           flush=True)
@@ -220,6 +231,9 @@ def _run_label() -> str:
 def _metadata(ys, Xs, label: str) -> dict:
     return {
         "label": label,
+        # 1: fit_seconds included the diagnostics. 2: diagnostics are lazy and timed
+        # separately as state_results_seconds.
+        "schema_version": 2,
         "git_sha": _git("rev-parse", "HEAD"),
         "git_short_sha": _git("rev-parse", "--short", "HEAD"),
         "git_branch": _git("rev-parse", "--abbrev-ref", "HEAD"),

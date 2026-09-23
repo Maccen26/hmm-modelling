@@ -21,7 +21,10 @@ class HMM:
         self.ll_fits = []  
         self.negative_log_likelihood : Callable = negative_log_likelihood 
         self.hmm_results: HMMResults | None = None
-        self.state_results: StateResults | None = None 
+        self._state_results: StateResults | None = None
+        # The data `fit` was last called with, so `state_results` can be computed
+        # lazily on first access instead of on the fit path.
+        self._fit_data: tuple | None = None
         self.no_of_free_params = len(self.params)  # Store the number of free parameters
 
     def set_negative_log_likelihood(self, loss_fn: Callable):
@@ -115,23 +118,71 @@ class HMM:
             prev_ll = current_ll
 
         self.hmm_results = HMMResults(convergence=convergence, log_likelihood=self.ll_fits[-1], num_params=len(self.params))
-        self.state_results = self._compute_state_results(ys, xs, ts)
+        # Pseudo-residuals are a diagnostic, not part of fitting: record what we were
+        # fitted on and let `state_results` compute them on first access.
+        self._fit_data = (ys, xs, ts)
+        self._state_results = None
+
+    @property
+    def state_results(self) -> StateResults | None:
+        """Per-observation state results, computed on first access and cached.
+
+        Computing these is pure diagnostics, so `fit` no longer pays for it; the
+        cost moves to whoever actually asks. Returns None if the model has not been
+        fitted.
+        """
+        if self._state_results is None and self._fit_data is not None:
+            self._state_results = self._compute_state_results(*self._fit_data)
+        return self._state_results
+
+    @state_results.setter
+    def state_results(self, value: StateResults | None) -> None:
+        self._state_results = value
+
+    def __setstate__(self, state: dict) -> None:
+        """Restore a pickle, migrating models written before `state_results` became
+        a property.
+
+        Pickle restores through `__dict__.update()`, which bypasses the property, so
+        a legacy `state_results` key would otherwise shadow nothing and leave
+        `_state_results` undefined.
+        """
+        state = dict(state)
+        if "state_results" in state:
+            state["_state_results"] = state.pop("state_results")
+        state.setdefault("_state_results", None)
+        state.setdefault("_fit_data", None)
+        self.__dict__.update(state)
+
+    def _forecast_pseudo_residuals(self, ut: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+        """Forecast pseudo-residuals for the whole sequence in one vectorised pass.
+
+        `ut[t]` is the one-step-ahead predictive state distribution for observation
+        t, so the residual for t pairs ut[t] with cdf(y_t). The clip into the open
+        interval keeps float saturation at the tails (cdf ~0/1) producing
+        large-but-finite residuals instead of +/-inf/NaN.
+        """
+        from jax.scipy.stats import norm
+        if not jax.config.jax_enable_x64:
+            # These are computed lazily, so they may run in a process that never
+            # enabled float64 -- in which case the CDF tails saturate and every
+            # residual comes back NaN. Fail loudly rather than returning garbage.
+            raise RuntimeError(
+                "Pseudo-residuals require float64. Set "
+                "jax.config.update('jax_enable_x64', True) at the top of your entry "
+                "point, before importing anything else, or they silently come back NaN."
+            )
+        indices = jnp.arange(len(ys))
+        Gs = self.emission.cdfs(indices, ys, xs, ts)      # (T, 1, num_states)
+        ut = jnp.asarray(ut).reshape(len(ys), -1)
+        u = jnp.clip(jnp.sum(ut * Gs.reshape(ut.shape), axis=-1), 1e-6, 1.0 - 1e-6)
+        return norm.ppf(u)
 
     def _compute_state_results(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> StateResults:
-        from jax.scipy.stats import norm
         inference_alg = self._set_inference_algorithm("forward")
         output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
-        z_list = []
-        for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
-            # ut[t] is the one-step-ahead predictive state distribution for obs t,
-            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
-            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
-            # yields large-but-finite residuals instead of +/-inf/NaN.
-            u_t = jnp.clip(jnp.sum(output.ut[t] * G_t), 1e-6, 1.0 - 1e-6)
-            z_list.append(norm.ppf(u_t))
-
-        return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=jnp.asarray(z_list))
+        residuals = self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
+        return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=residuals)
 
     def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
         if (ys is None):
@@ -151,23 +202,11 @@ class HMM:
     def update_param(self, param_name: str, new_value: jax.Array, index: Tuple|float|None = None) -> None:
         self.params = self.params.update_param(param_name, new_value, index) 
 
-    # Todo: Refactor this method to be part of fit maybe 
     def pseudo_residuals(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray|None = None) -> jnp.ndarray:
-        from jax.scipy.stats import norm
+        """Forecast pseudo-residuals for an arbitrary sequence."""
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts) 
-        ut = output.ut  # shape (T, num_states)
-        z_list = []
-        for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
-            # ut[t] is the one-step-ahead predictive state distribution for obs t,
-            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
-            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
-            # yields large-but-finite residuals instead of +/-inf/NaN.
-            u_t = jnp.clip(jnp.sum(ut[t] * G_t), 1e-6, 1.0 - 1e-6)
-            z_list.append(norm.ppf(u_t))
-
-        return jnp.array(z_list)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts)
+        return self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
     
 
     def predict_emission(self, t_pred: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:

@@ -1,3 +1,7 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 """Extract per-model transition matrices and write them to CSV.
 
 For a given ``data_name`` / ``tag`` this loads every fitted model from

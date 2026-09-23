@@ -76,6 +76,19 @@ class BaseEmission(eqx.Module, ABC):
         """
         ...
 
+    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Emission CDFs for every observation in a single batched call.
+
+        The counterpart of `densities`, used by the forecast pseudo-residuals.
+        Only `indices` is mapped over; `ys`, `xs` and `ts` are closed over and read
+        whole.
+
+        Returns an array whose leading axis is T, stacking what `cdf` returns per
+        step.
+        """
+        return jax.vmap(lambda i: self.cdf(i, ys, xs, ts))(indices)
+
     def __iter__(self) -> Any:
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""
         return ((f.name, getattr(self, f.name)) for f in fields(self))

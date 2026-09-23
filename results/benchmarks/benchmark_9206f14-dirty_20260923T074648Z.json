@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "label": "9206f14-dirty_20260923T074648Z",
+    "schema_version": 2,
+    "git_sha": "9206f14b8ea0e56edb913346193869fae9cd7e7f",
+    "git_short_sha": "9206f14",
+    "git_branch": "week_4",
+    "git_dirty": true,
+    "timestamp_utc": "2026-09-23T07:47:29.517878+00:00",
+    "data_name": "b1",
+    "tag": "jans-split",
+    "num_observations": 1666,
+    "num_covariates": 2,
+    "num_iters": 10,
+    "tol": 0.0,
+    "n_repeats": 11,
+    "python_version": "3.11.15",
+    "jax_version": "0.9.0.1",
+    "x64_enabled": true,
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "results": [
+    {
+      "model": "ordinary_hmm",
+      "fit_seconds": 6.660689625015948,
+      "state_results_seconds": 0.5096786250069272,
+      "num_iterations": 10,
+      "final_log_likelihood": -10425.131556606084,
+      "forward_first_call_seconds": 0.08085233400925063,
+      "forward_median_seconds": 9.25410131458193e-05,
+      "grad_first_call_seconds": 0.15648054200573824,
+      "grad_median_seconds": 0.0001762080064509064
+    },
+    {
+      "model": "ar_2_hmm",
+      "fit_seconds": 7.400443874998018,
+      "state_results_seconds": 0.043491250020451844,
+      "num_iterations": 10,
+      "final_log_likelihood": -9278.545708285172,
+      "forward_first_call_seconds": 0.08336049999343231,
+      "forward_median_seconds": 0.00011029100278392434,
+      "grad_first_call_seconds": 0.1790092079900205,
+      "grad_median_seconds": 0.00020608300110325217
+    },
+    {
+      "model": "covariate_hmm",
+      "fit_seconds": 8.024439125001663,
+      "state_results_seconds": 0.04203670800779946,
+      "num_iterations": 10,
+      "final_log_likelihood": -10279.560913122026,
+      "forward_first_call_seconds": 0.07853062500362284,
+      "forward_median_seconds": 0.00014820898650214076,
+      "grad_first_call_seconds": 0.17186829200363718,
+      "grad_median_seconds": 0.0003058329748455435
+    },
+    {
+      "model": "ar_2_second_order_hmm",
+      "fit_seconds": 15.339570500014815,
+      "state_results_seconds": 0.27757795798243023,
+      "num_iterations": 10,
+      "final_log_likelihood": -8866.47816090094,
+      "forward_first_call_seconds": 0.08865737498854287,
+      "forward_median_seconds": 0.0002666249929461628,
+      "grad_first_call_seconds": 0.2525302499998361,
+      "grad_median_seconds": 0.001132625009631738
+    }
+  ]
+}

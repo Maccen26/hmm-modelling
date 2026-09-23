@@ -93,10 +93,3 @@ Only `tests/v4` is current.
 
 LaTeX source in `report/` builds with `latexmk -xelatex` (VS Code LaTeX Workshop is configured for XeLaTeX on save). `report/main.pdf` is the compiled output.
 
-## AI disclosure
-
-1. Copilot chat completion has been used.
-2. No agents have written source code inside the directory /src/.
-3. Agents have been used to debug JAX modules (sometimes).
-4. Claude has been used to find sources and explain concepts.
-5. Claude Code has been used to generate documentation about the code and code for plotting.

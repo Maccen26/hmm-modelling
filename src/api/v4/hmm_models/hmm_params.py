@@ -57,6 +57,16 @@ class HMMParams(BaseHMM):
         """
         return self.emission.cdf(t, ys, xs, ts)
     
+    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+        """
+        Emission CDFs for every observation in a single batched call.
+
+        :param indices: observation indices, i.e. jnp.arange(T).
+        :param ts: per-observation waiting times, forwarded to the emission.
+        Returns an array whose leading axis is T.
+        """
+        return self.emission.cdfs(indices, ys, xs, ts)
+
     def __iter__(self):
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""
         yield 'transition', self.transition
