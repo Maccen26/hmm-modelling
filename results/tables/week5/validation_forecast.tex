@@ -1,0 +1,15 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lcccc}
+\hline
+Model & RMSE & MAPE% & R2 & n \\
+\hline
+Second-order + cov & 199.54 & 11.54 & 0.58 & 626 \\
+Autoregressive + cov & 205.71 & 12.14 & 0.55 & 626 \\
+Gaussian + cov & 215.91 & 13.39 & 0.51 & 626 \\
+Persistence baseline & 261.89 & 14.32 & 0.28 & 626 \\
+\hline
+\end{tabular}
+\caption{Rolling 6-hour-ahead validation forecast accuracy, Room 012 (30min).}
+\label{tab:week5-validation-forecast}
+\end{table}

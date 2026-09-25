@@ -15,6 +15,7 @@ dependencies = [
     "optax>=0.2.8",
     "optuna>=5.0.0",
     "pandas>=3.0.0",
+    "r-models",
     "requests>=2.34.2",
     "scikit-learn>=1.9.1",
     "seaborn>=0.13.2",
@@ -24,6 +25,12 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["src", "drivers"]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+r-models = { workspace = true, editable = false }
 
 [dependency-groups]
 dev = [
