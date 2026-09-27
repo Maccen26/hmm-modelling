@@ -305,25 +305,25 @@ def plot_hmm_diagnostics(model, save_path: str | None = None):
 
     sns.set_theme(style="whitegrid", context="notebook")
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 4))
 
-    ll = np.asarray(model.ll_fits)
-    iterations = np.arange(1, len(ll) + 1)
-    sns.lineplot(x=iterations, y=ll, ax=axes[0], marker="o")
-    axes[0].set_title("Log-likelihood per iteration")
-    axes[0].set_xlabel("Iteration")
-    axes[0].set_ylabel("log L")
-    axes[0].xaxis.set_major_locator(MaxNLocator(integer=True))
+    #ll = np.asarray(model.ll_fits)
+    #iterations = np.arange(1, len(ll) + 1)
+    #sns.lineplot(x=iterations, y=ll, ax=axes[0], marker="o")
+    #axes[0].set_title("Log-likelihood per iteration")
+    #axes[0].set_xlabel("Iteration")
+    #axes[0].set_ylabel("log L")
+    #axes[0].xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    stats.probplot(residuals, dist="norm", plot=axes[1])
-    axes[1].get_lines()[0].set_color(sns.color_palette()[0])
-    axes[1].get_lines()[1].set_color(sns.color_palette()[3])
-    axes[1].set_title("Normal Q-Q of pseudo-residuals")
+    stats.probplot(residuals, dist="norm", plot=axes[0])
+    axes[0].get_lines()[0].set_color(sns.color_palette()[0])
+    #axes[0].get_lines()[1].set_color(sns.color_palette()[1])
+    axes[0].set_title("Normal Q-Q of pseudo-residuals")
 
     lags = min(40, max(1, len(residuals) // 4))
-    plot_acf(residuals, lags=lags, ax=axes[2])
-    axes[2].set_title("ACF of pseudo-residuals")
-    axes[2].set_ylim(-0.25, 1.05)
+    plot_acf(residuals, lags=lags, ax=axes[1])
+    axes[1].set_title("ACF of pseudo-residuals")
+    axes[1].set_ylim(-0.25, 1.05)
 
     fig.tight_layout()
 

@@ -2,8 +2,8 @@
 
 Port of the cleaning pipeline in `week_5.ipynb`: drop NaN / saturated / duplicate readings,
 resample to a regular grid, keep the longest gap-free segment, build the covariate matrix
-(off-day flag, weekly / daily Fourier terms, hourly weather), shift the series so its minimum
-sits at the outdoor baseline, then split chronologically into train -> val -> test and z-score
+(off-day flag, weekly / daily Fourier terms, hourly weather), shift each calendar month so its
+minimum sits at the outdoor baseline, then split chronologically into train -> val -> test and z-score
 the covariates on training statistics only.
 """
 
@@ -62,13 +62,23 @@ def longest_gap_free_segment(df_raw: pd.DataFrame, bin: str = "30min") -> pd.Ser
     return max(segments, key=len)
 
 
-def calibrate_baseline(ys: np.ndarray, baseline: float = 400.0) -> np.ndarray:
-    """Shift a CO2 series so its minimum sits at `baseline` ppm (sensor-floor correction).
+def calibrate_baseline(seg: pd.Series, baseline: float = 400.0) -> tuple[pd.Series, pd.Series]:
+    """Shift each calendar month of a *binned* series so its minimum sits at `baseline` ppm.
 
-    A constant offset: every difference in the series is preserved, only the level moves.
+    The NDIR sensors drift, so the floor of a room's series wanders over weeks; one offset per
+    month tracks that drift. Within a month it is a constant, so every difference and dynamic
+    inside the month is preserved (only level moves) -- at the cost of a step at each month
+    boundary, where the two offsets differ.
+
+    Must run on the *aggregated* series, not the raw readings: a 30min bin averages several
+    readings, so calibrating the raw series leaves the binned minimum above `baseline`.
+
+    Returns the calibrated series and the per-month offsets that were subtracted.
     """
-    ys = np.asarray(ys, dtype=float)
-    return ys - np.min(ys) + baseline
+    month = seg.index.to_period("M")                                        # type: ignore
+    offsets = seg.groupby(month).min() - baseline
+    return seg - offsets.reindex(month).to_numpy(), offsets
+
 
 
 def split_three_way(n: int, val_size: float, test_size: float) -> tuple[int, int]:
@@ -110,10 +120,11 @@ def clean_dtu_data(
     print(f"  longest gap-free {bin} segment: {len(seg)} bins")
     print(f"  window {start} -> {end}  ({(end - start).total_seconds() / 3600:.1f} h)")
 
-    ys_uncal = np.asarray(seg.values, dtype=float)
-    ys = calibrate_baseline(ys_uncal, baseline=baseline_ppm)
-    offset = float(np.min(ys_uncal) - baseline_ppm)   # the constant subtracted
-    print(f"  baseline offset applied: {-offset:+.2f} ppm")
+    seg, offsets = calibrate_baseline(seg, baseline=baseline_ppm)
+    ys = np.asarray(seg.values, dtype=float)
+    offset = "|".join(f"{m}:{o:.2f}" for m, o in offsets.items())   # per month, subtracted
+    print(f"  baseline offsets applied: " +
+          ", ".join(f"{m} {-o:+.2f} ppm" for m, o in offsets.items()))
 
     dates = pd.DatetimeIndex(seg.index)
     X, covariate_cols = build_covariates(
@@ -189,7 +200,7 @@ def save_metadata(
         "train_end": dates[train_idx],
         "val_end": dates[val_idx],
         "baseline_ppm": baseline_ppm,
-        "baseline_offset": offset,           # ys = ys_uncalibrated - baseline_offset
+        "baseline_offset": offset,           # "YYYY-MM:offset|..." per calendar month
         "covariate_cols": "|".join(covariate_cols),
     }
     record.update(meta)
@@ -203,15 +214,39 @@ def save_metadata(
     print(f"  wrote {save_path}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
+
+    ROOM_LIST = [
+        "Room 001",
+        "Room 003", 
+        "Room 004",
+        "Room 005",
+        "Room 007",
+        "Room 008",
+        "Room 009", 
+        "Room 012", 
+        "Room 013", 
+        "Room 014", 
+        "Room 015", 
+        "Room 016"
+        ]
+
     ROOM_NAME = "Room 012"
     TAG = "30min"
     VAL_SIZE = 0.15
     TEST_SIZE = 0.20
 
-    clean_dtu_data(
-        room_name=ROOM_NAME,
-        tag=TAG,
-        val_size=VAL_SIZE,
-        test_size=TEST_SIZE,
-    )
+    for room_name in ROOM_LIST:
+        clean_dtu_data(
+            room_name=room_name,
+            tag=TAG,
+            val_size=VAL_SIZE,
+            test_size=TEST_SIZE,
+        )
+
+    #clean_dtu_data(
+    #    room_name=ROOM_NAME,
+    #    tag=TAG,
+    #    val_size=VAL_SIZE,
+    #    test_size=TEST_SIZE,
+    #)
