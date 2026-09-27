@@ -25,6 +25,10 @@ class HMM:
         # The data `fit` was last called with, so `state_results` can be computed
         # lazily on first access instead of on the fit path.
         self._fit_data: tuple | None = None
+        # Whether that data was a batch of sequences. The diagnostics are
+        # per-sequence, so they refuse to run on a batched fit rather than silently
+        # reading the batch axis as time.
+        self._fit_batched: bool = False
         self.no_of_free_params = len(self.params)  # Store the number of free parameters
 
     def set_negative_log_likelihood(self, loss_fn: Callable):
@@ -55,6 +59,19 @@ class HMM:
                 f"inital_distribution must be 1-D or 2-D, got {u.ndim}-D array."
             )
         return u
+
+    @staticmethod
+    def _reject_batched(ys: jnp.ndarray, what: str) -> None:
+        """Guard the per-sequence diagnostics against a batch of sequences.
+
+        They index `ys` by time and size their output with `len(ys)`, which for a
+        (B, T) array is the batch size.
+        """
+        if jnp.ndim(ys) > 1 and jnp.shape(ys)[-1] != 1:
+            raise ValueError(
+                f"{what} are computed per sequence and need a single sequence, got ys "
+                f"of shape {jnp.shape(ys)}. Pass one sequence at a time, e.g. ys[i]."
+            )
 
     def _compute_stationary_distribution(self):
         num_states = self.transition.transition_logits.shape[0]
@@ -92,7 +109,15 @@ class HMM:
             solver=None,
             frozen=None,
             num_iters: int = 200,
-            tol: float = 1e-6) -> None:
+            tol: float = 1e-6,
+            batched: bool = False) -> None:
+        """Fit the model.
+
+        :param batched: when True, `ys` holds a batch of independent sequences on its
+            leading axis, shape (B, T), and `ts`/`xs` carry the same leading axis.
+            The log-likelihood is then the sum over sequences. Batching is opt-in:
+            a 2-D `ys` with batched=False is still one sequence.
+        """
         
         if solver is None:
             from src.api.v4.solvers import LBFGSSolver
@@ -105,7 +130,8 @@ class HMM:
 
         for i in range(num_iters):
             solver.fit(self.params, ys, ts, xs, u_pre=self.u_pre,
-                   frozen=frozen, loss_fn=self.negative_log_likelihood)
+                   frozen=frozen, loss_fn=self.negative_log_likelihood,
+                   batched=batched)
             self.params = solver.params
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
@@ -121,6 +147,7 @@ class HMM:
         # Pseudo-residuals are a diagnostic, not part of fitting: record what we were
         # fitted on and let `state_results` compute them on first access.
         self._fit_data = (ys, xs, ts)
+        self._fit_batched = batched
         self._state_results = None
 
     @property
@@ -132,6 +159,13 @@ class HMM:
         fitted.
         """
         if self._state_results is None and self._fit_data is not None:
+            if self._fit_batched:
+                raise NotImplementedError(
+                    "state_results is not available after a batched fit: the filtered "
+                    "probabilities, time index and pseudo-residuals are per-sequence "
+                    "quantities. Call hmm.pseudo_residuals(ys[i]) on a single sequence "
+                    "instead."
+                )
             self._state_results = self._compute_state_results(*self._fit_data)
         return self._state_results
 
@@ -152,6 +186,7 @@ class HMM:
             state["_state_results"] = state.pop("state_results")
         state.setdefault("_state_results", None)
         state.setdefault("_fit_data", None)
+        state.setdefault("_fit_batched", False)
         self.__dict__.update(state)
 
     def _forecast_pseudo_residuals(self, ut: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
@@ -163,6 +198,9 @@ class HMM:
         large-but-finite residuals instead of +/-inf/NaN.
         """
         from jax.scipy.stats import norm
+        # `len(ys)` below would be the batch size, so a batched sequence would come
+        # back silently mis-shaped rather than as an error.
+        self._reject_batched(ys, "Pseudo-residuals")
         if not jax.config.jax_enable_x64:
             # These are computed lazily, so they may run in a process that never
             # enabled float64 -- in which case the CDF tails saturate and every
@@ -179,21 +217,30 @@ class HMM:
         return norm.ppf(u)
 
     def _compute_state_results(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> StateResults:
+        # Guarded before the forward pass so a batch-shaped `ys` reports what is
+        # wrong instead of failing inside the scan on a carry-shape mismatch.
+        self._reject_batched(ys, "State results")
         inference_alg = self._set_inference_algorithm("forward")
         output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
         residuals = self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
         return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=residuals)
 
-    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
+    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False) -> float:
+        """Log-likelihood of `ys`, or of the last fit when `ys` is None.
+
+        Unlike the other diagnostics this one is batch-safe: it only reads the
+        likelihood factors, so with `batched=True` it returns the summed
+        log-likelihood of every sequence in the batch.
+        """
         if (ys is None):
             return self.ll_fits[-1] if self.ll_fits else float('-inf')
-        ll = self._compute_log_likelihood(ys, xs, ts)
+        ll = self._compute_log_likelihood(ys, xs, ts, batched=batched)
         return ll
 
 
-    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
+    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False) -> float:
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs, batched=batched)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
         #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
@@ -203,7 +250,11 @@ class HMM:
         self.params = self.params.update_param(param_name, new_value, index) 
 
     def pseudo_residuals(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray|None = None) -> jnp.ndarray:
-        """Forecast pseudo-residuals for an arbitrary sequence."""
+        """Forecast pseudo-residuals for an arbitrary single sequence."""
+        # Checked before the forward pass, not just inside
+        # `_forecast_pseudo_residuals`: a batch-shaped `ys` would otherwise fail
+        # first inside the scan with an opaque carry-shape error.
+        self._reject_batched(ys, "Pseudo-residuals")
         inference_alg = self._set_inference_algorithm("forward")
         output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts)
         return self._forecast_pseudo_residuals(output.ut, ys, xs, ts)

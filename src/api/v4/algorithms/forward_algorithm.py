@@ -15,8 +15,41 @@ def normalize_probs(probs: jax.Array) -> jax.Array:
 
 
 class ForwardAlgorithm(BaseInference):
+    def run(self, hmm_params: HMMParams, carry_pre: Any, ys: jnp.ndarray, ts: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, batched: bool = False) -> ForwardOutput:
+        """
+        Run the forward algorithm over one sequence, or over a batch of them.
 
-    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> Any:
+        Batching is opt-in via `batched`, never inferred from the shape of `ys`: a
+        single sequence is legitimately spelled either `(T,)` or `(T, 1)`, and the
+        latter is indistinguishable from a batch of T length-1 sequences. Guessing
+        would silently return a different likelihood rather than an error.
+
+        With `batched=False` (the default) `ys` is one sequence of any rank and
+        nothing changes. With `batched=True` the leading axis of `ys` — and of `ts`
+        and `xs` when given — is the batch axis, and the result carries that axis in
+        front of every field: `utt`/`ut` of shape (B, T, 1, num_states) and `ft` of
+        shape (B, T). Since `ForwardOutput.log_likelihood` sums log(ft) over every
+        axis, the batch log-likelihood is the sum of the per-sequence ones, which is
+        the likelihood of independent sequences under shared parameters.
+        """
+        if not batched:
+            self._validate_inputs(hmm_params, ys, ts, xs, carry_pre)
+            return self.run_sequence(hmm_params, carry_pre, ys, ts, xs)
+
+        self._validate_batched_inputs(hmm_params, ys, ts, xs, carry_pre)
+
+        # `carry_pre` is closed over rather than mapped: every sequence starts from
+        # the same initial state distribution. `ys`/`ts`/`xs` are sliced per
+        # sequence, which is also what an autoregressive emission needs -- its
+        # `densities` closes over the whole `ys` it is handed, so each sequence sees
+        # only its own history and no lag reaches across a sequence boundary.
+        # `None` is an empty pytree, so the optional arguments need no special case.
+        return jax.vmap(
+            lambda y, t, x: self.run_sequence(hmm_params, carry_pre, y, t, x),
+            in_axes=(0, None if ts is None else 0, None if xs is None else 0),
+        )(ys, ts, xs)
+
+    def run_sequence(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: jnp.ndarray| None, xs: jnp.ndarray | None = None) -> Any:
         """
         Run the forward algorithm over a sequence using jax.lax.scan.
 
@@ -30,7 +63,6 @@ class ForwardAlgorithm(BaseInference):
         the waiting times the continuous-time transitions need. They coincide only
         by accident for discrete models with unit spacing.
         """
-        self._validate_inputs(hmm_params, ys, ts, xs, carry_pre)
 
         indices = jnp.arange(len(ys))
         if ts is None:

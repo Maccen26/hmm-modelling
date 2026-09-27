@@ -19,8 +19,13 @@ class BaseSolver(ABC):
             xs=None,
             u_pre=None,
             frozen=None,
-            loss_fn: Callable | None = None) -> None:
-        """Fit hmm_params to data. Result is stored in self.params."""
+            loss_fn: Callable | None = None,
+            batched: bool = False) -> None:
+        """Fit hmm_params to data. Result is stored in self.params.
+
+        :param batched: when True, `ys` holds a batch of independent sequences on its
+            leading axis and the likelihood is summed over them.
+        """
         ...
 
     def _parse_frozen(self, frozen):
@@ -131,7 +136,8 @@ class BaseSolver(ABC):
                        xs,
                        loss_fn: Callable | None = None,
                        element_frozen=None,
-                       original_params=None) -> Callable:
+                       original_params=None,
+                       batched: bool = False) -> Callable:
         """Returns scalar loss(trainable) -> scalar."""
         from src.api.v4.likelihoods import negative_log_likelihood
         from src.api.v4.algorithms.forward_algorithm import ForwardAlgorithm
@@ -142,7 +148,7 @@ class BaseSolver(ABC):
         def loss(trainable):
             full_params = eqx.combine(trainable, static)
             full_params = _freeze(full_params, element_frozen, original_params)
-            output = ForwardAlgorithm().run(full_params, u_pre, ys, ts, xs)
+            output = ForwardAlgorithm().run(full_params, u_pre, ys, ts, xs, batched=batched)
             return _loss(output, full_params)
 
         return loss

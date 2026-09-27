@@ -35,18 +35,24 @@ class BaseInference(ABC):
         ...
 
     @abstractmethod
-    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None) -> Any:
+    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None, batched: bool = False) -> Any:
         """
-        Run the full algorithm over a sequence.
+        Run the full algorithm over a sequence, or over a batch of sequences.
 
         Implementations precompute the per-step inputs in batched form, scan `step`
         over them, and hand the result to `postprocess`.
+
+        :param batched: when True, the leading axis of `ys` (and of `ts`/`xs` when
+            given) is a batch of independent sequences and every output field
+            carries that axis in front. Batching is always opt-in: it is never
+            inferred from the shape of `ys`, because a single sequence may be
+            spelled (T,) or (T, 1) and the latter is indistinguishable from a batch
+            of T length-1 sequences.
         """
         ...
 
-    def _validate_inputs(self, hmm_params:Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
-        """Validate that the inputs to run() have compatible shapes and types.
-        """
+    def _validate_common(self, hmm_params: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
+        """The type checks that hold whether or not the inputs are batched."""
         if carry_pre is None:
             raise ValueError("carry_pre cannot be None. Use the initialize() method to compute the initial carry.")
         if not isinstance(ys, jnp.ndarray):
@@ -55,14 +61,48 @@ class BaseInference(ABC):
             raise ValueError(f"xs must be a jnp.ndarray if provided, got {type(xs)}")
         if len(ys) == 0:
             raise ValueError("ys cannot be empty")
-        if xs is not None and len(xs) != len(ys):
-            raise ValueError(f"xs and ys must have the same length, got {len(xs)} and {len(ys)}")
         if not isinstance(hmm_params, BaseHMM):
             raise ValueError(f"hmm_params must be an instance of HMMParams, got {type(hmm_params)}")
-        if ts is not None and len(ts) != len(ys):
-            raise ValueError(f"ts and ys must have the same length, got {len(ts)} and {len(ys)}") 
         if (ts is not None and not isinstance(ts, jnp.ndarray)):
             raise ValueError(f"ts must be a jnp.ndarray of floats if provided, got {type(ts)}")
+
+    def _validate_inputs(self, hmm_params:Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
+        """Validate that the inputs to run() have compatible shapes and types.
+
+        This is the single-sequence path: `ys` is one sequence, so its leading axis
+        is time and `xs`/`ts` must line up with it.
+        """
+        self._validate_common(hmm_params, ys, ts, xs, carry_pre)
+        if xs is not None and len(xs) != len(ys):
+            raise ValueError(f"xs and ys must have the same length, got {len(xs)} and {len(ys)}")
+        if ts is not None and len(ts) != len(ys):
+            raise ValueError(f"ts and ys must have the same length, got {len(ts)} and {len(ys)}") 
+
+    def _validate_batched_inputs(self, hmm_params: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
+        """Validate the batched path, where ys is (B, T, ...).
+
+        Both the batch size and the sequence length are checked against `ts`/`xs`.
+        The single-sequence checks compare only leading-axis lengths, which for
+        batched input would compare batch sizes and never notice a per-sequence
+        length mismatch.
+        """
+        self._validate_common(hmm_params, ys, ts, xs, carry_pre)
+        if ys.ndim < 2:
+            raise ValueError(
+                f"batched=True expects ys of shape (B, T, ...), got a {ys.ndim}-D array "
+                f"of shape {ys.shape}. Pass batched=False for a single sequence."
+            )
+        batch_shape = ys.shape[:2]
+        if ts is not None and ts.shape[:2] != batch_shape:
+            raise ValueError(
+                f"ts must match ys on the batch and time axes, got ts shape {ts.shape} "
+                f"and ys shape {ys.shape}"
+            )
+        if xs is not None and xs.shape[:2] != batch_shape:
+            raise ValueError(
+                f"xs must match ys on the batch and time axes, got xs shape {xs.shape} "
+                f"and ys shape {ys.shape}"
+            )
     
     @abstractmethod
     def postprocess(self, carry_0, carry_final, outputs) -> Any:
