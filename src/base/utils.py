@@ -84,3 +84,55 @@ def transtion_matrix_to_logits_continuous(Gamma: jnp.ndarray, t: int) -> jnp.nda
     off_diag = jnp.clip(Q[mask], a_min=1e-8)
     return jnp.log(off_diag).reshape(m, m - 1)
 
+
+def pad_sequence_batch(seqs, lengths: list[int] | None = None) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Pad a ragged list of per-sequence arrays into one rectangular batch.
+
+    `jax.vmap` maps over an axis of a rectangular array, so sequences of different
+    lengths have to be padded to a common length and the padding then excluded from
+    the likelihood. This returns the padded batch and the boolean mask that marks
+    which steps are real:
+
+        padded: (B, max_T, ...)   mask: (B, max_T), True where the step is observed
+
+    Padding repeats each sequence's **last row** rather than inserting zeros or NaNs.
+    The padded steps are masked out of the likelihood, but their densities are still
+    computed, and `jnp.where` propagates a NaN from its unselected branch straight
+    into the gradient -- so the padding values have to stay in a range the emission
+    can evaluate. Repeating the last row also keeps an autoregressive emission's lags
+    finite. Padding always goes at the end, so the lags at every *real* step still
+    read only real observations.
+
+    :param seqs: per-sequence arrays, each with time on axis 0 and matching
+        trailing dimensions.
+    :param lengths: expected sequence lengths; if given, they are checked against
+        `seqs` so a mismatched `xs`/`ts` batch is caught here rather than producing a
+        silently misaligned mask.
+    """
+    arrays = [jnp.asarray(s) for s in seqs]
+    if not arrays:
+        raise ValueError("cannot pad an empty batch of sequences")
+
+    got = [a.shape[0] for a in arrays]
+    if min(got) == 0:
+        raise ValueError(f"every sequence must have at least one observation, got lengths {got}")
+    if lengths is not None and got != list(lengths):
+        raise ValueError(
+            f"sequence lengths must match across ys, ts and xs, got {got} where "
+            f"{list(lengths)} was expected"
+        )
+
+    trailing = {a.shape[1:] for a in arrays}
+    if len(trailing) > 1:
+        raise ValueError(
+            f"every sequence must share the same trailing shape, got {sorted(trailing)}"
+        )
+
+    max_len = max(got)
+    padded = [
+        a if a.shape[0] == max_len
+        else jnp.concatenate([a, jnp.repeat(a[-1:], max_len - a.shape[0], axis=0)], axis=0)
+        for a in arrays
+    ]
+    mask = jnp.arange(max_len)[None, :] < jnp.asarray(got)[:, None]
+    return jnp.stack(padded), mask

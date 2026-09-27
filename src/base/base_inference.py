@@ -35,7 +35,7 @@ class BaseInference(ABC):
         ...
 
     @abstractmethod
-    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None, batched: bool = False) -> Any:
+    def run(self, hmm_params: Any, carry_pre: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None = None, xs: jnp.ndarray | None = None, batched: bool = False, mask: jnp.ndarray | None = None) -> Any:
         """
         Run the full algorithm over a sequence, or over a batch of sequences.
 
@@ -48,6 +48,9 @@ class BaseInference(ABC):
             inferred from the shape of `ys`, because a single sequence may be
             spelled (T,) or (T, 1) and the latter is indistinguishable from a batch
             of T length-1 sequences.
+        :param mask: for a padded ragged batch, a (B, T) boolean array that is True
+            where a step is a real observation. Masked steps must contribute nothing
+            to the likelihood.
         """
         ...
 
@@ -78,7 +81,7 @@ class BaseInference(ABC):
         if ts is not None and len(ts) != len(ys):
             raise ValueError(f"ts and ys must have the same length, got {len(ts)} and {len(ys)}") 
 
-    def _validate_batched_inputs(self, hmm_params: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any):
+    def _validate_batched_inputs(self, hmm_params: Any, ys: jnp.ndarray, ts: Int[Array, " n"] | None, xs: jnp.ndarray | None, carry_pre: Any, mask: jnp.ndarray | None = None):
         """Validate the batched path, where ys is (B, T, ...).
 
         Both the batch size and the sequence length are checked against `ts`/`xs`.
@@ -103,6 +106,16 @@ class BaseInference(ABC):
                 f"xs must match ys on the batch and time axes, got xs shape {xs.shape} "
                 f"and ys shape {ys.shape}"
             )
+        if mask is not None:
+            if mask.shape != batch_shape:
+                raise ValueError(
+                    f"mask must have shape (B, T) = {batch_shape}, got {mask.shape}"
+                )
+            if mask.dtype != bool:
+                raise ValueError(f"mask must be a boolean array, got dtype {mask.dtype}")
+            # Nothing here inspects mask *values*: the loss is traced under jit, where
+            # they are tracers. Emptiness is checked on the Python sequence lengths in
+            # `pad_sequence_batch` instead.
     
     @abstractmethod
     def postprocess(self, carry_0, carry_final, outputs) -> Any:

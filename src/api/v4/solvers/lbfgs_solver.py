@@ -20,7 +20,8 @@ class LBFGSSolver(BaseSolver):
             u_pre=None,
             frozen=None,
             loss_fn: Callable | None = None,
-            batched: bool = False) -> None:
+            batched: bool = False,
+            mask=None) -> None:
         
         whole_frozen, element_frozen = self._parse_frozen(frozen)
         filter_spec = self._build_filter_spec(hmm_params, whole_frozen)
@@ -28,7 +29,7 @@ class LBFGSSolver(BaseSolver):
         _loss_fn = self._build_loss_fn(static, u_pre, ys, ts, xs, loss_fn=loss_fn,
                                        element_frozen=element_frozen,
                                        original_params=hmm_params,
-                                       batched=batched)
+                                       batched=batched, mask=mask)
 
         arrays, non_arrays = eqx.partition(trainable, eqx.is_array)
 

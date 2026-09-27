@@ -340,6 +340,8 @@ def plot_hmm_diagnostics(model, save_path: str | None = None):
 
 _LATEX_HEADER_MAP = {
     "#Params": "\\#Params",
+    # A bare % opens a LaTeX comment, which would swallow the rest of the header row.
+    "MAPE%": "MAPE (\\%)",
     "ΔAIC": "$\\Delta$AIC",
     "ΔBIC": "$\\Delta$BIC",
     "P-val": "$p$-value",
@@ -352,7 +354,7 @@ def _fmt_cell(value, col, float_cols_4dp):
     if isinstance(value, float):
         return f"{value:.4f}" if col in float_cols_4dp else f"{value:.2f}"
     if isinstance(value, (int, np.integer)):
-        return str(int(value) + 1)
+        return str(int(value))
     return str(value)
 
 

@@ -67,6 +67,11 @@ class HMM:
         They index `ys` by time and size their output with `len(ys)`, which for a
         (B, T) array is the batch size.
         """
+        if isinstance(ys, (list, tuple)):
+            raise ValueError(
+                f"{what} are computed per sequence, got a batch of {len(ys)} sequences. "
+                f"Pass one sequence at a time, e.g. ys[i]."
+            )
         if jnp.ndim(ys) > 1 and jnp.shape(ys)[-1] != 1:
             raise ValueError(
                 f"{what} are computed per sequence and need a single sequence, got ys "
@@ -110,13 +115,18 @@ class HMM:
             frozen=None,
             num_iters: int = 200,
             tol: float = 1e-6,
-            batched: bool = False) -> None:
+            batched: bool = False,
+            mask: jnp.ndarray | None = None) -> None:
         """Fit the model.
 
         :param batched: when True, `ys` holds a batch of independent sequences on its
             leading axis, shape (B, T), and `ts`/`xs` carry the same leading axis.
             The log-likelihood is then the sum over sequences. Batching is opt-in:
             a 2-D `ys` with batched=False is still one sequence.
+        :param mask: for a padded ragged batch, a (B, T) boolean array that is True
+            where a step is a real observation; masked steps contribute exactly 0 to
+            the log-likelihood. Unnecessary when `ys` (and `ts`/`xs`) are passed as
+            *lists* of variable-length sequences, which are padded and masked for you.
         """
         
         if solver is None:
@@ -131,7 +141,7 @@ class HMM:
         for i in range(num_iters):
             solver.fit(self.params, ys, ts, xs, u_pre=self.u_pre,
                    frozen=frozen, loss_fn=self.negative_log_likelihood,
-                   batched=batched)
+                   batched=batched, mask=mask)
             self.params = solver.params
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
@@ -225,22 +235,23 @@ class HMM:
         residuals = self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
         return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=residuals)
 
-    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False) -> float:
+    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False, mask: jnp.ndarray | None = None) -> float:
         """Log-likelihood of `ys`, or of the last fit when `ys` is None.
 
         Unlike the other diagnostics this one is batch-safe: it only reads the
         likelihood factors, so with `batched=True` it returns the summed
-        log-likelihood of every sequence in the batch.
+        log-likelihood of every sequence in the batch, and a ragged batch (a list of
+        sequences, or a padded array plus `mask`) counts only the real observations.
         """
         if (ys is None):
             return self.ll_fits[-1] if self.ll_fits else float('-inf')
-        ll = self._compute_log_likelihood(ys, xs, ts, batched=batched)
+        ll = self._compute_log_likelihood(ys, xs, ts, batched=batched, mask=mask)
         return ll
 
 
-    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False) -> float:
+    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False, mask: jnp.ndarray | None = None) -> float:
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs, batched=batched)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs, batched=batched, mask=mask)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
         #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
@@ -298,11 +309,7 @@ class HMM:
 
     def _run_prediction(self, utt: jnp.ndarray,  t_pred: jnp.ndarray , ys: jnp.ndarray, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Forecast the emission mean at each absolute time in `t_pred`, measured
-        from the last observation (anchor = 0). The per-step gap drives the
-        transition: for a continuous model the gap is the waiting time fed to
-        expm(Q * gap); for a discrete model the fixed matrix is raised to the
-        integer gap power.
+        Forecast for 
         """
         from src.api.v4.transitions.continuous_static_transition import ContinuousStaticTransition
         from src.api.v4.transitions.continuous_dynamic_transition import ContinuousDynamicTransition
