@@ -230,9 +230,16 @@ def state_means(emission, ys):
 def rolling_forecast(model, ys, xs_std, start: int, end: int, K: int):
     """Fixed K-step-ahead plug-in forecast anchored at every observation in [start, end - K).
 
-    Returns `(target_idx, y_true, y_pred)`: the index of each forecast target, the realised
-    value there, and the forecast of it. Anchors stop at `end - K` so every target falls
-    inside the block, which keeps the scores clear of the training block.
+    Returns `(target_idx, y_true, y_pred, state_probs)`: the index of each forecast target,
+    the realised value there, the forecast of it, and the K-step-ahead state distribution
+    that forecast was taken under -- `state_probs[a, s]` is P(state s at target a | history
+    up to its anchor), the same weights the predictive mean is a weighted average over, so
+    its rows sum to 1. Anchors stop at `end - K` so every target falls inside the block,
+    which keeps the scores clear of the training block.
+
+    A higher-order model's augmented index encodes (s_{t-order+1}, ..., s_t), so the
+    augmented probabilities are summed over the history part before being returned: the
+    columns are always the K *base* states, comparable across models.
 
     General in the number of AR lags: `lags[:, j]` is y_{t-j}, matching the flipped slice in
     `AutoregressiveGaussEmission.mu`, and each prediction is pushed onto the front of that
@@ -277,16 +284,26 @@ def rolling_forecast(model, ys, xs_std, start: int, end: int, K: int):
             y_pred = jnp.sum(u * mu_state, axis=1)                         # state-weighted mean
             lags = jnp.concatenate([y_pred[:, None], lags[:, :-1]], axis=1)  # plug-in next lag
 
+    # Fold the augmented state space onto the base states: augmented index i encodes the
+    # current base state as i % num_states, so summing over the leading history axis is
+    # the marginal over the state at the target. First-order models fall through unchanged.
+    base_states = getattr(model.transition, "num_states", u.shape[1])
+    state_probs = np.asarray(u).reshape(len(anchors), -1, base_states).sum(axis=1)
+
     target_idx = np.asarray(anchors) + K
-    return target_idx, np.asarray(ys[anchors + K]), np.asarray(y_pred)
+    return target_idx, np.asarray(ys[anchors + K]), np.asarray(y_pred), state_probs
 
 
 def rolling_persistence(ys, start: int, end: int, K: int):
-    """Persistence baseline: predict y[anchor + K] as the current value y[anchor]."""
+    """Persistence baseline: predict y[anchor + K] as the current value y[anchor].
+
+    Returns the same 4-tuple shape as `rolling_forecast` so the two can be held in one
+    dict and unpacked identically; the baseline has no states, so the last slot is None.
+    """
     ys = jnp.asarray(ys)
     anchors = jnp.arange(start, end - K)
     target_idx = np.asarray(anchors) + K
-    return target_idx, np.asarray(ys[anchors + K]), np.asarray(ys[anchors])
+    return target_idx, np.asarray(ys[anchors + K]), np.asarray(ys[anchors]), None
 
 
 # --------------------------------------------------------------------------- #

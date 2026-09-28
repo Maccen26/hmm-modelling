@@ -2,9 +2,9 @@
 
 Port of the cleaning pipeline in `week_5.ipynb`: drop NaN / saturated / duplicate readings,
 resample to a regular grid, keep the longest gap-free segment, build the covariate matrix
-(off-day flag, weekly / daily Fourier terms, hourly weather), shift each calendar month so its
-minimum sits at the outdoor baseline, then split chronologically into train -> val -> test and z-score
-the covariates on training statistics only.
+(off-day flag, weekly / daily Fourier terms, hourly weather), subtract the sensor's slowly
+drifting zero so an empty room sits at the outdoor baseline, then split chronologically into
+train -> val -> test and z-score the covariates on training statistics only.
 """
 
 import os
@@ -62,22 +62,52 @@ def longest_gap_free_segment(df_raw: pd.DataFrame, bin: str = "30min") -> pd.Ser
     return max(segments, key=len)
 
 
-def calibrate_baseline(seg: pd.Series, baseline: float = 400.0) -> tuple[pd.Series, pd.Series]:
-    """Shift each calendar month of a *binned* series so its minimum sits at `baseline` ppm.
+def sensor_floor(
+    seg: pd.Series, window: str = "28D", quantile: float = 0.02, min_periods: int = 10,
+) -> pd.Series:
+    """Estimate what the sensor reads with the room empty, as a function of time.
 
-    The NDIR sensors drift, so the floor of a room's series wanders over weeks; one offset per
-    month tracks that drift. Within a month it is a constant, so every difference and dynamic
-    inside the month is preserved (only level moves) -- at the cost of a step at each month
-    boundary, where the two offsets differ.
+    A centred rolling low quantile: for each bin, the window is every bin within half of
+    `window` either side of it, and the floor is that window's `quantile`. Stepping one bin
+    forward drops one observation off the back and adds one to the front, so the estimate can
+    only creep -- which is the whole point, since a floor that jumps injects a fake step into
+    the series (see `calibrate_baseline`).
+
+    Choosing `quantile`: it must stay below the fraction of bins in which the room is genuinely
+    empty, or the "floor" starts tracking occupancy and the calibration subtracts real CO2.
+    For Room 009 ~16% of bins sit below 500 ppm, so 0.02 is comfortably clear of occupancy
+    while still resting on ~27 observations rather than a single noisy minimum.
+
+    The window straddles the train/val/test boundaries, so a held-out bin's calibration is
+    informed by held-out data. That is a property of sensor calibration rather than of the
+    model -- no CO2 *level* crosses the split, only a low quantile of the surrounding weeks --
+    but it is worth stating explicitly when the held-out scores are reported.
+    """
+    return seg.rolling(window, center=True, min_periods=min_periods).quantile(quantile)
+
+
+def calibrate_baseline(
+    seg: pd.Series, baseline: float = 400.0, window: str = "28D", quantile: float = 0.02,
+) -> tuple[pd.Series, pd.Series]:
+    """Remove the sensor's drifting zero: `y_cal = y_raw - floor(t) + baseline`.
+
+    The NDIR sensors drift, so the level at which a room reads "empty" wanders by ~100 ppm
+    over a few months. Subtracting a smoothly varying floor takes that out while leaving the
+    short-run dynamics -- the peaks, decays and gaps the HMM actually models -- untouched.
 
     Must run on the *aggregated* series, not the raw readings: a 30min bin averages several
-    readings, so calibrating the raw series leaves the binned minimum above `baseline`.
+    readings, so calibrating the raw series leaves the binned floor above `baseline`.
 
-    Returns the calibrated series and the per-month offsets that were subtracted.
+    Returns the calibrated series and the floor that was subtracted (saved alongside the data
+    so the transform can be undone).
     """
-    month = seg.index.to_period("M")                                        # type: ignore
-    offsets = seg.groupby(month).min() - baseline
-    return seg - offsets.reindex(month).to_numpy(), offsets
+    floor = sensor_floor(seg, window=window, quantile=quantile)
+    if floor.isna().any():
+        raise ValueError(
+            f"sensor floor undefined for {int(floor.isna().sum())} of {len(floor)} bins -- "
+            f"the segment is too short for a {window} window"
+        )
+    return seg - floor + baseline, floor
 
 
 
@@ -105,6 +135,8 @@ def clean_dtu_data(
     test_size: float = 0.20,
     bin: str = "30min",
     baseline_ppm: float = 400.0,
+    baseline_window: str = "28D",
+    baseline_quantile: float = 0.02,
     tod_harmonics: tuple[int, ...] = (1, 2, 3),
     week_harmonics: tuple[int, ...] = (1,),
     use_off_day: bool = True,
@@ -120,11 +152,14 @@ def clean_dtu_data(
     print(f"  longest gap-free {bin} segment: {len(seg)} bins")
     print(f"  window {start} -> {end}  ({(end - start).total_seconds() / 3600:.1f} h)")
 
-    seg, offsets = calibrate_baseline(seg, baseline=baseline_ppm)
+    seg, floor = calibrate_baseline(
+        seg, baseline=baseline_ppm, window=baseline_window, quantile=baseline_quantile,
+    )
     ys = np.asarray(seg.values, dtype=float)
-    offset = "|".join(f"{m}:{o:.2f}" for m, o in offsets.items())   # per month, subtracted
-    print(f"  baseline offsets applied: " +
-          ", ".join(f"{m} {-o:+.2f} ppm" for m, o in offsets.items()))
+    floor_arr = np.asarray(floor.values, dtype=float)
+    print(f"  sensor floor ({baseline_window}, q={baseline_quantile:g}): "
+          f"{floor_arr.min():.1f} -> {floor_arr.max():.1f} ppm "
+          f"(drift {floor_arr.max() - floor_arr.min():+.1f} ppm), rebased to {baseline_ppm:.0f}")
 
     dates = pd.DatetimeIndex(seg.index)
     X, covariate_cols = build_covariates(
@@ -145,10 +180,10 @@ def clean_dtu_data(
     }
     data_name = room_slug(room_name)
     meta = {}
-    for arr_name, arr in (("y", ys), ("X", X_std)):
+    for arr_name, arr in (("y", ys), ("X", X_std), ("floor", floor_arr)):
         for arr_type, sl in slices.items():
             part = np.atleast_2d(arr[sl])
-            if part.shape[0] == 1 and arr_name == "y":
+            if part.shape[0] == 1 and arr_name in ("y", "floor"):
                 part = part.T
             meta[f"{arr_name}_{arr_type}_shape"] = part.shape
             save_arr(arr=part, data_name=data_name, tag=tag, arr_name=arr_name, arr_type=arr_type)
@@ -171,7 +206,9 @@ def clean_dtu_data(
         val_idx=val_idx,
         dates=dates,
         baseline_ppm=baseline_ppm,
-        offset=offset,
+        floor=floor_arr,
+        baseline_window=baseline_window,
+        baseline_quantile=baseline_quantile,
         covariate_cols=covariate_cols,
         x_mean=x_mean,
         x_std=x_std,
@@ -181,7 +218,8 @@ def clean_dtu_data(
 
 def save_metadata(
     data_name, tag, room_name, bin, start, end, n, val_size, test_size, train_idx, val_idx,
-    dates, baseline_ppm, offset, covariate_cols, x_mean, x_std, meta,
+    dates, baseline_ppm, floor, baseline_window, baseline_quantile,
+    covariate_cols, x_mean, x_std, meta,
 ) -> None:
     """One-row `metadata.csv` recording the window, the split and the reversible transforms."""
     record = {
@@ -200,7 +238,13 @@ def save_metadata(
         "train_end": dates[train_idx],
         "val_end": dates[val_idx],
         "baseline_ppm": baseline_ppm,
-        "baseline_offset": offset,           # "YYYY-MM:offset|..." per calendar month
+        # The floor is per-bin, so it is saved as floor_{train,val,test}.csv rather than here;
+        # y_uncalibrated = y + floor - baseline_ppm. These are the knobs and its span.
+        "baseline_window": baseline_window,
+        "baseline_quantile": baseline_quantile,
+        "baseline_floor_start": floor[0],
+        "baseline_floor_end": floor[-1],
+        "baseline_floor_drift": floor.max() - floor.min(),
         "covariate_cols": "|".join(covariate_cols),
     }
     record.update(meta)
