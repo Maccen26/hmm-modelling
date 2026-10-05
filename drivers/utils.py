@@ -34,6 +34,16 @@ def load_data_path(data_name: str, tag: str, arr_type: str) -> tuple[str, str]:
     X_path = os.path.join(base_path, f"{data_name}/{tag}/X_{arr_type}.csv")
     return y_path, X_path
 
+
+def load_y_df(data_name: str, tag: str, arr_type: str) -> pd.DataFrame:
+    """Headered y CSV written by `clean_dtu_data`, with `datetime` parsed."""
+    base_path = load_base_data_path()
+    y_path = os.path.join(base_path, f"{data_name}/{tag}/y_{arr_type}.csv")
+    df = pd.read_csv(y_path)
+    if "datetime" in df.columns:
+        df["datetime"] = pd.to_datetime(df["datetime"])
+    return df
+
 def load_csv_to_jnp(path) -> jnp.ndarray:
     arr = np.loadtxt(path, delimiter=",")
     arr = jnp.asarray(arr)

@@ -57,4 +57,4 @@ class LBFGSSolver(BaseSolver):
 
         self.params = eqx.combine(eqx.combine(arrays, non_arrays), static)
         self.params = self._restore_frozen_elements(self.params, element_frozen, hmm_params)
-        self.opt_loss_val = float(val)
+        self.opt_loss_val = val

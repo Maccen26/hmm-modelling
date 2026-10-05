@@ -135,6 +135,9 @@ class HMM:
 
         convergence = False
         prev_ll = float('-inf')
+        
+        self.ll_fits = []
+
         if (frozen is not None):
             self.no_of_free_params = self.no_of_free_params - len(frozen)
 
