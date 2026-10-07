@@ -1,5 +1,5 @@
-from src.base.base_emission import BaseEmission
-from src.base.base_transition import BaseTransition
+from src.api.v5.base.base_emission import BaseEmission
+from src.api.v5.base.base_transition import BaseTransition
 from src.base.base_hmm import BaseHMM
 from src.base.base_inference import BaseInference
 

@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import jax
 
-from src.base import BaseTransition
+from src.api.v5.base import BaseTransition
 from src.base.utils import logits_to_transition_matrix
 
 
@@ -40,15 +40,14 @@ class DynamicTransition(BaseTransition):
         from src.base.utils import transition_matrix_to_logits
         return cls(transition_matrix_to_logits(transition_matrix), beta)
 
-    def step(self, t: int | None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def step(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Computes the covariate-adjusted transition logits at observation index `t`.
+        Computes the covariate-adjusted transition logits for one observation.
 
-        :param t: index of the observation whose covariate row xs[t] is used.
-        :param xs: covariate sequence of shape (T, num_covariates).
+        :param xt: covariate row at one observation, shape (num_covariates,).
         :return: transition logits of shape (num_states, num_states - 1).
         """
-        if xs is None:
+        if xt is None:
             # A dynamic transition has no single covariate-free matrix. Raising keeps
             # that explicit rather than silently substituting the baseline logits --
             # callers that need one (e.g. a stationary distribution) must supply it.
@@ -56,22 +55,20 @@ class DynamicTransition(BaseTransition):
                 "DynamicTransition requires covariates `xs`; it has no time-invariant "
                 "transition matrix. Pass xs, or supply an explicit initial distribution.")
 
-        xt = xs[t, :].flatten()  # covariate row at this observation, as a 1D array
+        xt = jnp.ravel(xt)  # covariate row at this observation, as a 1D array
         # Broadcast each covariate scalar over its (num_states, num_states - 1) beta
         # slice and sum across covariates.
         tensor = self.beta * xt[:, None, None]
         return self.transition_logits + tensor.sum(axis=0)
 
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix for the observation at index `t`.
+        Builds the transition matrix for one observation.
 
-        :param t: index whose covariate row parameterises the matrix.
-        :param xs: covariate sequence of shape (T, num_covariates).
-        :param dt: ignored — this is a discrete-time transition.
+        :param xt: covariate row parameterising the matrix, shape (num_covariates,).
         :return: transition matrix of dim (num_states, num_states)
         """
-        return logits_to_transition_matrix(self.step(t, ys, xs))
+        return logits_to_transition_matrix(self.step(xt))
 
     def base_transition_matrix(self) -> jnp.ndarray:
         """

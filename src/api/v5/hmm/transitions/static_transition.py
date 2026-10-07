@@ -1,4 +1,4 @@
-from src.base import BaseTransition 
+from src.api.v5.base import BaseTransition 
 import jax.numpy as jnp
 
 from src.base.utils import logits_to_transition_matrix 
@@ -11,29 +11,25 @@ class StaticTransition(BaseTransition):
     transition_matrix_: jnp.ndarray is of dim (num_states, num_states - 1) and contains the off-diagonal elements of the transition matrix. 
     """
 
-    def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def step(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        computes new transtions logits based on the covariates at time step t. 
+        Returns the transition logits. They are covariate-free, so `xt` is ignored.
 
-        
-        :param self: Description
-        :param xt: Description
-        :return: Description
-        :rtype: ndarray
+        :param xt: covariate row at one observation (ignored).
+        :return: transition logits of shape (num_states, num_states - 1).
         """
-        return self.transition_logits 
-    
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
-        """
-        Builds the transition matrix for the observation at index `t`.
+        return self.transition_logits
 
-        The matrix is time-homogeneous and covariate-free, so both `t` and the
-        waiting time `dt` are ignored; they are accepted to keep one signature
-        across every transition.
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
+        """
+        Builds the transition matrix.
+
+        The matrix is time-homogeneous and covariate-free, so `xt` is ignored; it
+        is accepted to keep one signature across every transition.
 
         :return: transition matrix of dim (num_states, num_states)
         """
-        logits = self.step(t, ys, xs)
+        logits = self.step(xt)
         return logits_to_transition_matrix(logits)
     
 

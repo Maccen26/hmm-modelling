@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 import equinox as eqx
 from abc import ABC, abstractmethod
-from src.base.utils import logits_to_transition_matrix, transition_matrix_to_logits
+from src.base.utils import transition_matrix_to_logits
 from typing import Iterator, Tuple
 from dataclasses import fields
 import jax 
@@ -22,8 +22,9 @@ class BaseTransition(eqx.Module, ABC):
         transition_logits =  transition_matrix_to_logits(transition_matrix)
         return cls(transition_logits)
     
+
     @abstractmethod
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         Builds the transition matrix for the observation at index `t`.
 
@@ -40,75 +41,29 @@ class BaseTransition(eqx.Module, ABC):
         :return: transition matrix of dim (num_states, num_states)
         """
         ...
+    
+    def transition_matrices(self, N: int, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        if (xs is None): 
+            Gamma = self.transition_matrix()
+            return jnp.broadcast_to(Gamma, (N, *Gamma.shape))
+        # np.unique (not jnp) runs at trace time on the concrete xs, so this stays jittable
+        xs_uniq, inverse = np.unique(np.asarray(xs), axis=0, return_inverse=True)
+        transition_matrices_uniq = jax.vmap(self.transition_matrix)(jnp.asarray(xs_uniq))
+        transition_matrices = transition_matrices_uniq[inverse.reshape(-1)]
+        return transition_matrices
 
 
-    def transition_matrices(self, indices: jnp.ndarray, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
-        """
-        Builds one transition matrix per observation in a single batched call.
-
-        :param indices: observation indices, i.e. jnp.arange(T) — used for covariate
-            lookup.
-        :param ts: per-observation waiting times, parallel to `indices` — used by the
-            continuous-time transitions.
-
-        Returns an array of shape (T, num_states, num_states).
-
-        Only one matrix is computed per unique (covariate row, waiting time) pair;
-        observations sharing a pair reuse it via a gather, through which gradients
-        flow as usual. This assumes the matrix depends on `t` only through xs[t] —
-        `ys` is not forwarded — so a subclass that reads `ys` must override this.
-        Subclasses can also override it with a cheaper batched computation.
-        """
-        try:
-            # Concrete constants in the fit path, so we can dedup at trace time.
-            indices_np = np.asarray(indices)
-            ts_np = np.asarray(ts)
-            xs_np = None if xs is None else np.asarray(xs)
-        except Exception:
-            # Tracers (no concrete values available) — fall back to no dedup.
-            return jax.vmap(lambda i, dt: self.transition_matrix(t=i, ys=ys, xs=xs, dt=dt))(indices, ts)
-
-        n = len(indices_np)
-        if xs_np is None:
-            keys = ts_np.reshape(n, 1)
-        else:
-            keys = np.column_stack([xs_np[indices_np].reshape(n, -1), ts_np.reshape(n)])
-        keys_unique, inverse = np.unique(keys, axis=0, return_inverse=True)
-
-        xs_unique = None if xs_np is None else jnp.asarray(keys_unique[:, :-1].reshape((-1,) + xs_np.shape[1:]))
-        ts_unique = jnp.asarray(keys_unique[:, -1])
-        unique_mats = jax.vmap(lambda i, dt: self.transition_matrix(t=i, ys=None, xs=xs_unique, dt=dt))(
-            jnp.arange(len(keys_unique)), ts_unique
-        )                                                # (U, K, K)
-        return unique_mats[inverse.reshape(-1)]          # (T, K, K)
-
-    @abstractmethod
-    def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None) -> jnp.ndarray:
-        """
-        computes new transtions logits based on the covariates at time step t. 
-        Return dim is (num_states, num_states - 1) and contains the off-diagonal elements of the transition matrix.
-
-        :type t: int
-        :param t: time step
-        :type ys: jnp.ndarray
-        :param ys: observation sequence
-        :type xs: jnp.ndarray | None
-        :param xs: covariate sequence (optional)
-        :return: transition logits for time step t
-        :rtype: jnp.ndarray
-        """
-        ...
 
     def __iter__(self) -> Iterator:
         return ((f.name, getattr(self, f.name)) for f in fields(self))
     
 
     def __eq__(self, value: object) -> bool:
-        is_equal = True
-        
-        is_equal = is_equal and isinstance(value, BaseTransition)
-        is_equal = is_equal and (self.__class__.__name__ == value.__class__.__name__)
+        # Return early: a different class may not have the same fields
+        if not isinstance(value, BaseTransition) or self.__class__.__name__ != value.__class__.__name__:
+            return False
 
+        is_equal = True
         for f in fields(self):
             a = getattr(self, f.name)
             b = getattr(value, f.name) 

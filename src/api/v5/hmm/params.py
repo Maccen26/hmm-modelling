@@ -1,14 +1,17 @@
-from src.base.base_hmm import BaseHMM
-
 import jax.numpy as jnp
+import equinox as eqx
+from src.api.v5.base import BaseTransition, BaseEmission
 
-class Params(BaseHMM):
+class Params(eqx.Module):
     """
     HMM class that combines a transition model and an emission model. 
     Holds trainable parameters for both the transition and emission models.
     """
 
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
+    transition: BaseTransition
+    emission: BaseEmission
+
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         Builds the transition matrix for the observation at index `t`.
 
@@ -18,17 +21,17 @@ class Params(BaseHMM):
 
         :return: transition matrix of dim (num_states, num_states)
         """
-        return self.transition.transition_matrix(t=t, ys=ys, xs=xs, dt=dt)
+        return self.transition.transition_matrix(xt=xt)
 
-    def transition_matrices(self, indices: jnp.ndarray, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def transition_matrices(self, N: int, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         Builds one transition matrix per observation in a single batched call.
         Returns an array of shape (T, num_states, num_states).
         """
-        return self.transition.transition_matrices(indices, ts, ys=ys, xs=xs)
+        return self.transition.transition_matrices(N = N, xs = xs)
 
 
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def density(self, t:int, ys: jnp.ndarray):
         """
         y is the observation at time step t.
         x is the covariates at time step t.
@@ -36,9 +39,9 @@ class Params(BaseHMM):
         emission (used by continuous-time emissions; ignored by the others).
         Returns the emission density p(y_t | z_t, x_t) at time step t with dimensions (num_states,).
         """
-        return self.emission.density(t, ys, xs, ts)
+        return self.emission.density(t = t, ys = ys)
 
-    def densities(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def densities(self, ys: jnp.ndarray):
         """
         Emission densities for every observation in a single batched call.
 
@@ -46,18 +49,19 @@ class Params(BaseHMM):
         :param ts: per-observation waiting times, forwarded to the emission.
         Returns an array whose leading axis is T.
         """
-        return self.emission.densities(indices, ys, xs, ts)
+        indices = jnp.arange(len(ys)) 
+        return self.emission.densities(indices = indices, ys = ys)
 
-    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def cdf(self, t:int, ys: jnp.ndarray):
         """
         y is the observation at time step t.
         x is the covariates at time step t.
         ts is the optional per-observation waiting-time sequence, forwarded to the emission.
         Returns the emission cdf P(Y_t <= y | z_t, x_t) at time step t with dimensions (num_states,).
         """
-        return self.emission.cdf(t, ys, xs, ts)
+        return self.emission.cdf(t = t, ys = ys)
     
-    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def cdfs(self, ys: jnp.ndarray):
         """
         Emission CDFs for every observation in a single batched call.
 
@@ -65,7 +69,8 @@ class Params(BaseHMM):
         :param ts: per-observation waiting times, forwarded to the emission.
         Returns an array whose leading axis is T.
         """
-        return self.emission.cdfs(indices, ys, xs, ts)
+        indices = jnp.arange(len(ys))
+        return self.emission.cdfs(indices=indices, ys=ys)
 
     def __iter__(self):
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""

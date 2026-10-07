@@ -1,4 +1,4 @@
-from src.base.base_emission import BaseEmission 
+from src.api.v5.base import BaseEmission 
 import jax.numpy as jnp 
 import jax.scipy.stats as stats 
 
@@ -25,22 +25,22 @@ class GaussEmission(BaseEmission):
         log_sigma = jnp.log(sigma)  # Store log of sigma to ensure positivity
         return cls(log_mu_diff, mu0, log_sigma)
 
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
-        mu, sigma = self.step(t, ys, xs)
+    def density(self, t:int, ys: jnp.ndarray) -> jnp.ndarray:
+        mu, sigma = self.step(t, ys)
         yt = ys[t]
         return stats.norm.pdf(jnp.atleast_1d(yt)[:, None], loc=mu, scale=sigma)
 
-    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
-        return self.mu(t, ys, xs), self.sigma(t, ys, xs)
+    def step(self, t: int, ys: jnp.ndarray):
+        return self.mu(t, ys), self.sigma(t, ys)
 
-    def mu(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def mu(self, t: int, ys: jnp.ndarray):
         return jnp.concatenate([jnp.array([self.mu0]), self.mu0 + jnp.cumsum(jnp.exp(self.log_mu_diff))])
 
-    def sigma(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def sigma(self, t: int, ys: jnp.ndarray):
         return jnp.exp(self.log_sigma)
 
-    def cdf(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
-        mu = self.mu(t, ys, xs)
-        sigma = self.sigma(t, ys, xs)
+    def cdf(self, t: int, ys: jnp.ndarray) -> jnp.ndarray:
+        mu = self.mu(t, ys)
+        sigma = self.sigma(t, ys)
         return stats.norm.cdf(jnp.atleast_1d(ys[t])[:, None], loc=mu, scale=sigma)
     

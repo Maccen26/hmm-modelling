@@ -2,8 +2,8 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 
-from src.base import BaseTransition
-from src.api.v4.transitions.static_transition_higher_order import (
+from src.api.v5.base import BaseTransition
+from src.api.v5.hmm.transitions.static_transition_higher_order import (
     _make_transition_logits,
     logits_to_transition_matrix_higher_order,
     offdiag_logits_to_higher_order,
@@ -118,20 +118,19 @@ class DynamicTransitionHigherOrder(BaseTransition):
         lifted = offdiag_logits_to_higher_order(base_logits)
         return jnp.tile(lifted, (lifted.shape[0] ** (order - 1), 1))
 
-    def step(self, t: int | None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def step(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Computes the covariate-adjusted logits of the full augmented matrix at
-        observation index `t`.
+        Computes the covariate-adjusted logits of the full augmented matrix for one
+        observation.
 
         Like `StaticTransitionHigherOrder.step` this returns the *full*
         (K**order, K**order) logit matrix, with structurally impossible transitions
         driven to -1000, not the (K**order, K - 1) block of free logits.
 
-        :param t: index of the observation whose covariate row xs[t] is used.
-        :param xs: covariate sequence of shape (T, num_covariates).
+        :param xt: covariate row at one observation, shape (num_covariates,).
         :return: transition logits of shape (K**order, K**order).
         """
-        if xs is None:
+        if xt is None:
             # A dynamic transition has no single covariate-free matrix. Raising keeps
             # that explicit rather than silently substituting the baseline logits --
             # callers that need one (e.g. a stationary distribution) must supply it.
@@ -140,7 +139,7 @@ class DynamicTransitionHigherOrder(BaseTransition):
                 "time-invariant transition matrix. Pass xs, or supply an explicit "
                 "initial distribution.")
 
-        xt = xs[t, :].flatten()  # covariate row at this observation, as a 1D array
+        xt = jnp.ravel(xt)  # covariate row at this observation, as a 1D array
         # Broadcast each covariate scalar over its (K, K - 1) beta slice and sum
         # across covariates -> the shift for each *current* base state.
         shift = (self.beta * xt[:, None, None]).sum(axis=0)  # (K, K - 1)
@@ -149,16 +148,14 @@ class DynamicTransitionHigherOrder(BaseTransition):
         tiled = jnp.tile(shift, (num_states ** (self.order - 1), 1))
         return _make_transition_logits(self.transition_logits + tiled, self.order)
 
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Builds the augmented transition matrix for the observation at index `t`.
+        Builds the augmented transition matrix for one observation.
 
-        :param t: index whose covariate row parameterises the matrix.
-        :param xs: covariate sequence of shape (T, num_covariates).
-        :param dt: ignored -- this is a discrete-time transition.
+        :param xt: covariate row parameterising the matrix, shape (num_covariates,).
         :return: transition matrix of dim (K**order, K**order)
         """
-        return logits_to_transition_matrix_higher_order(self.step(t, ys, xs))
+        return logits_to_transition_matrix_higher_order(self.step(xt))
 
     def base_transition_matrix(self) -> jnp.ndarray:
         """

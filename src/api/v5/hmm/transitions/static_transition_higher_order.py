@@ -1,5 +1,5 @@
 import jax
-from src.base import BaseTransition 
+from src.api.v5.base import BaseTransition 
 import jax.numpy as jnp 
 import equinox as eqx
 
@@ -126,7 +126,7 @@ class StaticTransitionHigherOrder(BaseTransition):
 
     #Todo: Make it more geneeric. Right now we only implement for lags of 2 or 3 states.  
 
-    def step(self, t: int | None, ys: jnp.ndarray | None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+    def step(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
         computes new transitiongs logits based on the order of the markov chain. 
         The goal is to make non possible transition have almost 0 probability. 
@@ -140,16 +140,16 @@ class StaticTransitionHigherOrder(BaseTransition):
 
         return _make_transition_logits(self.transition_logits, self.order)
     
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
+    def transition_matrix(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Builds the augmented transition matrix for the observation at index `t`.
+        Builds the augmented transition matrix.
 
-        Time-homogeneous, so both `t` and the waiting time `dt` are ignored; they
-        are accepted to keep one signature across every transition.
+        Time-homogeneous and covariate-free, so `xt` is ignored; it is accepted to
+        keep one signature across every transition.
 
         :return: transition matrix of dim (num_states ** order, num_states ** order)
         """
-        logits = self.step(t, ys, xs)
+        logits = self.step(xt)
 
         return logits_to_transition_matrix_higher_order(logits)
     

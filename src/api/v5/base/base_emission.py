@@ -11,7 +11,7 @@ class BaseEmission(eqx.Module, ABC):
     """
 
     @abstractmethod
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def density(self, t:int, ys: jnp.ndarray) -> jnp.ndarray:
         """
         ys is the observations sequence.
         xs is the covariates sequence.
@@ -23,7 +23,7 @@ class BaseEmission(eqx.Module, ABC):
         """
         ...
 
-    def densities(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def densities(self, indices: jnp.ndarray, ys: jnp.ndarray) -> jnp.ndarray:
         """
         Emission densities for every observation in a single batched call.
 
@@ -37,10 +37,10 @@ class BaseEmission(eqx.Module, ABC):
         override this with a cheaper batched computation, but the vmap default is
         correct for any emission whose `density` is a pure function of `t`.
         """
-        return jax.vmap(lambda i: self.density(i, ys, xs, ts))(indices)
+        return jax.vmap(lambda i: self.density(i, ys))(indices)
 
     @abstractmethod
-    def mu(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def mu(self, t:int, ys: jnp.ndarray) -> jnp.ndarray:
         """
         ys is the observations sequence.
         xs is the covariates sequence.
@@ -51,7 +51,7 @@ class BaseEmission(eqx.Module, ABC):
         ...
 
     @abstractmethod
-    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None, ts: jnp.ndarray | None = None) -> Any:
+    def step(self, t: int, ys: jnp.ndarray) -> Any:
         """
         ys is the observations sequence. 
         xs is the covariates sequence.
@@ -65,7 +65,7 @@ class BaseEmission(eqx.Module, ABC):
         ...
     
     @abstractmethod
-    def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def cdf(self, t:int, ys: jnp.ndarray) -> jnp.ndarray:
         """
         ys is the observations sequence.
         xs is the covariates sequence.
@@ -76,7 +76,7 @@ class BaseEmission(eqx.Module, ABC):
         """
         ...
 
-    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray) -> jnp.ndarray:
         """
         Emission CDFs for every observation in a single batched call.
 
@@ -87,7 +87,7 @@ class BaseEmission(eqx.Module, ABC):
         Returns an array whose leading axis is T, stacking what `cdf` returns per
         step.
         """
-        return jax.vmap(lambda i: self.cdf(i, ys, xs, ts))(indices)
+        return jax.vmap(lambda i: self.cdf(i, ys))(indices)
 
     def __iter__(self) -> Any:
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""

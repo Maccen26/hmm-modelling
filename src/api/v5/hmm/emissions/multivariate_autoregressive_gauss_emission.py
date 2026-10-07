@@ -1,4 +1,4 @@
-from src.base.base_emission import BaseEmission 
+from src.api.v5.base import BaseEmission 
 import jax.scipy.stats as stats 
 import jax.numpy as jnp 
 import jax 
@@ -60,26 +60,26 @@ class MultivariateAutoregressiveGaussEmission(BaseEmission):
         log_mu_diff = jnp.log(jnp.diff(mu, axis=1))  # gaps between state means
         return cls(log_mu_diff, mu[:, 0], jnp.log(sigma), phi_to_phi_tilde(phi))
 
-    def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def density(self, t:int, ys: jnp.ndarray) -> jnp.ndarray:
         """Joint density p(y_t | z_t) per state, shape (1, num_states).
 
         The product over the K conditionally independent dimensions, neutralised to
         1 for the first k steps whose lags do not exist yet.
         """
-        density = jnp.prod(self.marginal_densities(t, ys, xs, ts), axis=0, keepdims=True)
+        density = jnp.prod(self.marginal_densities(t, ys), axis=0, keepdims=True)
         return jnp.where(t < len(self.phi_tilde), jnp.ones_like(density), density)
 
-    def marginal_densities(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def marginal_densities(self, t: int, ys: jnp.ndarray) -> jnp.ndarray:
         """Per-dimension, per-state density of y_t, shape (K, num_states)."""
-        mu, sigma = self.step(t, ys, xs)
+        mu, sigma = self.step(t, ys)
         return stats.norm.pdf(ys[t, :][:, None], loc=mu, scale=sigma)
 
-    def step(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
-        return self.mu(t, ys, xs), self.sigma(t, ys, xs)
+    def step(self, t: int, ys: jnp.ndarray):
+        return self.mu(t, ys), self.sigma(t, ys)
 
-    def mu(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def mu(self, t: int, ys: jnp.ndarray):
         """State means with the AR correction applied, shape (K, num_states)."""
-        base_mu = self.mu_vals(t, ys, xs)                      # (K, N)
+        base_mu = self.mu_vals(t, ys)                      # (K, N)
         k = len(self.phi_tilde)
         lags = self.lags(t, ys, k)                             # (k, K)
         ar = jnp.sum(self.phi() * (lags[:, :, None] - base_mu[None, :, :]), axis=0)
@@ -96,7 +96,7 @@ class MultivariateAutoregressiveGaussEmission(BaseEmission):
         window = jax.lax.dynamic_slice(ys, (jnp.maximum(t - k, 0), 0), (k, ys.shape[1]))
         return jnp.flip(window, axis=0)
 
-    def mu_vals(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def mu_vals(self, t: int, ys: jnp.ndarray):
         """State means before the AR correction, shape (K, num_states).
 
         Rebuilt per dimension from the state-0 mean plus the cumulative gaps, so the
@@ -111,13 +111,13 @@ class MultivariateAutoregressiveGaussEmission(BaseEmission):
         n_tiles = self.log_sigma.shape[1] // base.shape[1]
         return jnp.tile(base, (1, n_tiles))
 
-    def sigma(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+    def sigma(self, t: int, ys: jnp.ndarray):
         return jnp.exp(self.log_sigma)
 
     def phi(self):
         return phi_tilde_to_phi(self.phi_tilde)  # (num_lags, num_dims, num_states)
 
-    def cdf(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def cdf(self, t: int, ys: jnp.ndarray) -> jnp.ndarray:
         """Product of the marginal CDFs per state, shape (1, num_states).
 
         Mirrors `density` so `HMM.pseudo_residuals` runs, but note the product of
@@ -125,9 +125,9 @@ class MultivariateAutoregressiveGaussEmission(BaseEmission):
         resulting pseudo-residuals are not uniform under the model, so their QQ
         plots must not be read as a goodness-of-fit check.
         """
-        return jnp.prod(self.marginal_cdfs(t, ys, xs, ts), axis=0, keepdims=True)
+        return jnp.prod(self.marginal_cdfs(t, ys), axis=0, keepdims=True)
 
-    def marginal_cdfs(self, t: int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+    def marginal_cdfs(self, t: int, ys: jnp.ndarray) -> jnp.ndarray:
         """Per-dimension, per-state CDF at y_t, shape (K, num_states)."""
-        mu, sigma = self.step(t, ys, xs)
+        mu, sigma = self.step(t, ys)
         return stats.norm.cdf(ys[t, :][:, None], loc=mu, scale=sigma)
