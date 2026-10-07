@@ -60,18 +60,27 @@ class HMM:
             )
         return u
 
-    @staticmethod
-    def _reject_batched(ys: jnp.ndarray, what: str) -> None:
+    def _reject_batched(self, ys: jnp.ndarray, what: str) -> None:
         """Guard the per-sequence diagnostics against a batch of sequences.
 
         They index `ys` by time and size their output with `len(ys)`, which for a
-        (B, T) array is the batch size.
+        (B, T) array is the batch size. A multivariate emission (vector `mu0` of
+        shape (K,)) takes a single sequence of shape (T, K), so one extra axis is
+        allowed for it.
         """
         if isinstance(ys, (list, tuple)):
             raise ValueError(
                 f"{what} are computed per sequence, got a batch of {len(ys)} sequences. "
                 f"Pass one sequence at a time, e.g. ys[i]."
             )
+        obs_ndim = jnp.ndim(getattr(self.emission, "mu0", 0.0))  # 0 univariate, 1 multivariate
+        if obs_ndim > 0:
+            if jnp.ndim(ys) != 1 + obs_ndim:
+                raise ValueError(
+                    f"{what} are computed per sequence and need a single (T, K) sequence, "
+                    f"got ys of shape {jnp.shape(ys)}. Pass one sequence at a time, e.g. ys[i]."
+                )
+            return
         if jnp.ndim(ys) > 1 and jnp.shape(ys)[-1] != 1:
             raise ValueError(
                 f"{what} are computed per sequence and need a single sequence, got ys "
