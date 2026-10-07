@@ -1,0 +1,282 @@
+@startuml
+' Proposed refactor of src/api/v4: split the HMM god class.
+'
+' Today src/api/v4/hmm_models/hmm.py::HMM does eight jobs in one class:
+'   1. holds the model (params, transition/emission accessors, update_param)
+'   2. builds the initial distribution (stationary vs. given + validation)
+'   3. runs the outer fitting loop (solver calls, convergence, ll_fits, frozen count)
+'   4. picks the inference algorithm from a string ("forward")
+'   5. evaluates the log-likelihood on new data
+'   6. computes diagnostics (StateResults, pseudo-residuals, lazy cache, float64 guard)
+'   7. forecasts (predict_emission, arg checks, isinstance() switch on transition type)
+'   8. migrates old pickles (__setstate__)
+' plus shape validation (_reject_batched / check_predict_args) scattered through 5-7.
+'
+' The proposal gives each job its own small collaborator. HMM stays as a thin
+' facade with the same public surface (fit, log_likelihood, pseudo_residuals,
+' predict_emission, update_param, state_results, hmm_results, ll_fits, u_pre),
+' so drivers, tests and notebooks keep working while the internals move.
+'
+' Colour key:  green = new class,  amber = existing class that changes,
+'              grey = existing class, unchanged.
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5568
+skinparam class {
+    BackgroundColor #F2F2F2
+    BorderColor #8A8A8A
+    BackgroundColor<<new>> #E3F4E1
+    BorderColor<<new>> #3C8D3A
+    BackgroundColor<<changed>> #FDF1DC
+    BorderColor<<changed>> #C98A1B
+}
+skinparam package {
+    BorderColor #9AA5B1
+    FontColor #33415C
+}
+skinparam note {
+    BackgroundColor #FFFCE8
+    BorderColor #C9B458
+}
+hide stereotype
+hide empty members
+
+' ------------------------------------------------------------------ facade
+package "hmm_models" {
+    class HMM <<changed>> {
+        + params : HMMParams
+        + initial : InitialDistribution
+        + fit_result : FitResult | None
+        --
+        + __init__(transition, emission, initial=None, inference=ForwardAlgorithm())
+        + fit(ys, ts=None, xs=None, solver=None, frozen=None, num_iters=200, tol=1e-6, batched=False, mask=None) : FitResult
+        + log_likelihood(ys=None, xs=None, ts=None, batched=False, mask=None) : float
+        + pseudo_residuals(ys, xs=None, ts=None) : Array
+        + predict_emission(t_pred, ys, xs=None, x_pred=None, ts=None) : Array
+        + update_param(name, value, index=None)
+        --
+        <<properties, kept for back-compat>>
+        + transition / emission
+        + u_pre : Array (1, K)
+        + hmm_results : HMMResults | None
+        + ll_fits : list[float]
+        + no_of_free_params : int
+        + state_results : StateResults | None   (lazy)
+    }
+
+    class HMMParams <<changed>> {
+        + transition : BaseTransition
+        + emission : BaseEmission
+        --
+        + num_params() : int
+        + num_free_params(frozen) : int
+        + update_param(name, value, index) : HMMParams
+    }
+
+    class HMMResults {
+        + convergence : bool
+        + log_likelihood : float
+        + num_params : int
+    }
+
+    class StateResults {
+        + utt : Array (T, K)
+        + ut : Array (T, K)
+        + time_index : Array (T,)
+        + pseudo_residuals : Array (T,)
+    }
+}
+
+' ------------------------------------------------------------------ data
+package "data" {
+    class SequenceData <<new>> {
+        + ys : Array | list
+        + ts : Array | None
+        + xs : Array | None
+        + mask : Array | None
+        + batched : bool
+        --
+        + {static} single(ys, ts=None, xs=None) : SequenceData
+        + {static} batch(ys, ts=None, xs=None, mask=None) : SequenceData
+        + require_single(what: str, obs_ndim: int)
+        + num_obs() : int
+    }
+    note bottom of SequenceData
+      Replaces the (ys, ts, xs, batched, mask) tuple
+      threaded through every method, and owns the
+      batch guard that is _reject_batched today.
+    end note
+}
+
+' ------------------------------------------------------------------ initial distribution
+package "initial" {
+    abstract class InitialDistribution <<new>> {
+        + {abstract} __call__(params: HMMParams) : Array (1, K)
+    }
+    class StationaryDistribution <<new>> {
+        + __call__(params) : Array
+    }
+    note bottom of StationaryDistribution
+      delta = 1ᵀ (I - Γ + E)⁻¹
+    end note
+    class FixedDistribution <<new>> {
+        + u : Array (1, K)
+        --
+        + __init__(u, num_states)
+        + __call__(params) : Array
+    }
+    InitialDistribution <|-- StationaryDistribution
+    InitialDistribution <|-- FixedDistribution
+}
+
+' ------------------------------------------------------------------ fitting
+package "fitting" {
+    class Fitter <<new>> {
+        + solver : BaseSolver
+        + loss_fn : Callable
+        + num_iters : int
+        + tol : float
+        --
+        + fit(params, u_pre, data: SequenceData, frozen=None) : FitResult
+        - _converged(prev_ll, ll) : bool
+    }
+    class FitResult <<new>> {
+        + params : HMMParams
+        + ll_trace : list[float]
+        + converged : bool
+        + num_free_params : int
+        + data : SequenceData
+        --
+        + log_likelihood : float
+        + to_hmm_results() : HMMResults
+    }
+    Fitter ..> FitResult : creates
+}
+
+' ------------------------------------------------------------------ evaluation
+package "evaluation" {
+    class LikelihoodEvaluator <<new>> {
+        + inference : BaseInference
+        --
+        + log_likelihood(params, u_pre, data) : float
+    }
+    class Diagnostics <<new>> {
+        + inference : BaseInference
+        --
+        + state_results(params, u_pre, data) : StateResults
+        + pseudo_residuals(params, u_pre, data) : Array
+        - _residuals_from(ut, params, data) : Array
+        - _require_x64()
+    }
+    note bottom of Diagnostics
+      Per-sequence only: calls data.require_single().
+      Batch-safe likelihood lives in LikelihoodEvaluator.
+    end note
+}
+
+' ------------------------------------------------------------------ forecasting
+package "forecasting" {
+    class ForecastRequest <<new>> {
+        + t_pred : Array (H,)
+        + x_pred : Array | None
+        --
+        + validate(data: SequenceData, emission)
+        + gaps() : Array (H,)
+    }
+    class Forecaster <<new>> {
+        + inference : BaseInference
+        --
+        + predict(params, u_pre, data, request) : Array (H,)
+    }
+    Forecaster ..> ForecastRequest
+}
+
+' ------------------------------------------------------------------ existing components
+package "transitions / emissions" {
+    abstract class BaseTransition <<changed>> {
+        + transition_logits
+        --
+        + transition_matrix(t, ys, xs, dt) : Array
+        + transition_matrices(indices, ts, ys, xs) : Array
+        + **propagate(u, gap, t, ys, xs) : Array**
+    }
+    note right of BaseTransition
+      **propagate** replaces the isinstance() switch in
+      HMM._run_prediction. Default (discrete): u @ Γ^gap.
+      Continuous transitions override: u @ expm(Q·gap).
+    end note
+    class "StaticTransition\nDynamicTransition\nStaticTransitionHigherOrder" as DiscreteT
+    class "ContinuousStaticTransition\nContinuousDynamicTransition" as ContT <<changed>>
+    BaseTransition <|-- DiscreteT
+    BaseTransition <|-- ContT
+
+    abstract class BaseEmission {
+        + density / densities
+        + cdf / cdfs
+        + mu
+    }
+}
+
+package "algorithms / solvers" {
+    abstract class BaseInference {
+        + run(params, carry_pre, ys, ts, xs, batched, mask) : BaseOutput
+    }
+    class ForwardAlgorithm
+    class ForwardOutput {
+        + utt / ut / ft
+        + log_likelihood()
+    }
+    BaseInference <|-- ForwardAlgorithm
+    ForwardAlgorithm ..> ForwardOutput : returns
+
+    abstract class BaseSolver {
+        + fit(params, ys, ts, xs, u_pre, frozen, loss_fn, batched, mask)
+    }
+    class "LBFGSSolver\nGradientSolver" as Solvers
+    BaseSolver <|-- Solvers
+}
+
+package "persistence" {
+    class ModelStore <<new>> {
+        + save(hmm, path)
+        + load(path) : HMM
+        - _migrate(state: dict) : dict
+    }
+    note bottom of ModelStore
+      Owns the pickle-format migration that is
+      HMM.~__setstate~__ today (or keep ~__setstate~__
+      on the facade and just delegate to _migrate).
+    end note
+}
+
+' ------------------------------------------------------------------ relationships
+HMM *-- HMMParams
+HMM o-- InitialDistribution
+HMM o-- FitResult
+HMM --> Fitter : fit()
+HMM --> LikelihoodEvaluator : log_likelihood()
+HMM --> Diagnostics : state_results /\npseudo_residuals()
+HMM --> Forecaster : predict_emission()
+HMM ..> SequenceData : builds from\nraw args
+
+HMMParams *-- BaseTransition
+HMMParams *-- BaseEmission
+
+Fitter o-- BaseSolver
+FitResult ..> HMMResults : to_hmm_results()
+Diagnostics ..> StateResults : creates
+
+LikelihoodEvaluator o-- BaseInference
+Diagnostics o-- BaseInference
+Forecaster o-- BaseInference
+Forecaster ..> BaseTransition : propagate()
+Forecaster ..> BaseEmission : mu()
+
+ModelStore ..> HMM
+
+@enduml
