@@ -28,10 +28,15 @@ class TestForwardAlgorithm(TestCase):
         xs = None  # No covariates
 
         carry_0 = jnp.array([[1.0, 0.0, 0.0]])  # Initial forward variable (start in state 0 with prob 1)
+        # step() now consumes precomputed per-step inputs rather than the model, so
+        # build them the way run() does.
+        indices = jnp.arange(len(ys))
+        Gammas = self.hmm_params.transition_matrices(indices, indices, ys, xs)
+        gs = self.hmm_params.densities(indices, ys, xs, indices)
         try:
-            carry_1, output_1 = forward_alg.step(self.hmm_params, carry_0, t=0, ys=ys, xs=xs)
-            carry_2, output_2 = forward_alg.step(self.hmm_params,carry_1, t=1, ys=ys, xs=xs)
-            carry_3, output_3 = forward_alg.step(self.hmm_params,carry_2, t=2, ys=ys, xs=xs)
+            carry_1, output_1 = forward_alg.step(carry_0, (Gammas[0], gs[0]))
+            carry_2, output_2 = forward_alg.step(carry_1, (Gammas[1], gs[1]))
+            carry_3, output_3 = forward_alg.step(carry_2, (Gammas[2], gs[2]))
         except Exception as e:
             self.fail(f"Forward algorithm step failed with error: {e}")
 

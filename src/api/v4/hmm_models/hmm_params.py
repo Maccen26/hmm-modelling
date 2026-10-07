@@ -8,22 +8,24 @@ class HMMParams(BaseHMM):
     Holds trainable parameters for both the transition and emission models.
     """
 
-    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix at time step t given the covariates at time step t.
-        
-        :param xt: covarites at time step t. 
+        Builds the transition matrix for the observation at index `t`.
 
-        :return: transition matrix at time step t of dim (num_states, num_states) 
-        """
-        return self.transition.transition_matrix(t=t, ys=ys, xs=xs)
+        :param t: observation index, used for covariate lookup.
+        :param dt: waiting time since the previous observation, used by the
+            continuous-time transitions.
 
-    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
+        :return: transition matrix of dim (num_states, num_states)
         """
-        Builds the transition matrix for every time value in `ts` in one call.
-        Returns an array of shape (len(ts), num_states, num_states).
+        return self.transition.transition_matrix(t=t, ys=ys, xs=xs, dt=dt)
+
+    def transition_matrices(self, indices: jnp.ndarray, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        return self.transition.transition_matrices(ts, ys=ys, xs=xs)
+        Builds one transition matrix per observation in a single batched call.
+        Returns an array of shape (T, num_states, num_states).
+        """
+        return self.transition.transition_matrices(indices, ts, ys=ys, xs=xs)
 
 
     def density(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
@@ -36,6 +38,16 @@ class HMMParams(BaseHMM):
         """
         return self.emission.density(t, ys, xs, ts)
 
+    def densities(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+        """
+        Emission densities for every observation in a single batched call.
+
+        :param indices: observation indices, i.e. jnp.arange(T).
+        :param ts: per-observation waiting times, forwarded to the emission.
+        Returns an array whose leading axis is T.
+        """
+        return self.emission.densities(indices, ys, xs, ts)
+
     def cdf(self, t:int, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
         """
         y is the observation at time step t.
@@ -45,6 +57,16 @@ class HMMParams(BaseHMM):
         """
         return self.emission.cdf(t, ys, xs, ts)
     
+    def cdfs(self, indices: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None):
+        """
+        Emission CDFs for every observation in a single batched call.
+
+        :param indices: observation indices, i.e. jnp.arange(T).
+        :param ts: per-observation waiting times, forwarded to the emission.
+        Returns an array whose leading axis is T.
+        """
+        return self.emission.cdfs(indices, ys, xs, ts)
+
     def __iter__(self):
         """Make the class iterable with names. This is useful for the forward and backward algorithms, where we need to iterate over the states and compute the transition and emission probabilities."""
         yield 'transition', self.transition

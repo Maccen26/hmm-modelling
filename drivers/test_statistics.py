@@ -1,3 +1,7 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 """Compute model comparison statistics for a fitted model family.
 
 For a given ``data_name`` / ``tag`` this loads every fitted model from

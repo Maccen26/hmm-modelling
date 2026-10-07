@@ -89,38 +89,23 @@ class ContinuousDynamicTransition(BaseTransition):
         """Generator matrix Q at time step `t` given its covariates."""
         return get_Q_from_logits(self.step(t, ys, xs))
 
-    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float = 1.0) -> jnp.ndarray:
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix for the step at index `t`.
+        Builds the transition matrix for the observation at index `t`.
 
-        :param t: index whose covariates parameterize the generator (None -> baseline).
+        :param t: index whose covariate row parameterises the generator
+            (None -> baseline generator).
         :param xs: covariate sequence of shape (T, num_covariates).
         :param dt: waiting time used in expm(Q * dt). Defaults to a unit step, which
             is what the stationary-distribution computation expects.
         :return: transition matrix of shape (num_states, num_states).
         """
         Q = self.get_Q(t, ys, xs)
+        dt = 1.0 if dt is None else dt
         return jax.scipy.linalg.expm(Q * jnp.asarray(dt, dtype=Q.dtype))
 
-    def transition_matrices(self, ts: jnp.ndarray, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:
-        """
-        Batched transition matrices T_i = expm(Q(x_i) * ts[i]).
-
-        `ts` are the per-observation waiting times and `xs` the parallel covariate
-        rows; observation i uses both ts[i] and xs[i]. When no covariates are given
-        the generator is constant and this reduces to the static continuous case.
-        """
-        if xs is None:
-            Q = get_Q_from_logits(self.transition_logits)
-            return jax.vmap(lambda t: jax.scipy.linalg.expm(Q * t.astype(Q.dtype)))(ts)
-
-        indices = jnp.arange(ts.shape[0])
-
-        def one(i):
-            Q = get_Q_from_logits(self.step(i, ys, xs))
-            return jax.scipy.linalg.expm(Q * ts[i].astype(Q.dtype))
-
-        return jax.vmap(one)(indices)
+    # No `transition_matrices` override: the base implementation vmaps
+    # `transition_matrix` over (indices, ts), which is exactly T_i = expm(Q(x_i) * ts[i]).
 
     def base_transition_matrix(self, dt: float = 1.0) -> jnp.ndarray:
         """Transition matrix from the baseline generator, ignoring covariates."""

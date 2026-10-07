@@ -1,3 +1,7 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 """Extract covariate-coefficient (beta) tensors and write them to CSV.
 
 Only the covariate (dynamic-transition) models carry covariate coefficients. For

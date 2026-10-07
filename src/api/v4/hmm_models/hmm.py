@@ -21,7 +21,14 @@ class HMM:
         self.ll_fits = []  
         self.negative_log_likelihood : Callable = negative_log_likelihood 
         self.hmm_results: HMMResults | None = None
-        self.state_results: StateResults | None = None 
+        self._state_results: StateResults | None = None
+        # The data `fit` was last called with, so `state_results` can be computed
+        # lazily on first access instead of on the fit path.
+        self._fit_data: tuple | None = None
+        # Whether that data was a batch of sequences. The diagnostics are
+        # per-sequence, so they refuse to run on a batched fit rather than silently
+        # reading the batch axis as time.
+        self._fit_batched: bool = False
         self.no_of_free_params = len(self.params)  # Store the number of free parameters
 
     def set_negative_log_likelihood(self, loss_fn: Callable):
@@ -52,6 +59,33 @@ class HMM:
                 f"inital_distribution must be 1-D or 2-D, got {u.ndim}-D array."
             )
         return u
+
+    def _reject_batched(self, ys: jnp.ndarray, what: str) -> None:
+        """Guard the per-sequence diagnostics against a batch of sequences.
+
+        They index `ys` by time and size their output with `len(ys)`, which for a
+        (B, T) array is the batch size. A multivariate emission (vector `mu0` of
+        shape (K,)) takes a single sequence of shape (T, K), so one extra axis is
+        allowed for it.
+        """
+        if isinstance(ys, (list, tuple)):
+            raise ValueError(
+                f"{what} are computed per sequence, got a batch of {len(ys)} sequences. "
+                f"Pass one sequence at a time, e.g. ys[i]."
+            )
+        obs_ndim = jnp.ndim(getattr(self.emission, "mu0", 0.0))  # 0 univariate, 1 multivariate
+        if obs_ndim > 0:
+            if jnp.ndim(ys) != 1 + obs_ndim:
+                raise ValueError(
+                    f"{what} are computed per sequence and need a single (T, K) sequence, "
+                    f"got ys of shape {jnp.shape(ys)}. Pass one sequence at a time, e.g. ys[i]."
+                )
+            return
+        if jnp.ndim(ys) > 1 and jnp.shape(ys)[-1] != 1:
+            raise ValueError(
+                f"{what} are computed per sequence and need a single sequence, got ys "
+                f"of shape {jnp.shape(ys)}. Pass one sequence at a time, e.g. ys[i]."
+            )
 
     def _compute_stationary_distribution(self):
         num_states = self.transition.transition_logits.shape[0]
@@ -89,7 +123,20 @@ class HMM:
             solver=None,
             frozen=None,
             num_iters: int = 200,
-            tol: float = 1e-6) -> None:
+            tol: float = 1e-6,
+            batched: bool = False,
+            mask: jnp.ndarray | None = None) -> None:
+        """Fit the model.
+
+        :param batched: when True, `ys` holds a batch of independent sequences on its
+            leading axis, shape (B, T), and `ts`/`xs` carry the same leading axis.
+            The log-likelihood is then the sum over sequences. Batching is opt-in:
+            a 2-D `ys` with batched=False is still one sequence.
+        :param mask: for a padded ragged batch, a (B, T) boolean array that is True
+            where a step is a real observation; masked steps contribute exactly 0 to
+            the log-likelihood. Unnecessary when `ys` (and `ts`/`xs`) are passed as
+            *lists* of variable-length sequences, which are padded and masked for you.
+        """
         
         if solver is None:
             from src.api.v4.solvers import LBFGSSolver
@@ -97,12 +144,16 @@ class HMM:
 
         convergence = False
         prev_ll = float('-inf')
+        
+        self.ll_fits = []
+
         if (frozen is not None):
             self.no_of_free_params = self.no_of_free_params - len(frozen)
 
         for i in range(num_iters):
             solver.fit(self.params, ys, ts, xs, u_pre=self.u_pre,
-                   frozen=frozen, loss_fn=self.negative_log_likelihood)
+                   frozen=frozen, loss_fn=self.negative_log_likelihood,
+                   batched=batched, mask=mask)
             self.params = solver.params
             current_ll = -solver.opt_loss_val if solver.opt_loss_val is not None else float('-inf')
             self.ll_fits.append(current_ll)
@@ -115,34 +166,104 @@ class HMM:
             prev_ll = current_ll
 
         self.hmm_results = HMMResults(convergence=convergence, log_likelihood=self.ll_fits[-1], num_params=len(self.params))
-        self.state_results = self._compute_state_results(ys, xs, ts)
+        # Pseudo-residuals are a diagnostic, not part of fitting: record what we were
+        # fitted on and let `state_results` compute them on first access.
+        self._fit_data = (ys, xs, ts)
+        self._fit_batched = batched
+        self._state_results = None
+
+    @property
+    def state_results(self) -> StateResults | None:
+        """Per-observation state results, computed on first access and cached.
+
+        Computing these is pure diagnostics, so `fit` no longer pays for it; the
+        cost moves to whoever actually asks. Returns None if the model has not been
+        fitted.
+        """
+        if self._state_results is None and self._fit_data is not None:
+            if self._fit_batched:
+                raise NotImplementedError(
+                    "state_results is not available after a batched fit: the filtered "
+                    "probabilities, time index and pseudo-residuals are per-sequence "
+                    "quantities. Call hmm.pseudo_residuals(ys[i]) on a single sequence "
+                    "instead."
+                )
+            self._state_results = self._compute_state_results(*self._fit_data)
+        return self._state_results
+
+    @state_results.setter
+    def state_results(self, value: StateResults | None) -> None:
+        self._state_results = value
+
+    def __setstate__(self, state: dict) -> None:
+        """Restore a pickle, migrating models written before `state_results` became
+        a property.
+
+        Pickle restores through `__dict__.update()`, which bypasses the property, so
+        a legacy `state_results` key would otherwise shadow nothing and leave
+        `_state_results` undefined.
+        """
+        state = dict(state)
+        if "state_results" in state:
+            state["_state_results"] = state.pop("state_results")
+        state.setdefault("_state_results", None)
+        state.setdefault("_fit_data", None)
+        state.setdefault("_fit_batched", False)
+        self.__dict__.update(state)
+
+    def _forecast_pseudo_residuals(self, ut: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
+        """Forecast pseudo-residuals for the whole sequence in one vectorised pass.
+
+        `ut[t]` is the one-step-ahead predictive state distribution for observation
+        t, so the residual for t pairs ut[t] with cdf(y_t). The clip into the open
+        interval keeps float saturation at the tails (cdf ~0/1) producing
+        large-but-finite residuals instead of +/-inf/NaN.
+        """
+        from jax.scipy.stats import norm
+        # `len(ys)` below would be the batch size, so a batched sequence would come
+        # back silently mis-shaped rather than as an error.
+        self._reject_batched(ys, "Pseudo-residuals")
+        if not jax.config.jax_enable_x64:
+            # These are computed lazily, so they may run in a process that never
+            # enabled float64 -- in which case the CDF tails saturate and every
+            # residual comes back NaN. Fail loudly rather than returning garbage.
+            raise RuntimeError(
+                "Pseudo-residuals require float64. Set "
+                "jax.config.update('jax_enable_x64', True) at the top of your entry "
+                "point, before importing anything else, or they silently come back NaN."
+            )
+        indices = jnp.arange(len(ys))
+        Gs = self.emission.cdfs(indices, ys, xs, ts)      # (T, 1, num_states)
+        ut = jnp.asarray(ut).reshape(len(ys), -1)
+        u = jnp.clip(jnp.sum(ut * Gs.reshape(ut.shape), axis=-1), 1e-6, 1.0 - 1e-6)
+        return norm.ppf(u)
 
     def _compute_state_results(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> StateResults:
-        from jax.scipy.stats import norm
+        # Guarded before the forward pass so a batch-shaped `ys` reports what is
+        # wrong instead of failing inside the scan on a carry-shape mismatch.
+        self._reject_batched(ys, "State results")
         inference_alg = self._set_inference_algorithm("forward")
         output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
-        z_list = []
-        for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
-            # ut[t] is the one-step-ahead predictive state distribution for obs t,
-            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
-            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
-            # yields large-but-finite residuals instead of +/-inf/NaN.
-            u_t = jnp.clip(jnp.sum(output.ut[t] * G_t), 1e-6, 1.0 - 1e-6)
-            z_list.append(norm.ppf(u_t))
+        residuals = self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
+        return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=residuals)
 
-        return StateResults(utt=output.utt, ut=output.ut, time_index=jnp.arange(len(ys)), pseudo_residuals=jnp.asarray(z_list))
+    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False, mask: jnp.ndarray | None = None) -> float:
+        """Log-likelihood of `ys`, or of the last fit when `ys` is None.
 
-    def log_likelihood(self, ys: jnp.ndarray| None = None, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
+        Unlike the other diagnostics this one is batch-safe: it only reads the
+        likelihood factors, so with `batched=True` it returns the summed
+        log-likelihood of every sequence in the batch, and a ragged batch (a list of
+        sequences, or a padded array plus `mask`) counts only the real observations.
+        """
         if (ys is None):
             return self.ll_fits[-1] if self.ll_fits else float('-inf')
-        ll = self._compute_log_likelihood(ys, xs, ts)
+        ll = self._compute_log_likelihood(ys, xs, ts, batched=batched, mask=mask)
         return ll
 
 
-    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> float:
+    def _compute_log_likelihood(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray | None = None, batched: bool = False, mask: jnp.ndarray | None = None) -> float:
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, ts=ts, xs=xs, batched=batched, mask=mask)
         from src.api.v4.likelihoods import negative_log_likelihood
         return -float(negative_log_likelihood(output, self.params)) 
         #return float(jnp.sum(jnp.log(output.ft[drop_first:])))
@@ -151,23 +272,15 @@ class HMM:
     def update_param(self, param_name: str, new_value: jax.Array, index: Tuple|float|None = None) -> None:
         self.params = self.params.update_param(param_name, new_value, index) 
 
-    # Todo: Refactor this method to be part of fit maybe 
     def pseudo_residuals(self, ys: jnp.ndarray, xs: jnp.ndarray | None = None, ts: jnp.ndarray|None = None) -> jnp.ndarray:
-        from jax.scipy.stats import norm
+        """Forecast pseudo-residuals for an arbitrary single sequence."""
+        # Checked before the forward pass, not just inside
+        # `_forecast_pseudo_residuals`: a batch-shaped `ys` would otherwise fail
+        # first inside the scan with an opaque carry-shape error.
+        self._reject_batched(ys, "Pseudo-residuals")
         inference_alg = self._set_inference_algorithm("forward")
-        output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts) 
-        ut = output.ut  # shape (T, num_states)
-        z_list = []
-        for t in range(0, len(ys)):
-            G_t = self.emission.cdf(t, ys, xs, ts)  # shape (1, num_states)
-            # ut[t] is the one-step-ahead predictive state distribution for obs t,
-            # so the forecast pseudo-residual for obs t pairs ut[t] with cdf(y_t).
-            # Clip into the open interval so float saturation at the tails (cdf ~0/1)
-            # yields large-but-finite residuals instead of +/-inf/NaN.
-            u_t = jnp.clip(jnp.sum(ut[t] * G_t), 1e-6, 1.0 - 1e-6)
-            z_list.append(norm.ppf(u_t))
-
-        return jnp.array(z_list)
+        output = inference_alg.run(self.params, self.u_pre, ys=ys, xs=xs, ts=ts)
+        return self._forecast_pseudo_residuals(output.ut, ys, xs, ts)
     
 
     def predict_emission(self, t_pred: jnp.ndarray, ys: jnp.ndarray, xs: jnp.ndarray | None = None, x_pred: jnp.ndarray | None = None, ts: jnp.ndarray | None = None) -> jnp.ndarray:
@@ -208,11 +321,7 @@ class HMM:
 
     def _run_prediction(self, utt: jnp.ndarray,  t_pred: jnp.ndarray , ys: jnp.ndarray, x_pred: jnp.ndarray | None = None) -> jnp.ndarray:
         """
-        Forecast the emission mean at each absolute time in `t_pred`, measured
-        from the last observation (anchor = 0). The per-step gap drives the
-        transition: for a continuous model the gap is the waiting time fed to
-        expm(Q * gap); for a discrete model the fixed matrix is raised to the
-        integer gap power.
+        Forecast for 
         """
         from src.api.v4.transitions.continuous_static_transition import ContinuousStaticTransition
         from src.api.v4.transitions.continuous_dynamic_transition import ContinuousDynamicTransition
@@ -231,7 +340,7 @@ class HMM:
                 Gamma = self.transition.transition_matrix(t=i, ys=ys, xs=x_pred, dt=gap)
             elif is_continuous_static:
                 # expm(Q * gap); chaining the gaps reproduces expm(Q * t_abs).
-                Gamma = self.transition.transition_matrix(t=gap, ys=ys, xs=x_pred)
+                Gamma = self.transition.transition_matrix(ys=ys, xs=x_pred, dt=gap)
             else:
                 # Discrete: Gamma ignores time, so bridge the gap with Gamma^gap.
                 base = self.transition.transition_matrix(ys=ys, xs=x_pred)

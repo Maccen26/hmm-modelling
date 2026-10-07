@@ -1,13 +1,21 @@
 import os
 import pickle
+from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
-import numpy as np
 
 def load_train_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
     y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="train")
+    ys = load_csv_to_jnp(y_path)
+    ys = ys.flatten()  # Ensure ys is a 1D array
+    Xs = load_csv_to_jnp(X_path)
+    return ys, Xs
+
+def load_val_data(data_name: str, tag: str) -> tuple[jnp.ndarray, jnp.ndarray]:
+    y_path, X_path = load_data_path(data_name=data_name, tag=tag, arr_type="val")
     ys = load_csv_to_jnp(y_path)
     ys = ys.flatten()  # Ensure ys is a 1D array
     Xs = load_csv_to_jnp(X_path)
@@ -25,6 +33,16 @@ def load_data_path(data_name: str, tag: str, arr_type: str) -> tuple[str, str]:
     y_path = os.path.join(base_path, f"{data_name}/{tag}/y_{arr_type}.csv")
     X_path = os.path.join(base_path, f"{data_name}/{tag}/X_{arr_type}.csv")
     return y_path, X_path
+
+
+def load_y_df(data_name: str, tag: str, arr_type: str) -> pd.DataFrame:
+    """Headered y CSV written by `clean_dtu_data`, with `datetime` parsed."""
+    base_path = load_base_data_path()
+    y_path = os.path.join(base_path, f"{data_name}/{tag}/y_{arr_type}.csv")
+    df = pd.read_csv(y_path)
+    if "datetime" in df.columns:
+        df["datetime"] = pd.to_datetime(df["datetime"])
+    return df
 
 def load_csv_to_jnp(path) -> jnp.ndarray:
     arr = np.loadtxt(path, delimiter=",")
@@ -62,6 +80,10 @@ def load_time_covariates(period: int = 48) -> jnp.ndarray:
 
     Returns a (T, 2) array aligned with load_y_data(), since both draw from
     load_and_aggregate_data() with default arguments.
+
+    DEPRECATED: hardcoded to period=48 and tied to the legacy
+    `src.data.load_and_aggregate_data` path. Use `build_covariates` instead, which takes
+    real timestamps and any number of harmonics.
     """
     from src.data import load_and_aggregate_data  # lazy import to avoid circular import
 
@@ -70,6 +92,228 @@ def load_time_covariates(period: int = 48) -> jnp.ndarray:
     cos = jnp.cos(2 * jnp.pi * t / period)
     sin = jnp.sin(2 * jnp.pi * t / period)
     return jnp.column_stack((cos, sin))
+
+
+
+# --------------------------------------------------------------------------- #
+# Covariate construction
+#
+# Shared by `drivers/clean_dtu_data.py`, `week_5.ipynb` and
+# `week_5_optimal_parameters.ipynb` so the three cannot drift apart.
+# --------------------------------------------------------------------------- #
+
+WEATHER_COLS = [
+    "mean_temp",
+    "mean_relative_hum",
+    "mean_wind_speed",
+    "mean_pressure",
+    "mean_cloud_cover",
+    "mean_radiation",
+]
+
+
+def weather_path() -> Path:
+    return Path(load_base_data_path()) / "raw" / "dtu" / "weather.csv"
+
+
+def harmonic_range(n_list: list) -> tuple[int, ...]:
+    """Cycle count -> harmonic indices. `harmonic_range(0)` drops the block entirely."""
+    return tuple(n_list) if n_list else ()
+
+
+def is_holiday_mask(dt: pd.DatetimeIndex) -> np.ndarray:
+    import holidays as _holidays
+
+    dk = _holidays.Denmark(years=sorted(set(dt.year)))
+    return np.array([d.date() in dk for d in dt])
+
+
+def fourier_columns(angle, harmonics, label):
+    """sin/cos pairs for each requested harmonic of a 2*pi-normalised angle."""
+    cols, names = [], []
+    for k in harmonics:
+        cols += [np.sin(k * angle), np.cos(k * angle)]
+        names += [f"sin_{label}_{k}", f"cos_{label}_{k}"]
+    return cols, names
+
+
+def weather_features(datetimes, weather_cols: list[str]) -> np.ndarray:
+    """Match hourly weather (UTC) to each local, tz-naive observation time."""
+    if not weather_cols:
+        return np.empty((len(datetimes), 0))
+
+    weather_df = pd.read_csv(weather_path(), parse_dates=["DateFrom", "DateTo"])
+    weather_df = (
+        weather_df[["DateFrom", *weather_cols]]
+        .dropna()
+        .sort_values("DateFrom")
+        .reset_index(drop=True)
+    )
+
+    local = pd.DatetimeIndex(datetimes).tz_localize(
+        "Europe/Copenhagen", ambiguous="NaT", nonexistent="shift_forward"
+    )
+    left = pd.DataFrame({"t": local.tz_convert("UTC")})
+    left["order"] = np.arange(len(left))
+    left = left.sort_values("t")
+    merged = pd.merge_asof(
+        left, weather_df.rename(columns={"DateFrom": "t"}), on="t", direction="nearest",
+    )
+    merged = merged.sort_values("order")
+    return merged[weather_cols].ffill().bfill().to_numpy()
+
+
+def build_covariates(
+    datetimes,
+    tod_harmonics: tuple[int, ...] = (1, 2, 3),
+    week_harmonics: tuple[int, ...] = (1,),
+    use_off_day: bool = True,
+    weather_cols: list[str] | None = None,
+) -> tuple[np.ndarray, list[str]]:
+    """Return (X, names): an (N, D) covariate matrix and its D column names."""
+    weather_cols = WEATHER_COLS if weather_cols is None else weather_cols
+    dt = pd.DatetimeIndex(datetimes)
+    cols, names = [], []
+
+    if use_off_day:
+        is_weekend = dt.dayofweek >= 5
+        cols.append((is_weekend | is_holiday_mask(dt)).astype(float))
+        names.append("off_day")
+
+    seconds_into_week = dt.dayofweek * 86400 + dt.hour * 3600 + dt.minute * 60 + dt.second
+    c, n = fourier_columns(2 * np.pi * seconds_into_week / (7 * 86400), week_harmonics, "week")
+    cols += c
+    names += n
+
+    seconds_into_day = dt.hour * 3600 + dt.minute * 60 + dt.second
+    c, n = fourier_columns(2 * np.pi * seconds_into_day / 86400, tod_harmonics, "tod")
+    cols += c
+    names += n
+
+    X = np.column_stack(cols) if cols else np.empty((len(dt), 0))
+    return np.column_stack([X, weather_features(datetimes, weather_cols)]), [*names, *weather_cols]
+
+
+def standardise(X: np.ndarray, train_idx: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Z-score X with training statistics only, so nothing from val/test leaks into the scaling."""
+    mean = X[:train_idx].mean(axis=0)
+    std = X[:train_idx].std(axis=0)
+    std = np.where(std == 0, 1.0, std)           # a flag can be constant in a short segment
+    return (X - mean) / std, mean, std
+
+
+# --------------------------------------------------------------------------- #
+# Forecast metrics
+# --------------------------------------------------------------------------- #
+
+def rmse(y_true, y_pred) -> float:
+    return float(np.sqrt(np.mean((np.asarray(y_true) - np.asarray(y_pred)) ** 2)))
+
+
+def r2_score(y_true, y_pred) -> float:
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - y_true.mean()) ** 2)
+    return float(1.0 - ss_res / ss_tot)
+
+
+def mape(y_true, y_pred) -> float:
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    return float(np.mean(np.abs((y_true - y_pred) / y_true)) * 100.0)
+
+
+
+
+def state_means(emission, ys):
+    """Per-state base means, whichever emission is asked.
+
+    `GaussEmission` exposes them directly as `mu`; the autoregressive emission splits them
+    into `mu_vals` (state base) and `mu` (base + AR term on the previous values).
+    """
+    return getattr(emission, "mu_vals", emission.mu)(0, ys)
+
+
+# --------------------------------------------------------------------------- #
+# Rolling multi-step forecasting
+# --------------------------------------------------------------------------- #
+
+def rolling_forecast(model, ys, xs_std, start: int, end: int, K: int):
+    """Fixed K-step-ahead plug-in forecast anchored at every observation in [start, end - K).
+
+    Returns `(target_idx, y_true, y_pred, state_probs)`: the index of each forecast target,
+    the realised value there, the forecast of it, and the K-step-ahead state distribution
+    that forecast was taken under -- `state_probs[a, s]` is P(state s at target a | history
+    up to its anchor), the same weights the predictive mean is a weighted average over, so
+    its rows sum to 1. Anchors stop at `end - K` so every target falls inside the block,
+    which keeps the scores clear of the training block.
+
+    A higher-order model's augmented index encodes (s_{t-order+1}, ..., s_t), so the
+    augmented probabilities are summed over the history part before being returned: the
+    columns are always the K *base* states, comparable across models.
+
+    General in the number of AR lags: `lags[:, j]` is y_{t-j}, matching the flipped slice in
+    `AutoregressiveGaussEmission.mu`, and each prediction is pushed onto the front of that
+    window as the next step's lag-1 value. Works unchanged for a higher-order transition,
+    whose augmented state space just makes the arrays wider. A non-autoregressive emission
+    takes the constant-mean branch.
+    """
+    from src.api.v4.algorithms import ForwardAlgorithm  # lazy: avoid a circular import
+
+    ys = jnp.asarray(ys)
+    T = len(ys)
+    out = ForwardAlgorithm().run(model.params, model.u_pre, ys=ys, ts=None, xs=xs_std)
+    utt = out.utt.reshape(T, -1)                                          # (T, S)
+    # `ts` is ignored by a discrete transition, so unit waiting times are fine here.
+    Gammas = model.transition.transition_matrices(jnp.arange(T), jnp.ones(T), ys, xs_std)
+
+    anchors = jnp.arange(start, end - K)
+    u = utt[anchors]
+    is_ar = hasattr(model.emission, "phi")
+
+    if not is_ar:
+        mu = model.emission.mu(0, ys, xs_std)                             # (S,)
+        for m in range(1, K + 1):
+            u = jnp.einsum("ai,aij->aj", u, Gammas[anchors + m])
+        y_pred = u @ mu
+    else:
+        base = model.emission.mu_vals(0, ys, xs_std)                      # (S,) state base means
+        phi = model.emission.phi()                                        # (k, S)
+        k = phi.shape[0]
+        if start < k - 1:
+            raise ValueError(f"start={start} leaves no room for {k} AR lags")
+
+        lags = jnp.stack([ys[anchors - j] for j in range(k)], axis=1)      # (A, k), col 0 = newest
+        # mu_s = base_s + sum_j phi_js (y_{t-j} - base_s)
+        #      = base_s (1 - sum_j phi_js) + sum_j phi_js y_{t-j}
+        intercept = base[None, :] * (1.0 - phi.sum(axis=0))[None, :]       # (1, S)
+
+        y_pred = None
+        for m in range(1, K + 1):
+            u = jnp.einsum("ai,aij->aj", u, Gammas[anchors + m])
+            mu_state = intercept + jnp.einsum("aj,js->as", lags, phi)      # (A, S)
+            y_pred = jnp.sum(u * mu_state, axis=1)                         # state-weighted mean
+            lags = jnp.concatenate([y_pred[:, None], lags[:, :-1]], axis=1)  # plug-in next lag
+
+    # Fold the augmented state space onto the base states: augmented index i encodes the
+    # current base state as i % num_states, so summing over the leading history axis is
+    # the marginal over the state at the target. First-order models fall through unchanged.
+    base_states = getattr(model.transition, "num_states", u.shape[1])
+    state_probs = np.asarray(u).reshape(len(anchors), -1, base_states).sum(axis=1)
+
+    target_idx = np.asarray(anchors) + K
+    return target_idx, np.asarray(ys[anchors + K]), np.asarray(y_pred), state_probs
+
+
+def rolling_persistence(ys, start: int, end: int, K: int):
+    """Persistence baseline: predict y[anchor + K] as the current value y[anchor].
+
+    Returns the same 4-tuple shape as `rolling_forecast` so the two can be held in one
+    dict and unpacked identically; the baseline has no states, so the last slot is None.
+    """
+    ys = jnp.asarray(ys)
+    anchors = jnp.arange(start, end - K)
+    target_idx = np.asarray(anchors) + K
+    return target_idx, np.asarray(ys[anchors + K]), np.asarray(ys[anchors]), None
 
 
 # --------------------------------------------------------------------------- #
@@ -88,25 +332,25 @@ def plot_hmm_diagnostics(model, save_path: str | None = None):
 
     sns.set_theme(style="whitegrid", context="notebook")
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 4))
 
-    ll = np.asarray(model.ll_fits)
-    iterations = np.arange(1, len(ll) + 1)
-    sns.lineplot(x=iterations, y=ll, ax=axes[0], marker="o")
-    axes[0].set_title("Log-likelihood per iteration")
-    axes[0].set_xlabel("Iteration")
-    axes[0].set_ylabel("log L")
-    axes[0].xaxis.set_major_locator(MaxNLocator(integer=True))
+    #ll = np.asarray(model.ll_fits)
+    #iterations = np.arange(1, len(ll) + 1)
+    #sns.lineplot(x=iterations, y=ll, ax=axes[0], marker="o")
+    #axes[0].set_title("Log-likelihood per iteration")
+    #axes[0].set_xlabel("Iteration")
+    #axes[0].set_ylabel("log L")
+    #axes[0].xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    stats.probplot(residuals, dist="norm", plot=axes[1])
-    axes[1].get_lines()[0].set_color(sns.color_palette()[0])
-    axes[1].get_lines()[1].set_color(sns.color_palette()[3])
-    axes[1].set_title("Normal Q-Q of pseudo-residuals")
+    stats.probplot(residuals, dist="norm", plot=axes[0])
+    axes[0].get_lines()[0].set_color(sns.color_palette()[0])
+    #axes[0].get_lines()[1].set_color(sns.color_palette()[1])
+    axes[0].set_title("Normal Q-Q of pseudo-residuals")
 
     lags = min(40, max(1, len(residuals) // 4))
-    plot_acf(residuals, lags=lags, ax=axes[2])
-    axes[2].set_title("ACF of pseudo-residuals")
-    axes[2].set_ylim(-0.25, 1.05)
+    plot_acf(residuals, lags=lags, ax=axes[1])
+    axes[1].set_title("ACF of pseudo-residuals")
+    axes[1].set_ylim(-0.25, 1.05)
 
     fig.tight_layout()
 
@@ -123,6 +367,8 @@ def plot_hmm_diagnostics(model, save_path: str | None = None):
 
 _LATEX_HEADER_MAP = {
     "#Params": "\\#Params",
+    # A bare % opens a LaTeX comment, which would swallow the rest of the header row.
+    "MAPE%": "MAPE (\\%)",
     "ΔAIC": "$\\Delta$AIC",
     "ΔBIC": "$\\Delta$BIC",
     "P-val": "$p$-value",
@@ -135,7 +381,7 @@ def _fmt_cell(value, col, float_cols_4dp):
     if isinstance(value, float):
         return f"{value:.4f}" if col in float_cols_4dp else f"{value:.2f}"
     if isinstance(value, (int, np.integer)):
-        return str(int(value) + 1)
+        return str(int(value))
     return str(value)
 
 

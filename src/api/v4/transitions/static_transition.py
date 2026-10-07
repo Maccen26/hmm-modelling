@@ -23,13 +23,15 @@ class StaticTransition(BaseTransition):
         """
         return self.transition_logits 
     
-    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray: 
+    def transition_matrix(self, t: int | None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None, dt: float | None = None) -> jnp.ndarray:
         """
-        Builds the transition matrix at time step t given the covariates at time step t.
-        
-        :param xt: covarites at time step t. 
+        Builds the transition matrix for the observation at index `t`.
 
-        :return: transition matrix at time step t of dim (num_states, num_states) 
+        The matrix is time-homogeneous and covariate-free, so both `t` and the
+        waiting time `dt` are ignored; they are accepted to keep one signature
+        across every transition.
+
+        :return: transition matrix of dim (num_states, num_states)
         """
         logits = self.step(t, ys, xs)
         return logits_to_transition_matrix(logits)

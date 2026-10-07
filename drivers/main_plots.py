@@ -1,3 +1,7 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 from drivers.utils import plot_hmm_diagnostics, load_model
 import matplotlib.pyplot as plt
 

@@ -1,0 +1,14 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lccccccc}
+\hline
+Model & RMSE & MAPE (\%) & R2 (pooled) & R2 (per-run mean) & R2 (per-run min) & Runs & n \\
+\hline
+Autoregressive + cov (runs) & 413.54 & 24.84 & 0.57 & -4.82 & -15.01 & 3 & 409 \\
+Gaussian + cov (runs) & 468.07 & 31.63 & 0.45 & -9.51 & -28.70 & 3 & 409 \\
+Persistence baseline & 640.42 & 32.43 & -0.04 & -0.66 & -0.90 & 3 & 409 \\
+\hline
+\end{tabular}
+\caption{Pooled rolling 6-hour-ahead validation forecast accuracy over working-day runs, Room 009 (30min).}
+\label{tab:week5-validation-forecast-runs}
+\end{table}
