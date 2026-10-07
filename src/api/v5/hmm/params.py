@@ -2,7 +2,7 @@ from src.base.base_hmm import BaseHMM
 
 import jax.numpy as jnp
 
-class HMMParams(BaseHMM):
+class Params(BaseHMM):
     """
     HMM class that combines a transition model and an emission model. 
     Holds trainable parameters for both the transition and emission models.

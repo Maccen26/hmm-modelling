@@ -2,7 +2,7 @@ from src.base.base_emission import BaseEmission
 import jax.scipy.stats as stats 
 import jax.numpy as jnp 
 import jax 
-from src.api.v4.utils import phi_to_phi_tilde, phi_tilde_to_phi
+from .utils import phi_to_phi_tilde, phi_tilde_to_phi
 
 
 class MultivariateAutoregressiveGaussEmission(BaseEmission):

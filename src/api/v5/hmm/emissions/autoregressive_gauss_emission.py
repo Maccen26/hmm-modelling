@@ -2,7 +2,8 @@ from src.base.base_emission import BaseEmission
 import jax.scipy.stats as stats 
 import jax.numpy as jnp 
 import jax 
-from src.api.v4.utils import phi_to_phi_tilde, phi_tilde_to_phi
+from .utils import phi_to_phi_tilde, phi_tilde_to_phi
+
 class AutoregressiveGaussEmission(BaseEmission):
     """
     Gaussian emission model for an HMM. The emission density is a Gaussian distribution with mean and variance that can depend on the covariates at time step t. 
