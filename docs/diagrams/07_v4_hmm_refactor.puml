@@ -1,7 +1,8 @@
 @startuml 07_v4_hmm_refactor
-' Proposed v4 structure, first step: HMMParams is built from an initial
-' distribution, a transition and an emission. Transition and emission are
-' abstract base classes with concrete implementations underneath.
+' Proposed v4 structure: HMMParams is built from a transition and an emission
+' (abstract base classes with concrete implementations underneath). The data,
+' including the initial state distribution, lives in a Pydantic dataclass that
+' the solver hands to the loss function together with HMMParams.
 
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
@@ -16,14 +17,20 @@ skinparam class {
 hide empty members
 
 class HMMParams {
-    + initial_distribution : InitialDistribution
     + transition : BaseTransition
     + emission : BaseEmission
 }
 
-class InitialDistribution {
-    + u : Array (1, K)
+class Data <<pydantic dataclass>> {
+    + ys : Array
+    + ts : Array | None
+    + xs : Array | None
+    {field} + initial_distribution : Array (1, K)
 }
+note right of Data
+  Fields are validated on construction
+  (shapes, u sums to 1).
+end note
 
 abstract class BaseTransition {
     + transition_matrix(t, ys, xs, dt) : Array
@@ -43,7 +50,6 @@ class ContinuousDynamicTransition
 class GaussEmission
 class AutoregressiveGaussEmission
 
-HMMParams *-- InitialDistribution
 HMMParams *-- BaseTransition
 HMMParams *-- BaseEmission
 
@@ -57,26 +63,63 @@ BaseEmission <|-- AutoregressiveGaussEmission
 
 ' --- Fitting: a solver minimises a loss over HMMParams ---
 abstract class BaseSolver {
-    + fit(params : HMMParams, loss_fn : LossFunction, data : tuple) : HMMParams
+    + fit(params : HMMParams, loss_fn : LossFunction, data : Data) : HMMParams
 }
 
-abstract class LossFunction {
-    + __call__(params : HMMParams, data : tuple) : float
+interface LossFunction <<Callable>> {
+    (params : HMMParams, data : Data) -> float
 }
-note right of LossFunction
-  data = (ys, ts, xs)
-end note
 
 class LBFGSSolver
 class GradientSolver
-class NegativeLogLikelihood
+class "negative_log_likelihood(params, data) -> float" as negative_log_likelihood <<function>>
+note bottom of negative_log_likelihood
+  return -ForwardAlgorithm().run(params, data).log_likelihood()
+end note
+
+' --- Inference: runs the HMM recursions over the data ---
+abstract class BaseInference {
+    + run(params : HMMParams, data : Data) : BaseOutput
+}
+
+class ForwardAlgorithm {
+    + run(params : HMMParams, data : Data) : ForwardOutput
+}
+
+BaseInference <|-- ForwardAlgorithm
+negative_log_likelihood ..> ForwardAlgorithm : calls
 
 BaseSolver <|-- LBFGSSolver
 BaseSolver <|-- GradientSolver
-LossFunction <|-- NegativeLogLikelihood
+LossFunction <|.. negative_log_likelihood
 
 BaseSolver --> LossFunction : uses
 BaseSolver --> HMMParams : optimises
 LossFunction ..> HMMParams : evaluates
+LossFunction ..> Data : reads
+
+' --- Diagnostics and prediction on a fitted model ---
+class Diagnostics {
+    + params : HMMParams
+    + data : Data
+    --
+    + log_likelihood() : float
+    + state_results() : StateResults
+    + pseudo_residuals() : Array
+}
+
+abstract class BasePrediction {
+    + predict(params : HMMParams, data : Data, t_pred : Array, x_pred : Array | None) : Array
+}
+
+class EmissionMeanPrediction
+
+BasePrediction <|-- EmissionMeanPrediction
+
+Diagnostics o-- HMMParams
+Diagnostics o-- Data
+BasePrediction ..> HMMParams : uses
+BasePrediction ..> Data : uses
+BaseSolver ..> Data : passes on
 
 @enduml
