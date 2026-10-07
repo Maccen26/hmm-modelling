@@ -1,125 +1,144 @@
 @startuml 07_v4_hmm_refactor
-' Proposed v4 structure: HMMParams is built from a transition and an emission
-' (abstract base classes with concrete implementations underneath). The data,
-' including the initial state distribution, lives in a Pydantic dataclass that
-' the solver hands to the loss function together with HMMParams.
+' Proposed v4 structure.
+'
+'   Model     - HMMParams = a transition + an emission (abstract bases, concrete
+'               implementations underneath).
+'   Data      - the observations plus the initial state distribution, as a
+'               Pydantic dataclass.
+'   Fitting   - a solver minimises a loss function of (HMMParams, Data).
+'   Inference - the forward algorithm, used by the loss, the diagnostics and
+'               the prediction.
+'   Analysis  - diagnostics and prediction on a fitted model.
+'
+' To keep the picture readable, HMMParams and Data are not drawn as arrows from
+' every class that takes them: they appear in the method signatures instead.
 
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam defaultFontSize 13
 skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
 skinparam ArrowColor #4A75B0
 skinparam class {
     BackgroundColor #EAF1FB
     BorderColor #4A75B0
 }
+skinparam package {
+    BorderColor #9AA5B1
+    FontColor #33415C
+}
+skinparam note {
+    BackgroundColor #FFFCE8
+    BorderColor #C9B458
+}
 hide empty members
+hide <<function>> circle
 
-class HMMParams {
-    + transition : BaseTransition
-    + emission : BaseEmission
+' ------------------------------------------------------------------ fitting
+package "Fitting" {
+    abstract class BaseSolver {
+        + fit(params : HMMParams, loss_fn : LossFunction, data : Data) : HMMParams
+    }
+    class LBFGSSolver
+    class GradientSolver
+
+    interface LossFunction <<Callable>> {
+        (params : HMMParams, data : Data) -> float
+    }
+    class "negative_log_likelihood(params, data) -> float" as nll <<function>>
+
+    BaseSolver <|-- LBFGSSolver
+    BaseSolver <|-- GradientSolver
+    BaseSolver --> LossFunction : minimises
+    LossFunction <|.. nll
 }
 
-class Data <<pydantic dataclass>> {
-    + ys : Array
-    + ts : Array | None
-    + xs : Array | None
-    {field} + initial_distribution : Array (1, K)
-}
-note right of Data
-  Fields are validated on construction
-  (shapes, u sums to 1).
-end note
+' ------------------------------------------------------------------ analysis
+package "Analysis" {
+    class Diagnostics {
+        + params : HMMParams
+        + data : Data
+        + inference : BaseInference
+        --
+        + log_likelihood() : float
+        + state_results() : StateResults
+        + pseudo_residuals() : Array
+    }
 
-abstract class BaseTransition {
-    + transition_matrix(t, ys, xs, dt) : Array
-}
-
-abstract class BaseEmission {
-    + density(t, ys, xs, ts) : Array
-    + cdf(t, ys, xs, ts) : Array
-    + mu(t, ys, xs, ts) : Array
-}
-
-class StaticTransition
-class DynamicTransition
-class ContinuousStaticTransition
-class ContinuousDynamicTransition
-
-class GaussEmission
-class AutoregressiveGaussEmission
-
-HMMParams *-- BaseTransition
-HMMParams *-- BaseEmission
-
-BaseTransition <|-- StaticTransition
-BaseTransition <|-- DynamicTransition
-BaseTransition <|-- ContinuousStaticTransition
-BaseTransition <|-- ContinuousDynamicTransition
-
-BaseEmission <|-- GaussEmission
-BaseEmission <|-- AutoregressiveGaussEmission
-
-' --- Fitting: a solver minimises a loss over HMMParams ---
-abstract class BaseSolver {
-    + fit(params : HMMParams, loss_fn : LossFunction, data : Data) : HMMParams
+    abstract class BasePrediction {
+        + predict(params : HMMParams, data : Data, t_pred : Array, x_pred : Array | None) : Array
+    }
+    class EmissionMeanPrediction {
+        + inference : BaseInference
+    }
+    BasePrediction <|-- EmissionMeanPrediction
 }
 
-interface LossFunction <<Callable>> {
-    (params : HMMParams, data : Data) -> float
+' ------------------------------------------------------------------ inference
+package "Inference" {
+    abstract class BaseInference {
+        + run(params : HMMParams, data : Data) : BaseOutput
+    }
+    class ForwardAlgorithm {
+        + run(params : HMMParams, data : Data) : ForwardOutput
+    }
+    BaseInference <|-- ForwardAlgorithm
 }
 
-class LBFGSSolver
-class GradientSolver
-class "negative_log_likelihood(params, data) -> float" as negative_log_likelihood <<function>>
-note bottom of negative_log_likelihood
-  return -ForwardAlgorithm().run(params, data).log_likelihood()
-end note
+nll ..> ForwardAlgorithm : calls
+Diagnostics o-- BaseInference
+EmissionMeanPrediction o-- BaseInference
 
-' --- Inference: runs the HMM recursions over the data ---
-abstract class BaseInference {
-    + run(params : HMMParams, data : Data) : BaseOutput
+' ------------------------------------------------------------------ data
+package "Data" as DataPkg {
+    class Data <<pydantic dataclass>> {
+        + ys : Array
+        + ts : Array | None
+        + xs : Array | None
+        {field} + initial_distribution : Array (1, K)
+    }
+    note bottom of Data
+      Fields are validated on construction
+      (shapes, u sums to 1).
+    end note
 }
 
-class ForwardAlgorithm {
-    + run(params : HMMParams, data : Data) : ForwardOutput
+' ------------------------------------------------------------------ model
+package "Model" {
+    class HMMParams {
+        + transition : BaseTransition
+        + emission : BaseEmission
+    }
+
+    abstract class BaseTransition {
+        + transition_matrix(t, ys, xs, dt) : Array
+    }
+    abstract class BaseEmission {
+        + density(t, ys, xs, ts) : Array
+        + cdf(t, ys, xs, ts) : Array
+        + mu(t, ys, xs, ts) : Array
+    }
+
+    class StaticTransition
+    class DynamicTransition
+    class ContinuousStaticTransition
+    class ContinuousDynamicTransition
+    class GaussEmission
+    class AutoregressiveGaussEmission
+
+    HMMParams *-- BaseTransition
+    HMMParams *-- BaseEmission
+    BaseTransition <|-- StaticTransition
+    BaseTransition <|-- DynamicTransition
+    BaseTransition <|-- ContinuousStaticTransition
+    BaseTransition <|-- ContinuousDynamicTransition
+    BaseEmission <|-- GaussEmission
+    BaseEmission <|-- AutoregressiveGaussEmission
 }
 
-BaseInference <|-- ForwardAlgorithm
-negative_log_likelihood ..> ForwardAlgorithm : calls
-
-BaseSolver <|-- LBFGSSolver
-BaseSolver <|-- GradientSolver
-LossFunction <|.. negative_log_likelihood
-
-BaseSolver --> LossFunction : uses
-BaseSolver --> HMMParams : optimises
-LossFunction ..> HMMParams : evaluates
-LossFunction ..> Data : reads
-
-' --- Diagnostics and prediction on a fitted model ---
-class Diagnostics {
-    + params : HMMParams
-    + data : Data
-    --
-    + log_likelihood() : float
-    + state_results() : StateResults
-    + pseudo_residuals() : Array
-}
-
-abstract class BasePrediction {
-    + predict(params : HMMParams, data : Data, t_pred : Array, x_pred : Array | None) : Array
-}
-
-class EmissionMeanPrediction
-
-BasePrediction <|-- EmissionMeanPrediction
-
-Diagnostics o-- HMMParams
-Diagnostics o-- Data
-BasePrediction ..> HMMParams : uses
-BasePrediction ..> Data : uses
-BaseSolver ..> Data : passes on
+' Invisible links only steer the layout: Data and Model sit below Inference.
+ForwardAlgorithm -[hidden]down- Data
+ForwardAlgorithm -[hidden]down- HMMParams
 
 @enduml
