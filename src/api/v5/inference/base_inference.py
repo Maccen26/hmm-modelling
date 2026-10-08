@@ -15,9 +15,9 @@ class BaseInference(ABC):
     emission densities — is computed up front in `run`, so `step` is left with pure
     linear algebra over already-materialised arrays.
     """
-
+    @staticmethod
     @abstractmethod
-    def step(self, carry: Any, step_input: Any) -> Any:
+    def step(carry: Any, step_input: Any) -> Any:
         """
         Single iteration of the algorithm, in `jax.lax.scan` form.
 
@@ -30,9 +30,9 @@ class BaseInference(ABC):
             (new_carry, output) tuple compatible with jax.lax.scan
         """
         ...
-
+    @classmethod
     @abstractmethod
-    def run(self,
+    def run(cls,
             params: Params, 
             initial_dist: jnp.ndarray, 
             ys: jnp.ndarray, 

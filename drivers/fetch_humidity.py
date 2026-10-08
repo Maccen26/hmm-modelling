@@ -1,7 +1,7 @@
-"""Download hourly relative humidity from DMI's 10 km climate grid for a coordinate.
+"""Download hourly relative humidity and mean temperature from DMI's 10 km climate grid for a coordinate.
 
 The coordinate is mapped to its DMI grid cell (ETRS89 / UTM 32N), the hourly
-`mean_relative_hum` series is fetched from the DMI open-data API, de-duplicated,
+`mean_relative_hum` and `mean_temp` series are fetched from the DMI open-data API, de-duplicated,
 resampled to a regular hourly grid, and written to `{DATA_PATH}/raw/dtu/humidity.csv`.
 """
 
@@ -14,6 +14,7 @@ from pyproj import Transformer
 from drivers.utils import load_base_data_path
 
 DMI_URL = "https://opendataapi.dmi.dk/v2/climateData/collections/10kmGridValue/items"
+PARAMETERS = ["mean_relative_hum", "mean_temp"]
 
 
 def find_grid_name(lat: float, lon: float) -> str:
@@ -44,21 +45,20 @@ def fetch_weather(parameter: str, cell: str, start: str, end: str) -> pd.Series:
 
     data["time"] = pd.to_datetime(data["properties.to"], utc=True, errors="coerce")
     data = data.dropna(subset=["time"])
-    return data.set_index("time")["properties.value"].astype(float).sort_index()
+    series = data.set_index("time")["properties.value"].astype(float)
+    return series.groupby(level=0).mean()  # remove duplicate timestamps (sorted)
 
 
 def fetch_humidity(lat: float, lon: float, start: str, end: str) -> pd.DataFrame:
-    """Regular hourly relative humidity (%) for the grid cell containing (lat, lon)."""
+    """Regular hourly relative humidity (%) and mean temperature (°C) for the grid cell containing (lat, lon)."""
     cell = find_grid_name(lat, lon)
     print("DMI grid:", cell)
     print("Start:", start)
     print("End:", end)
 
-    humidity = fetch_weather("mean_relative_hum", cell, start, end)
-    df = pd.DataFrame({"mean_relative_hum": humidity})
+    df = pd.DataFrame({parameter: fetch_weather(parameter, cell, start, end) for parameter in PARAMETERS})
 
-    # Remove duplicate timestamps, then fill gaps on a regular hourly grid
-    df = df.sort_index().groupby(level=0).mean()
+    # Fill gaps on a regular hourly grid
     df = df.resample("1h").mean().interpolate(method="time").ffill().bfill()
     df.index.name = "DateTo"
     return df
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     START = "2023-11-12T00:00:00.000Z"
     END = "2024-02-10T23:00:00.000Z"
 
-    print("\nDownloading humidity data...")
+    print("\nDownloading humidity and temperature data...")
     df_humidity = fetch_humidity(LAT, LON, START, END)
     path = save_humidity(df_humidity)
     print(f"Saved {len(df_humidity)} hourly rows to {path}")

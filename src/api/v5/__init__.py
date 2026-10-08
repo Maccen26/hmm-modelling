@@ -1,4 +1,6 @@
 from src.api.v5.hmm import * 
+from src.api.v5.solvers import *
+from src.api.v5.inference import *
 
 __all__ = [
     "Params",
@@ -9,5 +11,8 @@ __all__ = [
     "GaussEmission",
     "AutoregressiveGaussEmission",
     "MultivariateGaussEmission",
-    "MultivariateAutoregressiveGaussEmission"
+    "MultivariateAutoregressiveGaussEmission", 
+    "ForwardAlgorithm", 
+    "GradientSolver",
+    "LBFGSSolver",
 ]

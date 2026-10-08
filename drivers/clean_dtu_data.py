@@ -117,7 +117,7 @@ def sensor_floor(
     return seg.rolling(window, center=True, min_periods=min_periods).quantile(quantile)
 
 
-def calibrate_baseline(
+def calibrate_baseline_co2(
     seg_df: pd.DataFrame, baseline: float = 400.0, window: str = "28D", quantile: float = 0.02,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """Remove the CO2 sensor's drifting zero: `co2_cal = co2_raw - floor(t) + baseline`.
@@ -142,6 +142,79 @@ def calibrate_baseline(
     seg_df = seg_df.copy()
     seg_df["co2"] = seg_df["co2"] - floor + baseline
     return seg_df, floor
+
+
+# --- Humidity calibration -------------------------------------------------
+
+P_ATM_HPA = 1013.0
+
+
+def saturation_vapour_pressure(temp_c):
+    """Magnus formula over water (Sonntag 1990), in hPa; `temp_c` in °C, valid ~-45 to 60 °C."""
+    return 6.112 * np.exp(17.62 * temp_c / (243.12 + temp_c))
+
+
+def vapour_pressure(rh, temp_c):
+    """Actual vapour pressure in hPa from relative humidity `rh` (%) and temperature (°C)."""
+    return rh / 100.0 * saturation_vapour_pressure(temp_c)
+
+
+def humidity_ratio(rh, temp_c, p: float = P_ATM_HPA):
+    """Humidity ratio in g water vapour per kg dry air; `p` is total air pressure in hPa."""
+    e = vapour_pressure(rh, temp_c)
+    return 622.0 * e / (p - e)
+
+
+def outdoor_humidity_path() -> Path:
+    return Path(load_base_data_path()) / "raw" / "dtu" / "humidity.csv"
+
+
+def load_outdoor_humidity() -> pd.Series:
+    """Hourly outdoor humidity ratio `x_out` (g/kg), indexed by UTC `DateTo`."""
+    df = pd.read_csv(outdoor_humidity_path())
+    df["DateTo"] = pd.to_datetime(df["DateTo"], utc=True)
+    df = df.dropna().sort_values("DateTo")
+    x_out = humidity_ratio(df["mean_relative_hum"], df["mean_temp"])
+    return pd.Series(x_out.values, index=pd.DatetimeIndex(df["DateTo"]), name="x_out")
+
+
+def calibrate_humidity(seg_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
+    """Replace indoor RH with the moisture excess `Δx = x_in - x_out` (g/kg dry air).
+
+    `x_in` uses the room's own `temperature`; `x_out` is the hourly DMI series matched to each
+    local, tz-naive bin time (same convention as `drivers.utils.weather_features`). Raises if
+    the segment runs outside the outdoor data's span rather than extrapolating.
+
+    Returns the frame with `humidity` replaced and the `x_out` that was subtracted.
+    """
+    x_out_hourly = load_outdoor_humidity()
+
+    local = pd.DatetimeIndex(seg_df.index).tz_localize(
+        "Europe/Copenhagen", ambiguous="NaT", nonexistent="shift_forward"
+    )
+    utc = local.tz_convert("UTC")
+    lo, hi = x_out_hourly.index[0], x_out_hourly.index[-1]
+    tol = pd.Timedelta("1h")
+    if utc.min() < lo - tol or utc.max() > hi + tol:
+        raise ValueError(
+            f"segment {utc.min()} -> {utc.max()} extends beyond outdoor humidity data {lo} -> {hi}"
+        )
+
+    left = pd.DataFrame({"t": utc, "order": np.arange(len(utc))}).sort_values("t")
+    right = x_out_hourly.rename_axis("t").reset_index()
+    merged = pd.merge_asof(left.dropna(subset=["t"]), right, on="t", direction="nearest")
+    x_out = (
+        merged.set_index("order")["x_out"]
+        .reindex(np.arange(len(utc)))
+        .ffill().bfill()        # bins dropped as ambiguous at the DST switch
+        .to_numpy()
+    )
+    x_out = pd.Series(x_out, index=seg_df.index, name="x_out")
+
+    x_in = humidity_ratio(seg_df["humidity"], seg_df["temperature"])
+    seg_df = seg_df.copy()
+    seg_df["humidity"] = x_in - x_out
+    return seg_df, x_out
 
 
 def split_three_way(n: int, val_size: float, test_size: float) -> tuple[int, int]:
@@ -186,7 +259,11 @@ def clean_dtu_data(
     y_cols: tuple[str, ...] = ("co2", "humidity"),
 ) -> None:
     """Clean one DTU room and write headered y train/val/test CSVs to `{DATA_PATH}/<room>/<tag>/`."""
-    df_raw, y_cols = load_raw_series(room_name, y_cols=y_cols)
+    calibrate_hum = "humidity" in y_cols
+    drop_temperature = calibrate_hum and "temperature" not in y_cols
+    load_cols = (*y_cols, "temperature") if drop_temperature else y_cols
+    df_raw, y_cols = load_raw_series(room_name, y_cols=load_cols)
+    calibrate_hum = calibrate_hum and "humidity" in y_cols and "temperature" in y_cols
     print(f"{room_name}: {len(df_raw)} cleaned raw observations, columns {y_cols}")
     print(f"  from {df_raw['datetime'].iloc[0]} to {df_raw['datetime'].iloc[-1]}")
 
@@ -195,29 +272,43 @@ def clean_dtu_data(
     print(f"  longest gap-free {bin} segment: {len(seg_df)} bins")
     print(f"  window {start} -> {end}  ({(end - start).total_seconds() / 3600:.1f} h)")
 
-    seg_df, floor = calibrate_baseline(
+    seg_df, co2_floor = calibrate_baseline_co2(
         seg_df, baseline=baseline_ppm, window=baseline_window, quantile=baseline_quantile,
     )
-    floor_arr = np.asarray(floor.values, dtype=float)
+
+    x_out = None
+    if calibrate_hum:
+        seg_df, x_out = calibrate_humidity(seg_df)
+        dx = seg_df["humidity"]
+        print(f"  humidity -> moisture excess x_in - x_out: "
+              f"{dx.min():.2f} -> {dx.max():.2f} g/kg (mean {dx.mean():.2f})")
+    if drop_temperature:
+        seg_df = seg_df.drop(columns="temperature")
+        y_cols = [c for c in y_cols if c != "temperature"]
+
+    co2_floor_arr = np.asarray(co2_floor.values, dtype=float)
     print(f"  sensor floor ({baseline_window}, q={baseline_quantile:g}): "
-          f"{floor_arr.min():.1f} -> {floor_arr.max():.1f} ppm "
-          f"(drift {floor_arr.max() - floor_arr.min():+.1f} ppm), rebased to {baseline_ppm:.0f}")
+          f"{co2_floor_arr.min():.1f} -> {co2_floor_arr.max():.1f} ppm "
+          f"(drift {co2_floor_arr.max() - co2_floor_arr.min():+.1f} ppm), rebased to {baseline_ppm:.0f}")
 
     dates = pd.DatetimeIndex(seg_df.index)
     n = len(seg_df)
     train_idx, val_idx = split_three_way(n, val_size=val_size, test_size=test_size)
 
     out_df = seg_df.reset_index().rename(columns={"index": "datetime"})
-    floor_df = pd.DataFrame({"floor": floor_arr}, index=dates).reset_index().rename(columns={"index": "datetime"})
+    floor_df = pd.DataFrame({"floor": co2_floor_arr}, index=dates).reset_index().rename(columns={"index": "datetime"})
 
     slices = {
         "train": slice(None, train_idx),
         "val": slice(train_idx, val_idx),
         "test": slice(val_idx, None),
-    }
+    } 
     data_name = room_slug(room_name)
     meta = {}
-    for arr_name, df in (("y", out_df), ("floor", floor_df)):
+    arrays = [("y", out_df), ("floor", floor_df)]
+    if x_out is not None:
+        arrays.append(("x_out", x_out.rename_axis("datetime").reset_index()))
+    for arr_name, df in arrays:
         for arr_type, sl in slices.items():
             part = df.iloc[sl]
             meta[f"{arr_name}_{arr_type}_shape"] = part.shape
@@ -240,7 +331,7 @@ def clean_dtu_data(
         val_idx=val_idx,
         dates=dates,
         baseline_ppm=baseline_ppm,
-        floor=floor_arr,
+        floor=co2_floor_arr,
         baseline_window=baseline_window,
         baseline_quantile=baseline_quantile,
         y_cols=y_cols,
@@ -277,6 +368,8 @@ def save_metadata(
         "baseline_floor_end": floor[-1],
         "baseline_floor_drift": floor.max() - floor.min(),
         "y_cols": "|".join(y_cols),
+        # humidity = x_in - x_out (g/kg dry air); x_out saved as x_out_{train,val,test}.csv
+        "humidity_unit": "g/kg (x_in - x_out)" if "humidity" in y_cols else "",
     }
     record.update(meta)
 

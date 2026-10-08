@@ -11,8 +11,8 @@ from dataclasses import dataclass
 
 class ForwardAlgorithm(BaseInference):
 
-
-    def run(self, 
+    @classmethod
+    def run(cls, 
             params: Params, 
             initial_dist: jnp.ndarray, 
             ys: jnp.ndarray, 
@@ -21,6 +21,10 @@ class ForwardAlgorithm(BaseInference):
             ) -> Any:
         """
         Run the forward algorithm on a single sequence of observations.
+        Returns (utt, f_t, u_t) for each time step t, where:
+        - utt: the filtered state distribution at time t
+        - f_t: the normalizing constant at time t
+        - u_t: the predicted state distribution at time t
         """ 
         if (prior_densities is None):
             prior_densities = jnp.ones_like(ys)  # (T, 1)
@@ -28,11 +32,11 @@ class ForwardAlgorithm(BaseInference):
         N = len(ys) 
         Gammas = params.transition_matrices(N=N, xs=xs)  # (T, num_states, num_states)
         gs = params.densities(ys=ys)                # (T, 1, num_states)
-        _, outputs = jax.lax.scan(f=self.step, init=initial_dist, xs=(Gammas, gs, prior_densities))
-
+        _, outputs = jax.lax.scan(f=cls.step, init=initial_dist, xs=(Gammas, gs, prior_densities))
         return outputs
-
-    def step(self, carry: Any, step_input: Any) -> Any:
+    
+    @staticmethod
+    def step(carry: Any, step_input: Any) -> Any:
         """One forward recursion step over a precomputed (Gamma, density) pair."""
         
         Gamma, g_t, prior_dens = step_input
