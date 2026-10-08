@@ -1,8 +1,7 @@
-import numpy as np
 import jax.numpy as jnp
 import equinox as eqx
 from abc import ABC, abstractmethod
-from src.base.utils import transition_matrix_to_logits
+from src.api.v5.base.utils import transition_matrix_to_logits
 from typing import Iterator, Tuple
 from dataclasses import fields
 import jax 
@@ -46,11 +45,7 @@ class BaseTransition(eqx.Module, ABC):
         if (xs is None): 
             Gamma = self.transition_matrix()
             return jnp.broadcast_to(Gamma, (N, *Gamma.shape))
-        # np.unique (not jnp) runs at trace time on the concrete xs, so this stays jittable
-        xs_uniq, inverse = np.unique(np.asarray(xs), axis=0, return_inverse=True)
-        transition_matrices_uniq = jax.vmap(self.transition_matrix)(jnp.asarray(xs_uniq))
-        transition_matrices = transition_matrices_uniq[inverse.reshape(-1)]
-        return transition_matrices
+        return jax.vmap(self.transition_matrix)(xs)
 
 
 

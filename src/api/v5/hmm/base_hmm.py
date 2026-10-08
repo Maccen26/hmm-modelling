@@ -1,6 +1,6 @@
 import jax.numpy as jnp 
-from src.base.base_transition import BaseTransition
-from src.base.base_emission import BaseEmission
+from src.api.v5.hmm.transitions.base_transition import BaseTransition
+from src.api.v5.hmm.emissions.base_emission import BaseEmission
 from abc import ABC, abstractmethod
 import equinox as eqx
 from typing import Iterator, Tuple

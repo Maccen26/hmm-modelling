@@ -101,7 +101,7 @@ class TestTransitionMatrices(TestCase):
 
     def test_static_higher_order_ignores_covariates(self):
         transition = StaticTransitionHigherOrder(jnp.zeros((self.K ** 2, self.K - 1)))
-        Gammas = transition.transition_matrices(self.xs)
+        Gammas = transition.transition_matrices(len(self.xs), self.xs)
         self.assertEqual(Gammas.shape, (self.T, self.K ** 2, self.K ** 2))
         self.assertTrue(jnp.allclose(Gammas, transition.transition_matrix()))
 
@@ -114,12 +114,12 @@ class TestTransitionMatrices(TestCase):
         for name, transition in self.dynamic.items():
             with self.subTest(name):
                 n = transition.transition_matrix(self.xs[0]).shape[0]
-                self.assertEqual(transition.transition_matrices(self.xs).shape, (self.T, n, n))
+                self.assertEqual(transition.transition_matrices(len(self.xs), self.xs).shape, (self.T, n, n))
 
     def test_rows_are_stochastic(self):
         for name, transition in self.dynamic.items():
             with self.subTest(name):
-                Gammas = transition.transition_matrices(self.xs)
+                Gammas = transition.transition_matrices(len(self.xs), self.xs)
                 self.assertTrue(jnp.allclose(Gammas.sum(axis=-1), 1.0))
                 self.assertTrue(bool(jnp.all(Gammas >= 0.0)))
 
@@ -127,36 +127,36 @@ class TestTransitionMatrices(TestCase):
         for name, transition in self.dynamic.items():
             with self.subTest(name):
                 self.assertTrue(jnp.allclose(
-                    transition.transition_matrices(self.xs),
+                    transition.transition_matrices(len(self.xs), self.xs),
                     naive_transition_matrices(transition, self.xs)))
 
     def test_preserves_sequence_order(self):
         transition = self.dynamic["DynamicTransition"]
-        Gammas = transition.transition_matrices(self.xs)
+        Gammas = transition.transition_matrices(len(self.xs), self.xs)
         for t in (0, 1, 17, self.T - 1):
             self.assertTrue(jnp.allclose(Gammas[t], transition.transition_matrix(self.xs[t])))
 
     def test_all_rows_unique(self):
-        # No repeats (U == T): dedup must still be correct.
+        # No repeated covariate rows: every matrix must match the naive loop.
         xs = jnp.asarray(np.random.default_rng(2).normal(size=(50, self.C)))
         transition = self.dynamic["DynamicTransition"]
-        self.assertTrue(jnp.allclose(transition.transition_matrices(xs),
+        self.assertTrue(jnp.allclose(transition.transition_matrices(len(xs), xs),
                                      naive_transition_matrices(transition, xs)))
 
     def test_single_unique_row(self):
         xs = jnp.ones((20, self.C))
         transition = self.dynamic["DynamicTransition"]
-        Gammas = transition.transition_matrices(xs)
+        Gammas = transition.transition_matrices(len(xs), xs)
         self.assertEqual(Gammas.shape, (20, self.K, self.K))
         self.assertTrue(jnp.allclose(Gammas, transition.transition_matrix(xs[0])))
 
     def test_zero_beta_gives_base_matrix(self):
         transition = DynamicTransition.from_params(self.P, jnp.zeros_like(self.beta))
-        self.assertTrue(jnp.allclose(transition.transition_matrices(self.xs), self.P))
+        self.assertTrue(jnp.allclose(transition.transition_matrices(len(self.xs), self.xs), self.P))
 
     def test_static_ignores_covariates(self):
         transition = StaticTransition.from_params(self.P)
-        Gammas = transition.transition_matrices(self.xs)
+        Gammas = transition.transition_matrices(len(self.xs), self.xs)
         self.assertEqual(Gammas.shape, (self.T, self.K, self.K))
         self.assertTrue(jnp.allclose(Gammas, self.P))
 
@@ -167,7 +167,7 @@ class TestTransitionMatrices(TestCase):
         loss = lambda Gammas: (weights[:, None, None] * Gammas ** 2).sum()
         for name, transition in self.dynamic.items():
             with self.subTest(name):
-                g_dedup = jax.grad(lambda m: loss(m.transition_matrices(self.xs)))(transition)
+                g_dedup = jax.grad(lambda m: loss(m.transition_matrices(len(self.xs), self.xs)))(transition)
                 g_naive = jax.grad(lambda m: loss(naive_transition_matrices(m, self.xs)))(transition)
                 for a, b in zip(jax.tree.leaves(g_dedup), jax.tree.leaves(g_naive)):
                     self.assertTrue(jnp.allclose(a, b))
@@ -175,7 +175,7 @@ class TestTransitionMatrices(TestCase):
     def test_jit_with_closed_over_covariates(self):
         # The solvers jit the loss with the data closed over, so this path must compile.
         transition = self.dynamic["DynamicTransition"]
-        Gammas = jax.jit(lambda m: m.transition_matrices(self.xs))(transition)
+        Gammas = jax.jit(lambda m: m.transition_matrices(len(self.xs), self.xs))(transition)
         self.assertTrue(jnp.allclose(Gammas, naive_transition_matrices(transition, self.xs)))
 
 

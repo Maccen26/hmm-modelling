@@ -6,8 +6,9 @@ import numpy as np
 import jax.numpy as jnp
 
 from src.api.v5.hmm.params import Params
-from src.api.v5.hmm.transitions import StaticTransition, StaticTransitionHigherOrder, DynamicTransition
-from src.api.v5.hmm.emissions import GaussEmission, AutoregressiveGaussEmission
+from src.api.v5.hmm.transitions import (StaticTransition, StaticTransitionHigherOrder,
+                                       DynamicTransition, DynamicTransitionHigherOrder)
+from src.api.v5.hmm.emissions import GaussEmission, AutoregressiveGaussEmission, MultivariateGaussEmission
 
 
 class TestParams(TestCase):
@@ -51,6 +52,11 @@ class TestParams(TestCase):
     def test_equality_is_false(self):
         other = Params(transition=self.transition,
                        emission=GaussEmission.from_params(self.mean + 1.0, self.sigma))
+        self.assertNotEqual(self.params, other)
+
+    def test_equality_is_false_for_different_component_class(self):
+        other = Params(transition=DynamicTransition.from_params(self.P, self.beta),
+                       emission=self.emission)
         self.assertNotEqual(self.params, other)
 
     # --- parameter count --------------------------------------------------
@@ -134,3 +140,46 @@ class TestParams(TestCase):
     def test_jit(self):
         densities = jax.jit(lambda p: p.densities(self.ys))(self.params)
         self.assertTrue(jnp.allclose(densities, self.params.densities(self.ys)))
+
+    def test_jit_transition_matrices(self):
+        Gammas = jax.jit(lambda p: p.transition_matrices(self.T))(self.params)
+        self.assertTrue(jnp.allclose(Gammas, self.params.transition_matrices(self.T)))
+
+    # --- other component combinations -------------------------------------
+
+    def test_transition_matrices_rows_sum_to_one(self):
+        params = Params(transition=DynamicTransition.from_params(self.P, self.beta),
+                        emission=self.emission)
+        Gammas = params.transition_matrices(self.T, self.xs)
+        self.assertTrue(jnp.allclose(Gammas.sum(axis=-1), 1.0))
+
+    def test_higher_order_transition_matrices_shape(self):
+        params = Params(transition=StaticTransitionHigherOrder(jnp.zeros((self.K ** 2, self.K - 1))),
+                        emission=self.emission)
+        Gammas = params.transition_matrices(self.T)
+        self.assertEqual(Gammas.shape, (self.T, self.K ** 2, self.K ** 2))
+        self.assertTrue(jnp.allclose(Gammas.sum(axis=-1), 1.0))
+
+    def test_dynamic_higher_order_transition_matrices_shape(self):
+        transition = DynamicTransitionHigherOrder.from_params(self.P, self.beta)
+        params = Params(transition=transition, emission=self.emission)
+        Gammas = params.transition_matrices(self.T, self.xs)
+        self.assertEqual(Gammas.shape, (self.T, self.K ** 2, self.K ** 2))
+        self.assertTrue(jnp.allclose(Gammas, transition.transition_matrices(self.T, self.xs)))
+
+    def test_ar_densities_are_one_before_first_lag(self):
+        num_lags = 2
+        emission = AutoregressiveGaussEmission.from_params(self.mean, self.sigma, jnp.full((num_lags, self.K), 0.5))
+        params = Params(transition=self.transition, emission=emission)
+        densities = params.densities(self.ys)
+        self.assertEqual(densities.shape, (self.T, 1, self.K))
+        self.assertTrue(jnp.allclose(densities[:num_lags], 1.0))
+        self.assertTrue(jnp.allclose(densities[num_lags:], emission.densities(jnp.arange(num_lags, self.T), self.ys)))
+
+    def test_multivariate_densities_shape(self):
+        ys = jnp.stack([self.ys, 2.0 * self.ys], axis=1)  # (T, 2)
+        emission = MultivariateGaussEmission.from_params(jnp.stack([self.mean, 2.0 * self.mean]),
+                                                         jnp.stack([self.sigma, self.sigma]))
+        params = Params(transition=self.transition, emission=emission)
+        self.assertEqual(params.densities(ys).shape, (self.T, 1, self.K))
+        self.assertEqual(params.cdfs(ys).shape, (self.T, 1, self.K))

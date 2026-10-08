@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import equinox as eqx
-from src.api.v5.base import BaseTransition, BaseEmission
+from src.api.v5.hmm.transitions.base_transition import BaseTransition
+from src.api.v5.hmm.emissions.base_emission import BaseEmission
 
 class Params(eqx.Module):
     """

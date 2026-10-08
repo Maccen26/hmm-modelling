@@ -1,4 +1,4 @@
-from src.api.v5.base import BaseEmission 
+from src.api.v5.hmm.emissions.base_emission import BaseEmission 
 import jax.numpy as jnp 
 import jax.scipy.stats as stats 
 

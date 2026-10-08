@@ -1,7 +1,7 @@
-from src.api.v5.base import BaseTransition 
+from src.api.v5.hmm.transitions.base_transition import BaseTransition 
 import jax.numpy as jnp
 
-from src.base.utils import logits_to_transition_matrix 
+from src.api.v5.base.utils import logits_to_transition_matrix 
 
 
 class StaticTransition(BaseTransition):

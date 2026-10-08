@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import equinox as eqx
 
-from src.api.v5.base import BaseTransition
+from src.api.v5.hmm.transitions.base_transition import BaseTransition
 from src.api.v5.hmm.transitions.static_transition_higher_order import (
     _make_transition_logits,
     logits_to_transition_matrix_higher_order,
@@ -89,7 +89,7 @@ class DynamicTransitionHigherOrder(BaseTransition):
         :param transition_matrix: base transition matrix of shape (K, K).
         :param beta: covariate effects of shape (num_covariates, K, K - 1).
         """
-        from src.base.utils import transition_matrix_to_logits
+        from src.api.v5.base.utils import transition_matrix_to_logits
         base_logits = transition_matrix_to_logits(transition_matrix)
         return cls(cls._lift_logits(base_logits, order), beta, order)
 

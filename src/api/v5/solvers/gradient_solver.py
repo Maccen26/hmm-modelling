@@ -1,52 +1,37 @@
-import optax
+from typing import Any, Callable
 import equinox as eqx
-from typing import Callable
-from jaxtyping import Int, Array
-from src.base.base_solver import BaseSolver
+import optax
+import optax.tree_utils as otu
+from src.api.v5.hmm.params import Params
+from src.api.v5.solvers.base_solver import BaseSolver
 
 
 class GradientSolver(BaseSolver):
-    def __init__(self, optimizer=None, n_iter: int = 500, verbose: bool = False):
+    """First-order optax optimiser (Adam by default); stops when the gradient norm drops below tol."""
+
+    def __init__(self, optimizer=None, n_iter: int = 500, tol: float = 1e-6, verbose: bool = False):
         self.optimizer = optimizer or optax.adam(1e-3)
         self.n_iter = n_iter
+        self.tol = tol
         self.verbose = verbose
-        self.params = None
-        self.opt_loss_val = None
 
-    def fit(self,
-            hmm_params,
-            ys,
-            ts: Int[Array, " n"] | None = None,
-            xs=None,
-            u_pre=None,
-            frozen=None, loss_fn: Callable | None = None,
-            batched: bool = False, mask=None) -> None:
-        whole_frozen, element_frozen = self._parse_frozen(frozen)
-        filter_spec = self._build_filter_spec(hmm_params, whole_frozen)
-        trainable, static = eqx.partition(hmm_params, filter_spec)
-        _loss_fn = self._build_loss_fn(static, u_pre, ys, ts, xs, loss_fn=loss_fn,
-                                       element_frozen=element_frozen,
-                                       original_params=hmm_params,
-                                       batched=batched, mask=mask)
-
-        optimizer = self.optimizer
-        opt_state = optimizer.init(eqx.filter(trainable, eqx.is_array))
-
-        @eqx.filter_jit
-        def make_step(trainable, opt_state):
-            val, grads = eqx.filter_value_and_grad(_loss_fn)(trainable)
-            updates, new_opt_state = optimizer.update(
-                grads, opt_state, eqx.filter(trainable, eqx.is_array)
-            )
-            new_trainable = eqx.apply_updates(trainable, updates)
-            return new_trainable, new_opt_state, val
-
+    def _minimise(self, trainable: Params, objective: Callable, data: Any) -> tuple[Params, float, bool]:
+        step, state = self._make_step(objective), self.optimizer.init(trainable) # type: ignore
         for i in range(self.n_iter):
-            trainable, opt_state, val = make_step(trainable, opt_state)
-            if self.verbose and (i % 50 == 0 or i == self.n_iter - 1):
-                print(f"iter {i:4d}  loss={float(val):.6f}")
+            trainable, state, loss, grad_norm = step(trainable, state, data)
+            self._log(i, loss)
+            if grad_norm < self.tol:
+                return trainable, float(loss), True
+        return trainable, float(loss), False # type: ignore
 
-        self.params = eqx.combine(trainable, static)
-        self.params = self._restore_frozen_elements(
-            self.params, element_frozen, hmm_params)
-        self.opt_loss_val = float(val)
+    def _make_step(self, objective: Callable) -> Callable:
+        @eqx.filter_jit
+        def step(trainable, state, data):
+            loss, grads = eqx.filter_value_and_grad(objective)(trainable, data)
+            updates, state = self.optimizer.update(grads, state, trainable)
+            return eqx.apply_updates(trainable, updates), state, loss, otu.tree_norm(grads)
+        return step
+
+    def _log(self, i: int, loss) -> None:
+        if self.verbose and (i % 50 == 0 or i == self.n_iter - 1):
+            print(f"iter {i:4d}  loss={float(loss):.6f}")

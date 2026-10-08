@@ -1,60 +1,37 @@
-import optax
-import equinox as eqx
+from functools import partial
+from typing import Any, Callable
 import jax
-from typing import Callable
-from jaxtyping import Int, Array
-from src.base.base_solver import BaseSolver
+import optax
+import optax.tree_utils as otu
+from src.api.v5.hmm.params import Params
+from src.api.v5.solvers.base_solver import BaseSolver
 
 
 class LBFGSSolver(BaseSolver):
-    def __init__(self, n_iter: int = 200):
+    """L-BFGS with line search; stops when the gradient norm drops below tol or after n_iter steps."""
+
+    def __init__(self, n_iter: int = 200, tol: float = 1e-6):
         self.n_iter = n_iter
-        self.params = None
-        self.opt_loss_val = None
+        self.tol = tol
+        self.optimizer = optax.lbfgs()
 
-    def fit(self,
-            hmm_params,
-            ys,
-            ts: Int[Array, " n"] | None = None,
-            xs=None,
-            u_pre=None,
-            frozen=None,
-            loss_fn: Callable | None = None,
-            batched: bool = False,
-            mask=None) -> None:
-        
-        whole_frozen, element_frozen = self._parse_frozen(frozen)
-        filter_spec = self._build_filter_spec(hmm_params, whole_frozen)
-        trainable, static = eqx.partition(hmm_params, filter_spec)
-        _loss_fn = self._build_loss_fn(static, u_pre, ys, ts, xs, loss_fn=loss_fn,
-                                       element_frozen=element_frozen,
-                                       original_params=hmm_params,
-                                       batched=batched, mask=mask)
+    def _minimise(self, trainable: Params, objective: Callable, data: Any) -> tuple[Params, float, bool]:
+        params, state = self._run(objective, trainable, data)
+        loss, grad = otu.tree_get(state, "value"), otu.tree_get(state, "grad")
+        return params, float(loss), bool(otu.tree_norm(grad) < self.tol)
 
-        arrays, non_arrays = eqx.partition(trainable, eqx.is_array)
+    @partial(jax.jit, static_argnums=(0, 1))
+    def _run(self, objective: Callable, params: Params, data: Any):
+        value_fn, carry = partial(objective, data=data), (params, self.optimizer.init(params)) # type: ignore
+        return jax.lax.while_loop(self._should_continue, partial(self._step, value_fn), carry)
 
-        def array_loss_fn(arrays):
-            return _loss_fn(eqx.combine(arrays, non_arrays))
+    def _step(self, value_fn: Callable, carry):
+        params, state = carry
+        value, grad = optax.value_and_grad_from_state(value_fn)(params, state=state)
+        updates, state = self.optimizer.update(grad, state, params, value=value, grad=grad, value_fn=value_fn)
+        return optax.apply_updates(params, updates), state
 
-        optimizer = optax.lbfgs()
-        opt_state = optimizer.init(arrays)
-
-        @jax.jit
-        def run(arrays, opt_state):
-            
-            def body(_, carry):
-                arrays, opt_state = carry
-                val, grads = jax.value_and_grad(array_loss_fn)(arrays)
-                updates, new_opt_state = optimizer.update(
-                    grads, opt_state, arrays,
-                    value=val, grad=grads, value_fn=array_loss_fn
-                )
-                return optax.apply_updates(arrays, updates), new_opt_state
-            return jax.lax.fori_loop(0, self.n_iter, body, (arrays, opt_state))
-
-        arrays, opt_state = run(arrays, opt_state)
-        val = array_loss_fn(arrays)
-
-        self.params = eqx.combine(eqx.combine(arrays, non_arrays), static)
-        self.params = self._restore_frozen_elements(self.params, element_frozen, hmm_params)
-        self.opt_loss_val = val
+    def _should_continue(self, carry) -> jax.Array:
+        _, state = carry
+        count, grad = otu.tree_get(state, "count"), otu.tree_get(state, "grad")
+        return (count == 0) | ((count < self.n_iter) & (otu.tree_norm(grad) >= self.tol))

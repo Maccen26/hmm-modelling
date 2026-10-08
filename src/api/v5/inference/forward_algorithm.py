@@ -1,4 +1,4 @@
-from src.api.v5.base import BaseInference
+from src.api.v5.inference.base_inference import BaseInference
 from src.api.v5.hmm.params import Params
 import jax.numpy as jnp
 #from src.api.v5.inference.forward_outout import ForwardOutput

@@ -16,6 +16,7 @@ dependencies = [
     "optuna>=5.0.0",
     "pandas>=3.0.0",
     "pydantic>=2.13.5",
+    "pyproj>=3.7.2",
     "r-models",
     "requests>=2.34.2",
     "scikit-learn>=1.9.1",

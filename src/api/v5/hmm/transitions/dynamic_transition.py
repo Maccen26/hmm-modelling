@@ -1,8 +1,8 @@
 import jax.numpy as jnp
 import jax
 
-from src.api.v5.base import BaseTransition
-from src.base.utils import logits_to_transition_matrix
+from src.api.v5.hmm.transitions.base_transition import BaseTransition
+from src.api.v5.base.utils import logits_to_transition_matrix
 
 
 class DynamicTransition(BaseTransition):
@@ -37,7 +37,7 @@ class DynamicTransition(BaseTransition):
 
     @classmethod
     def from_params(cls, transition_matrix, beta):
-        from src.base.utils import transition_matrix_to_logits
+        from src.api.v5.base.utils import transition_matrix_to_logits
         return cls(transition_matrix_to_logits(transition_matrix), beta)
 
     def step(self, xt: jnp.ndarray | None = None) -> jnp.ndarray:

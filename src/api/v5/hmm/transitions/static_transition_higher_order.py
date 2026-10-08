@@ -1,5 +1,5 @@
 import jax
-from src.api.v5.base import BaseTransition 
+from src.api.v5.hmm.transitions.base_transition import BaseTransition 
 import jax.numpy as jnp 
 import equinox as eqx
 
