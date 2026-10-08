@@ -36,7 +36,7 @@ class BaseInference(ABC):
             params: Params, 
             initial_dist: jnp.ndarray, 
             ys: jnp.ndarray, 
-            xs: jnp.ndarray | None = None,) -> Any:
+            xs: jnp.ndarray | None = None) -> Any:
         """
         Run the full algorithm over a sequence, or over a batch of sequences.
 

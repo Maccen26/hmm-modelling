@@ -17,24 +17,28 @@ class ForwardAlgorithm(BaseInference):
             initial_dist: jnp.ndarray, 
             ys: jnp.ndarray, 
             xs: jnp.ndarray | None = None, 
+            prior_densities: jnp.ndarray | None = None
             ) -> Any:
         """
         Run the forward algorithm on a single sequence of observations.
         """ 
+        if (prior_densities is None):
+            prior_densities = jnp.ones_like(ys)  # (T, 1)
+
         N = len(ys) 
         Gammas = params.transition_matrices(N=N, xs=xs)  # (T, num_states, num_states)
         gs = params.densities(ys=ys)                # (T, 1, num_states)
-        _, outputs = jax.lax.scan(f=self.step, init=initial_dist, xs=(Gammas, gs))
-        
+        _, outputs = jax.lax.scan(f=self.step, init=initial_dist, xs=(Gammas, gs, prior_densities))
+
         return outputs
 
     def step(self, carry: Any, step_input: Any) -> Any:
         """One forward recursion step over a precomputed (Gamma, density) pair."""
         
-        Gamma, g_t = step_input
+        Gamma, g_t, prior_dens = step_input
         ut_prev = carry
-
         u_t = ut_prev @ Gamma
+        u_t = u_t * prior_dens
         f_t = jnp.sum(u_t * g_t)
 
         # To do: Make 1 if f_t is zero. This results in Density being zero, which is
