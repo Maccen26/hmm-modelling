@@ -26,6 +26,10 @@ class DynamicTransition(BaseTransition):
     # rebuilds the class positionally via self.__class__(*params), so the argument
     # order must match the field declaration order.
     def __init__(self, transition_logits, beta):
+        """
+        Accepts beta of shape (num_covariates, num_states, num_states - 1) 
+        and transition_logits of shape (num_states, num_states - 1). 
+        """
         self.transition_logits = jnp.asarray(transition_logits, dtype=float)
         self.beta = jnp.asarray(beta, dtype=float)
 
