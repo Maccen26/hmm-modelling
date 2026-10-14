@@ -27,7 +27,7 @@ class ForwardAlgorithm(BaseInference):
         - u_t: the predicted state distribution at time t
         """ 
         if (prior_densities is None):
-            prior_densities = jnp.ones_like(ys)  # (T, 1)
+            prior_densities = jnp.ones((len(ys), 1))  # (T, 1)
 
         N = len(ys) 
         Gammas = params.transition_matrices(N=N, xs=xs)  # (T, num_states, num_states)
