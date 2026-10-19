@@ -18,7 +18,7 @@ class BaseHMM(ABC, eqx.Module):
     transition: BaseTransition
 
     @abstractmethod
-    def transition_matrix(self, t:int| None = None, ys: jnp.ndarray | None = None, xs: jnp.ndarray | None = None) -> jnp.ndarray:  
+    def transition_matrix(self, xs: jnp.ndarray | None = None) -> jnp.ndarray:  
         """
         Builds the transition matrix at time step t given the covariates at time step t.
         
