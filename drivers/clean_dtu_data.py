@@ -217,6 +217,32 @@ def calibrate_humidity(seg_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     return seg_df, x_out
 
 
+# --- Occupant feedback ----------------------------------------------------
+
+def feedback_path(room_name: str) -> Path:
+    return Path(load_base_data_path()) / "raw" / "dtu" / "feedback" / f"{room_name}.csv"
+
+
+def add_feedback(seg_df: pd.DataFrame, room_name: str, bin: str = "30min") -> pd.DataFrame:
+    """Add a binary `feedback` column: 1 if any feedback was submitted within that bin, else 0.
+
+    Feedback timestamps are floored onto the same left-labelled grid `resample` produces, so a
+    response at 13:13 lands in the 13:00 bin. Rooms without a feedback file get all zeros.
+    """
+    seg_df = seg_df.copy()
+    seg_df["feedback"] = 0
+
+    path = feedback_path(room_name)
+    if not path.exists():
+        print(f"  {room_name}: no feedback file, feedback column is all zeros")
+        return seg_df
+
+    fb_bins = pd.to_datetime(pd.read_csv(path)["datetime"]).dt.floor(bin).unique()
+    seg_df.loc[seg_df.index.isin(fb_bins), "feedback"] = 1
+    print(f"  feedback: {int(seg_df['feedback'].sum())} of {len(fb_bins)} feedback bins fall in the segment")
+    return seg_df
+
+
 def split_three_way(n: int, val_size: float, test_size: float) -> tuple[int, int]:
     """Chronological boundaries (train_idx, val_idx): train -> val -> test."""
     if not (0 < val_size + test_size < 1):
@@ -285,6 +311,8 @@ def clean_dtu_data(
     if drop_temperature:
         seg_df = seg_df.drop(columns="temperature")
         y_cols = [c for c in y_cols if c != "temperature"]
+
+    seg_df = add_feedback(seg_df, room_name, bin=bin)
 
     co2_floor_arr = np.asarray(co2_floor.values, dtype=float)
     print(f"  sensor floor ({baseline_window}, q={baseline_quantile:g}): "

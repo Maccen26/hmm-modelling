@@ -47,7 +47,7 @@ class ForwardAlgorithm(BaseInference):
 
         # To do: Make 1 if f_t is zero. This results in Density being zero, which is
         # correct. But we cannot divide by zero
-        f_t = jnp.clip(f_t, a_min=1e-10)
+        f_t = jnp.clip(f_t, a_min=2.2250738585072014e-308)
 
         u_tt = u_t * g_t / f_t
 
