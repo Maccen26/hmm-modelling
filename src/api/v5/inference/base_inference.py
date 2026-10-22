@@ -33,10 +33,7 @@ class BaseInference(ABC):
     @classmethod
     @abstractmethod
     def run(cls,
-            params: Params, 
-            initial_dist: jnp.ndarray, 
-            ys: jnp.ndarray, 
-            xs: jnp.ndarray | None = None) -> Any:
+            params: Params) -> Any:
         """
         Run the full algorithm over a sequence, or over a batch of sequences.
 

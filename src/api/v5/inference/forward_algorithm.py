@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 
 
-class ForwardAlgorithm(BaseInference):
+class ForwardAlgorithm:
 
     @classmethod
     def run(cls, 
