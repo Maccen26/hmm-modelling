@@ -25,6 +25,11 @@ class ForwardAlgorithm:
         - utt: the filtered state distribution at time t
         - f_t: the normalizing constant at time t
         - u_t: the predicted state distribution at time t
+
+        Returns:
+        - utt: jnp.ndarray of shape (T, 1, num_states)
+        - f_t: jnp.ndarray of shape (T,)
+        - u_t: jnp.ndarray of shape (T, 1, num_states)
         """ 
         if (prior_densities is None):
             prior_densities = jnp.ones((len(ys), 1))  # (T, 1)

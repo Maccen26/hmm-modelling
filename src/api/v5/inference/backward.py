@@ -23,6 +23,7 @@ class BackwardAlgorithm:
         Run the backward algorithm on a single sequence of observations.
         Returns (b_t) for each time step t, where:
         - b_t: the backward state distribution at time t
+        Shape is (T, num_states), where T is the number of time steps and num_states is the number of hidden states in the HMM.
         """ 
         if (prior_densities is None):
             prior_densities = jnp.ones((len(ys), 1))  # (T, 1)
