@@ -1,7 +1,8 @@
 import jax.numpy as jnp
 import jax 
+from functools import partial
 
-class BackwardAlgorithm: 
+class BackwardSampler: 
 
     @classmethod
     def step(cls, key: jax.Array, Gammas: jax.Array, utt: jax.Array) -> jax.Array:
@@ -21,7 +22,7 @@ class BackwardAlgorithm:
 
         # Sample the last state from the filtered distribution at time T
         z_last = jax.random.choice(subkey, num_states, p=utt[T - 1])
-        path = jnp.zeros(T, dtype=jnp.int32).at[T - 1].set(z_last)
+        path = jnp.zeros(T, dtype=jnp.int64).at[T - 1].set(z_last)
 
         def body(i, carry):
             path, key = carry
@@ -40,6 +41,7 @@ class BackwardAlgorithm:
         return path
     
     @classmethod
+    @partial(jax.jit, static_argnames=("cls", "num_paths"))
     def run_algorithm(cls, num_paths: int, Gammas: jax.Array, utt: jax.Array, seed: int) -> jax.Array:
         """
         Returns num_paths paths via backward recursion  over a precomputed transition matrix and filtered state distribution.

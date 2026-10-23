@@ -10,7 +10,7 @@ from src.api.v5.hmm.params import Params
 from src.api.v5.hmm.transitions import StaticTransition, DynamicTransition
 from src.api.v5.hmm.emissions import GaussEmission
 from src.api.v5.inference.forward_algorithm import ForwardAlgorithm
-from src.api.v5.inference.backward import BackwardAlgorithm
+from src.api.v5.inference.backward_sampler import BackwardSampler
 
 
 def brute_force_path_posterior(params: Params, u0: jnp.ndarray, ys: jnp.ndarray,
@@ -40,7 +40,7 @@ def sample_paths(params: Params, u0: jnp.ndarray, ys: jnp.ndarray, num_paths: in
                  xs: jnp.ndarray | None = None, seed: int = 0) -> np.ndarray:
     utts, _, _ = ForwardAlgorithm.run(params, u0, ys, xs)
     Gammas = params.transition_matrices(len(ys), xs)
-    return np.asarray(BackwardAlgorithm.run(num_paths, Gammas, utts, seed=seed))
+    return np.asarray(BackwardSampler.run(num_paths, Gammas, utts, seed=seed))
 
 
 def empirical_path_distribution(paths: np.ndarray) -> dict[tuple[int, ...], float]:
@@ -50,7 +50,7 @@ def empirical_path_distribution(paths: np.ndarray) -> dict[tuple[int, ...], floa
 
 class TestForwardBackwardIntegration(TestCase):
     """
-    Runs ForwardAlgorithm -> BackwardAlgorithm and checks that the sampled
+    Runs ForwardAlgorithm -> BackwardSampler and checks that the sampled
     state paths follow the exact posterior p(z_{0:T-1} | y_{0:T-1}).
     """
 

@@ -421,7 +421,8 @@ if __name__ == "__main__":
         "Room 013",
         "Room 014",
         "Room 015",
-        "Room 016"
+        "Room 016",
+        "Room 019"
         ]
 
     TAG = "30min"
