@@ -3,23 +3,20 @@ jax.config.update("jax_enable_x64", True)
 
 import jax.numpy as jnp
 
-from drivers.models.utils import Config, Data, Loss, fit_and_report, load_data, load_fit
+from drivers.models.utils import Config, Data, Loss, fit_and_report, floored_transition_matrix, load_data, load_fit
 from src.api.v5 import DynamicTransition, Params
 from src.api.v5.solvers.base_solver import SolverResult
 
 NAME = "HMM(b,1)"
 SLUG = "hmm_beta_1"
-LOSS = Loss("ridge_beta", lam=1)  # L2 penalty on beta; without it some betas diverge and the fit never converges
+LOSS = Loss(beta_lam=1e-2)  # L2 penalty on beta; without it some betas diverge and the fit never converges
 DYNAMIC = True
 
 
 def build(cfg: Config, data: Data) -> Params:
     base = load_fit(cfg, "hmm_1")
     beta = jnp.ones((len(cfg.covariate_cols), cfg.states, cfg.states - 1)) * 0.05
-    # Floor Γ: entries that underflowed to 0 in hmm_1 would give -inf logits, which L-BFGS turns into NaN on step 1
-    gamma = jnp.maximum(base.transition.transition_matrix(), 1e-8)
-    gamma = gamma / gamma.sum(axis=1, keepdims=True)
-    transition = DynamicTransition.from_params(transition_matrix=gamma, beta=beta)
+    transition = DynamicTransition.from_params(transition_matrix=floored_transition_matrix(base.transition), beta=beta)
     return Params(emission=base.emission, transition=transition)
 
 

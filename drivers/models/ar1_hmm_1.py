@@ -7,7 +7,7 @@ from src.api.v5.solvers.base_solver import SolverResult
 
 NAME = "AR(1)-HMM(1)"
 SLUG = "ar1_hmm_1"
-LOSS = Loss("nll")
+LOSS = Loss()
 DYNAMIC = False
 
 

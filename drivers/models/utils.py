@@ -33,24 +33,32 @@ OBS_COLS = ("co2",)         # ≥2 columns -> multivariate emission
 COVARIATE_COLS = ("off_day", "sin_week_1", "cos_week_1", "sin_tod_1", "cos_tod_1", "working_hours")  # β models only
 
 
+SIGMA_LAM = 1e-4  # ridge on σ²: ~20 nats on a σ≈450 ppm state, negligible on the σ≈20-30 ppm ones
+
+
 @dataclass(frozen=True)
 class Loss:
-    """The objective a model is fitted with; its slug names the results/plots folder."""
-    name: str = "nll"               # "nll" | "ridge_beta" | "ridge_beta_sigma"
-    lam: float = 0.0
+    """NLL plus optional ridge penalties; its slug names the results/plots folder.
+
+    beta_lam  * sum(beta^2)  on the transition covariate effects (β models only)
+    sigma_lam * sum(sigma^2) on the emission variances
+    """
+    beta_lam: float = 0.0
+    sigma_lam: float = 0.0
 
     @property
     def fn(self) -> Callable:
-        if self.name == "nll":
-            return negative_likelihood
-        penalised = {"ridge_beta": ridge_negative_likelihood, "ridge_beta_sigma": ridge_beta_sigma}
-        if self.name not in penalised:
-            raise ValueError(f"Unknown loss '{self.name}'; choose from nll, {', '.join(penalised)}")
-        return partial(penalised[self.name], lam=self.lam)
+        return partial(penalised_negative_likelihood, beta_lam=self.beta_lam, sigma_lam=self.sigma_lam)
+
+    @property
+    def penalised(self) -> bool:
+        return bool(self.beta_lam or self.sigma_lam)
 
     @property
     def slug(self) -> str:
-        return "nll" if self.name == "nll" else f"{self.name}_lam{self.lam:g}"
+        """e.g. nll, ridge_sigma_lam0.0001, ridge_beta_lam1, ridge_beta_lam1_ridge_sigma_lam0.0001"""
+        parts = [f"ridge_{name}_lam{lam:g}" for name, lam in (("beta", self.beta_lam), ("sigma", self.sigma_lam)) if lam]
+        return "_".join(parts) or "nll"
 
 
 @dataclass(frozen=True)
@@ -99,14 +107,19 @@ def room_name(room: int) -> str:
     return f"room_{room:03d}"
 
 
-def parse_args(default_states: int) -> tuple[str, int]:
-    """Room and number of states from the command line (`--room 9 --states K`)."""
-    parser = argparse.ArgumentParser()
+def add_run_args(parser: argparse.ArgumentParser, default_states: int | None = None) -> argparse.ArgumentParser:
+    """--room, --states and --sigma-lam, shared by the single-driver and run-all CLIs."""
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
-    parser.add_argument("--states", "-K", type=int, default=default_states,
-                        help=f"number of hidden states (default {default_states})")
-    args = parser.parse_args()
-    return room_name(args.room), args.states
+    parser.add_argument("--states", "-K", type=int, default=default_states, required=default_states is None,
+                        help="number of hidden states" + (f" (default {default_states})" if default_states else ""))
+    parser.add_argument("--sigma-lam", type=float, default=0.0,
+                        help=f"ridge on the emission variances, added to the driver's loss (default 0; suggested {SIGMA_LAM:g})")
+    return parser
+
+
+def parse_args(default_states: int) -> argparse.Namespace:
+    """Room, number of states and σ-ridge from the command line (`--room 9 --states K [--sigma-lam λ]`)."""
+    return add_run_args(argparse.ArgumentParser(), default_states).parse_args()
 
 
 # --- Data ---------------------------------------------------------------------------
@@ -156,12 +169,14 @@ def negative_likelihood(params: Params, data: tuple):
     return -jnp.sum(jnp.log(f_t))
 
 
-def ridge_negative_likelihood(params: Params, data: tuple, lam: float):
-    """Negative log-likelihood plus an L2 (ridge) penalty lam * sum(beta^2) on the transition betas."""
-    return negative_likelihood(params, data) + lam * jnp.sum(params.transition.beta ** 2)
-
-def ridge_beta_sigma(params: Params, data: tuple, lam: float):
-    return ridge_negative_likelihood(params, data, lam) + lam*jnp.sum(jnp.exp(params.emission.log_sigma) ** 2)
+def penalised_negative_likelihood(params: Params, data: tuple, beta_lam: float = 0.0, sigma_lam: float = 0.0):
+    """Negative log-likelihood plus ridge penalties beta_lam * sum(beta^2) and sigma_lam * sum(sigma^2)."""
+    loss = negative_likelihood(params, data)
+    if beta_lam:
+        loss = loss + beta_lam * jnp.sum(params.transition.beta ** 2)
+    if sigma_lam:
+        loss = loss + sigma_lam * jnp.sum(jnp.exp(params.emission.log_sigma) ** 2)
+    return loss
 
 
 def number_of_clipped_ft(params: Params, data: tuple) -> int:
@@ -182,6 +197,13 @@ def seed_emission(cfg: Config, ys: jnp.ndarray):
     mu = jnp.quantile(ys, quantiles)
     sigma = jnp.std(ys) * jnp.ones((cfg.states,))
     return GaussEmission.from_params(mu=mu, sigma=sigma)
+
+
+def floored_transition_matrix(transition, floor: float = 1e-8) -> jnp.ndarray:
+    """Γ with entries floored and rows renormalised: entries that underflowed to 0 in a fitted model
+    would give -inf logits when seeding a new transition, which L-BFGS turns into NaN on step 1."""
+    gamma = jnp.maximum(transition.transition_matrix(), floor)
+    return gamma / gamma.sum(axis=1, keepdims=True)
 
 
 def seed_transition(states: int) -> StaticTransition:
@@ -207,7 +229,7 @@ def fit_and_report(name: str, params: Params, data: tuple, cfg: Config) -> Solve
         params=params, loss_fn=cfg.loss.fn, data=data
     )
     print(f"Final loss: {result.loss}")
-    if cfg.loss.name != "nll":
+    if cfg.loss.penalised:
         print(f"Negative log-likelihood (unpenalised): {float(negative_likelihood(result.params, data))}")
     print(f"Converged: {result.converged}")
     print(f"Number of clipped steps in f_t: {number_of_clipped_ft(result.params, data)}")
@@ -238,13 +260,18 @@ def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str
 
 
 def load_fit(cfg: Config, slug: str, covariates: bool = False) -> Params:
-    """Params of a previously fitted seed model for the same room/states, fitted with the seed's own loss."""
-    path = result_path(replace(cfg, loss=driver_loss(slug)), slug)
+    """Params of a previously fitted seed model for the same room/states.
+
+    The seed is looked up under its own β-ridge but this run's σ-ridge, so each σ-ridge setting is its own chain.
+    """
+    seed_loss = replace(driver_loss(slug), sigma_lam=cfg.loss.sigma_lam)
+    path = result_path(replace(cfg, loss=seed_loss), slug)
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"Seed model '{slug}' has not been fitted for {cfg.room}, K={cfg.states} (expected {path}). "
             f"Run `uv run python -m drivers.models.{slug} --room {int(cfg.room.split('_')[-1])} "
-            f"--states {cfg.states}` first.")
+            f"--states {cfg.states}"
+            + (f" --sigma-lam {cfg.loss.sigma_lam:g}" if cfg.loss.sigma_lam else "") + "` first.")
     saved = load_model(path)
     fitted = saved["config"]
     if fitted.obs_cols != cfg.obs_cols or (covariates and fitted.covariate_cols != cfg.covariate_cols):

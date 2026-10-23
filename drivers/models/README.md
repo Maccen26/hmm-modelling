@@ -6,6 +6,7 @@ Run from the repo root with module syntax:
 ```bash
 uv run python -m drivers.models.<driver> --room 9 [--states K]   # one model on room_009
 uv run python -m drivers.models.run --room 9 --states K          # every model, in fit order
+uv run python -m drivers.models.run --room 9 --states K --sigma-lam 1e-4   # same, plus a ridge on σ²
 uv run python -m drivers.models.run --room 9 --states K --models hmm_1 ar1_hmm_1
 ```
 
@@ -14,22 +15,27 @@ Observation columns and covariates are shared defaults in `utils.py` (`OBS_COLS`
 
 ## Losses
 
-Each driver declares the objective it is fitted with as `LOSS = Loss(name, lam)` (`nll`, `ridge_beta`, `ridge_beta_sigma`).
-The loss slug (`nll`, `ridge_beta_lam1`, `ridge_beta_sigma_lam0.01`) names the results/plots folder, so changing λ never overwrites earlier fits.
+The objective is the NLL plus two optional ridge penalties, `Loss(beta_lam, sigma_lam)`:
+`beta_lam · Σβ²` on the transition covariate effects and `sigma_lam · Σσ²` on the emission variances.
+
+- Each driver's `LOSS` fixes its β-ridge: `hmm_beta_1`, `ar1_hmm_beta_1` and `ar1_hmm_beta_1_shared` use λ_β = 1e-2 (their betas diverge under plain NLL), and every other driver uses plain NLL.
+- `--sigma-lam` adds the σ-ridge on top. The suggested value is `SIGMA_LAM = 1e-4` in `utils.py`: about 20 nats on a σ≈450 ppm state, and negligible on the σ≈20–30 ppm states.
+
+The loss slug names the results/plots folder (`nll`, `ridge_sigma_lam0.0001`, `ridge_beta_lam0.01`, `ridge_beta_lam0.01_ridge_sigma_lam0.0001`, …), so changing a λ never overwrites earlier fits.
 
 ## Fit order
 
-Drivers don't refit their seed models; they load them from `results/` for the same room/states, from the folder of **the seed's own loss**.
+Drivers don't refit their seed models; they load them from `results/` for the same room/states, using **the seed's own β-ridge and this run's σ-ridge**. Each `--sigma-lam` value is therefore its own chain.
 If a seed is missing, the driver raises an error naming the command to run. `run` fits in this order:
 
-| Driver | Loss | Seeded from |
+| Driver | Base loss | Seeded from |
 |---|---|---|
 | `hmm_1` | `nll` | quantiles of the data |
-| `hmm_beta_1` | `ridge_beta_lam1` | `hmm_1` |
+| `hmm_beta_1` | `ridge_beta_lam0.01` | `hmm_1` |
 | `hmm_beta_1_shared` | `nll` | `hmm_1` |
 | `ar1_hmm_1` | `nll` | `hmm_1` |
-| `ar1_hmm_beta_1` | `ridge_beta_sigma_lam0.01` | `ar1_hmm_1` (emission) + `hmm_beta_1` (transition) |
-| `ar1_hmm_beta_1_shared` | `nll` | `ar1_hmm_1` (emission) + `hmm_beta_1_shared` (transition) |
+| `ar1_hmm_beta_1` | `ridge_beta_lam0.01` | `ar1_hmm_1` (emission) + `hmm_beta_1` (transition) |
+| `ar1_hmm_beta_1_shared` | `ridge_beta_lam0.01` | `ar1_hmm_1` (emission) + `hmm_beta_1_shared` (transition) |
 
 ## Outputs
 

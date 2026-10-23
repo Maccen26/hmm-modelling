@@ -7,7 +7,7 @@ from src.api.v5.solvers.base_solver import SolverResult
 
 NAME = "AR(1)-HMM(b,1) shared cols"
 SLUG = "ar1_hmm_beta_1_shared"
-LOSS = Loss("nll")
+LOSS = Loss(beta_lam=1e-2)  # L2 penalty on beta; under plain NLL the betas diverge for K≥5
 DYNAMIC = True
 
 

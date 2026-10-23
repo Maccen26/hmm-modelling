@@ -7,7 +7,7 @@ from src.api.v5.solvers.base_solver import SolverResult
 
 NAME = "AR(1)-HMM(b,1)"
 SLUG = "ar1_hmm_beta_1"
-LOSS = Loss("ridge_beta_sigma", lam=1e-2)  # L2 penalty on beta and sigma; without it some betas diverge
+LOSS = Loss(beta_lam=1e-2)  # L2 penalty on beta; without it some betas diverge and the fit never converges
 DYNAMIC = True
 
 
