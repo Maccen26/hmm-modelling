@@ -1,7 +1,7 @@
 """Print the natural and working (unconstrained, optimised) parameters of a saved fit.
 
-    uv run python -m drivers.models.show_params ar1_hmm_beta_1 -K 6
-    uv run python -m drivers.models.show_params hmm_1 --room room_009 --tag 30min -K 4
+    uv run python -m drivers.models.show_params ar1_hmm_beta_1 --room 9 -K 6
+    uv run python -m drivers.models.show_params hmm_1 --room 9 -K 4 --loss nll
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -12,7 +12,7 @@ from dataclasses import fields
 
 import numpy as np
 
-from drivers.models.utils import RESULTS_DIR
+from drivers.models.utils import fit_path, room_name
 from drivers.utils import load_model
 from src.api.v5 import Params
 
@@ -46,12 +46,12 @@ def show(title: str, values: dict[str, np.ndarray]):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("model", help="slug of the saved fit, e.g. ar1_hmm_beta_1")
-    parser.add_argument("--room", default="room_009")
-    parser.add_argument("--tag", default="30min")
+    parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
+    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
     args = parser.parse_args()
 
-    path = os.path.join(RESULTS_DIR, args.room, args.tag, f"states_{args.states}", f"{args.model}.pkl")
+    path = fit_path(room_name(args.room), args.states, args.model, args.loss)
     if not os.path.exists(path):
         raise SystemExit(f"No saved fit at {path}")
     saved = load_model(path)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     np.set_printoptions(precision=4, suppress=True, linewidth=120)
     print(f"{args.model}: {type(params.emission).__name__} + {type(params.transition).__name__} "
-          f"({args.room}/{args.tag}, K={args.states}, obs={list(saved['config'].obs_cols)})")
+          f"({saved['config'].room}, K={args.states}, loss={saved['config'].loss.slug}, obs={list(saved['config'].obs_cols)})")
     if "covariate_cols" in saved and hasattr(params.transition, "beta"):
         print(f"beta covariates (axis 0): {saved['covariate_cols']}")
     show("Natural parameters", natural(params, saved["data"].ys))

@@ -57,8 +57,8 @@ def metrics_table(name: str, slug: str, cfg: Config, y_val: np.ndarray, preds: d
 
 
 def save_metrics(table: pd.DataFrame, cfg: Config) -> str:
-    """Upsert into one CSV shared by all models of this room/tag/states."""
-    path = os.path.join(RESULTS_DIR, cfg.room, cfg.tag, f"states_{cfg.states}", "predictive_metrics.csv")
+    """Upsert into one CSV shared by all models of this room/loss/states."""
+    path = os.path.join(cfg.run_dir(RESULTS_DIR), "predictive_metrics.csv")
     if os.path.exists(path):
         old = pd.read_csv(path)
         keys = table[METRICS_KEY].astype(str).agg("|".join, axis=1)
@@ -117,6 +117,11 @@ def plot_first_week(name: str, col: str, dt: pd.DatetimeIndex, y: np.ndarray, pr
     plt.close(fig)
 
 
+def run_label(name: str, cfg: Config) -> str:
+    """Plot-title prefix naming the model, room, number of states and loss."""
+    return f"{name} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}"
+
+
 def evaluate(name: str, slug: str, params: Params, cfg: Config, train: Data, val: Data,
              horizons=HORIZONS) -> pd.DataFrame:
     """Rolling k-step forecasts on the validation set: save R2/RMSE/MAPE to CSV and the diagnostic plots."""
@@ -128,12 +133,13 @@ def evaluate(name: str, slug: str, params: Params, cfg: Config, train: Data, val
     print(table.to_string(index=False))
     print(f"Saved metrics to {save_metrics(table, cfg)}")
 
-    plot_dir = os.path.join(PLOTS_DIR, cfg.room, cfg.tag, f"states_{cfg.states}")
+    plot_dir = cfg.run_dir(PLOTS_DIR)
+    label = run_label(name, cfg)
     for d, col in enumerate(cfg.obs_cols):
         file = f"{slug}.png" if not cfg.multivariate else f"{slug}_{col}.png"
-        plot_diagnostics(f"{name} [{col}]", y_val[:, d], {k: p[:, d] for k, p in preds.items()},
+        plot_diagnostics(f"{label} [{col}]", y_val[:, d], {k: p[:, d] for k, p in preds.items()},
                          res[:, d], os.path.join(plot_dir, file))
-        plot_first_week(name, col, val.datetime, y_val[:, d], {k: p[:, d] for k, p in preds.items()},
+        plot_first_week(label, col, val.datetime, y_val[:, d], {k: p[:, d] for k, p in preds.items()},
                         table, os.path.join(plot_dir, file.replace(".png", "_first_week.png")))
     print(f"Saved plots to {plot_dir}")
     return table

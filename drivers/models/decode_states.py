@@ -4,8 +4,8 @@ Smoothed state probabilities P(z_t = s | y_1:T) are estimated as the share of pa
 with BackwardSampler that are in state s at time t; the top panel colours each observation by
 its most probable state. The validation split is filtered through the training set first.
 
-    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 -K 4
-    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 -K 4 --split train --start-day 14 --days 7
+    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 --room 9 -K 4
+    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 --room 9 -K 4 --split train --start-day 14 --days 7
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from drivers.models.evaluate import _covariates
-from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, load_data, working_hours
+from drivers.models.utils import PLOTS_DIR, fit_path, load_data, room_name, working_hours
 from drivers.utils import load_model
 from src.api.v5 import BackwardSampler, ForwardAlgorithm, Params
 
@@ -77,16 +77,16 @@ def plot(title: str, dt: pd.DatetimeIndex, y: np.ndarray, probs: np.ndarray, lab
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("model", help="slug of the saved fit, e.g. ar1_hmm_beta_1")
-    parser.add_argument("--room", default="room_009")
-    parser.add_argument("--tag", default="30min")
+    parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
+    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
     parser.add_argument("--split", choices=["train", "val"], default="val")
     parser.add_argument("--start-day", type=float, default=0, help="window start, days after the split begins")
     parser.add_argument("--days", type=float, default=7, help="window length in days")
     parser.add_argument("--paths", type=int, default=500, help="backward-sampled paths for the smoothed probabilities")
     args = parser.parse_args()
 
-    path = os.path.join(RESULTS_DIR, args.room, args.tag, f"states_{args.states}", f"{args.model}.pkl")
+    path = fit_path(room_name(args.room), args.states, args.model, args.loss)
     if not os.path.exists(path):
         raise SystemExit(f"No saved fit at {path}")
     saved = load_model(path)
@@ -107,7 +107,8 @@ if __name__ == "__main__":
     y = np.asarray(ys)
     y = y if y.ndim == 1 else y[:, 0]
 
-    out = os.path.join(PLOTS_DIR, args.room, args.tag, f"states_{args.states}", f"{args.model}_states_{args.split}.png")
-    plot(f"{args.model} (K={args.states}): decoded states, {args.split} split from {start:%Y-%m-%d}",
+    out = os.path.join(cfg.run_dir(PLOTS_DIR), f"{args.model}_states_{args.split}.png")
+    plot(f"{args.model} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}: decoded states, "
+         f"{args.split} split from {start:%Y-%m-%d}",
          dt[window], y[window], probs[window], state_labels(params, train.ys), out)
     print(f"Saved {out}")

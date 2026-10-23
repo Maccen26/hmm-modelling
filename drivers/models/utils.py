@@ -1,8 +1,10 @@
 """Shared helpers for the per-model fitting drivers in drivers/models/."""
 import argparse
+import importlib
 import os
 import re
 from dataclasses import dataclass, field, replace
+from functools import partial
 from typing import Callable
 
 import jax.numpy as jnp
@@ -25,15 +27,40 @@ from src.api.v5.solvers.base_solver import SolverResult
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 PLOTS_DIR = os.path.join(os.path.dirname(__file__), "plots")
 HORIZONS = (1, 2, 4, 6, 8)  # rolling-forecast horizons (steps ahead) for the validation set
+TAG = "30min"               # all room data is binned to 30 min; only used to locate the CSVs
+
+OBS_COLS = ("co2",)         # ≥2 columns -> multivariate emission
+COVARIATE_COLS = ("off_day", "sin_week_1", "cos_week_1", "sin_tod_1", "cos_tod_1", "working_hours")  # β models only
+
+
+@dataclass(frozen=True)
+class Loss:
+    """The objective a model is fitted with; its slug names the results/plots folder."""
+    name: str = "nll"               # "nll" | "ridge_beta" | "ridge_beta_sigma"
+    lam: float = 0.0
+
+    @property
+    def fn(self) -> Callable:
+        if self.name == "nll":
+            return negative_likelihood
+        penalised = {"ridge_beta": ridge_negative_likelihood, "ridge_beta_sigma": ridge_beta_sigma}
+        if self.name not in penalised:
+            raise ValueError(f"Unknown loss '{self.name}'; choose from nll, {', '.join(penalised)}")
+        return partial(penalised[self.name], lam=self.lam)
+
+    @property
+    def slug(self) -> str:
+        return "nll" if self.name == "nll" else f"{self.name}_lam{self.lam:g}"
 
 
 @dataclass(frozen=True)
 class Config:
     room: str                       # e.g. "room_009"
-    tag: str                        # e.g. "30min"
     obs_cols: tuple[str, ...]       # ≥2 columns -> multivariate emission
     covariate_cols: tuple[str, ...] # only used by the β models
     states: int
+    loss: Loss = Loss()
+    tag: str = TAG
     n_iter: int = 100_000
     tol: float = 1e-6
 
@@ -44,6 +71,10 @@ class Config:
     @property
     def multivariate(self) -> bool:
         return len(self.obs_cols) > 1
+
+    def run_dir(self, base: str) -> str:
+        """{base}/{room}/{loss}/states_{K}: where this run's fits, metrics and plots live."""
+        return os.path.join(base, self.room, self.loss.slug, f"states_{self.states}")
 
 
 @dataclass(frozen=True)
@@ -64,11 +95,18 @@ class Data:
         return replace(self, xs=None)
 
 
-def parse_states(default: int) -> int:
-    """Number of states from the command line (`--states K`), else `default`."""
+def room_name(room: int) -> str:
+    return f"room_{room:03d}"
+
+
+def parse_args(default_states: int) -> tuple[str, int]:
+    """Room and number of states from the command line (`--room 9 --states K`)."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--states", "-K", type=int, default=default, help=f"number of hidden states (default {default})")
-    return parser.parse_args().states
+    parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
+    parser.add_argument("--states", "-K", type=int, default=default_states,
+                        help=f"number of hidden states (default {default_states})")
+    args = parser.parse_args()
+    return room_name(args.room), args.states
 
 
 # --- Data ---------------------------------------------------------------------------
@@ -163,14 +201,13 @@ def ar1_emission_from(emission, cfg: Config, phi0: float = 0.05):
 
 # --- Fitting / saving ---------------------------------------------------------------
 
-def fit_and_report(name: str, params: Params, data: tuple, cfg: Config,
-                   loss_fn: Callable = negative_likelihood) -> SolverResult:
-    print(f"--- Fitting {name} ({cfg.room}/{cfg.tag}, obs={list(cfg.obs_cols)}, K={cfg.states})")
+def fit_and_report(name: str, params: Params, data: tuple, cfg: Config) -> SolverResult:
+    print(f"--- Fitting {name} ({cfg.room}, obs={list(cfg.obs_cols)}, K={cfg.states}, loss={cfg.loss.slug})")
     result = LBFGSSolver(n_iter=cfg.n_iter, tol=cfg.tol).fit(
-        params=params, loss_fn=loss_fn, data=data
+        params=params, loss_fn=cfg.loss.fn, data=data
     )
     print(f"Final loss: {result.loss}")
-    if loss_fn is not negative_likelihood:
+    if cfg.loss.name != "nll":
         print(f"Negative log-likelihood (unpenalised): {float(negative_likelihood(result.params, data))}")
     print(f"Converged: {result.converged}")
     print(f"Number of clipped steps in f_t: {number_of_clipped_ft(result.params, data)}")
@@ -178,7 +215,18 @@ def fit_and_report(name: str, params: Params, data: tuple, cfg: Config,
 
 
 def result_path(cfg: Config, slug: str) -> str:
-    return os.path.join(RESULTS_DIR, cfg.room, cfg.tag, f"states_{cfg.states}", f"{slug}.pkl")
+    return os.path.join(cfg.run_dir(RESULTS_DIR), f"{slug}.pkl")
+
+
+def driver_loss(slug: str) -> Loss:
+    """The loss the driver `drivers.models.{slug}` fits with."""
+    return importlib.import_module(f"drivers.models.{slug}").LOSS
+
+
+def fit_path(room: str, states: int, slug: str, loss: str | None = None) -> str:
+    """Path of a saved fit; `loss` is a folder slug, defaulting to the driver's own loss."""
+    loss = loss or driver_loss(slug).slug
+    return os.path.join(RESULTS_DIR, room, loss, f"states_{states}", f"{slug}.pkl")
 
 
 def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str:
@@ -190,12 +238,13 @@ def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str
 
 
 def load_fit(cfg: Config, slug: str, covariates: bool = False) -> Params:
-    """Params of a previously fitted seed model for the same room/tag/states."""
-    path = result_path(cfg, slug)
+    """Params of a previously fitted seed model for the same room/states, fitted with the seed's own loss."""
+    path = result_path(replace(cfg, loss=driver_loss(slug)), slug)
     if not os.path.exists(path):
         raise FileNotFoundError(
-            f"Seed model '{slug}' has not been fitted for {cfg.room}/{cfg.tag}/states_{cfg.states} "
-            f"(expected {path}). Run `uv run python -m drivers.models.{slug} --states {cfg.states}` first.")
+            f"Seed model '{slug}' has not been fitted for {cfg.room}, K={cfg.states} (expected {path}). "
+            f"Run `uv run python -m drivers.models.{slug} --room {int(cfg.room.split('_')[-1])} "
+            f"--states {cfg.states}` first.")
     saved = load_model(path)
     fitted = saved["config"]
     if fitted.obs_cols != cfg.obs_cols or (covariates and fitted.covariate_cols != cfg.covariate_cols):
