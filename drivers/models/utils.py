@@ -122,6 +122,9 @@ def ridge_negative_likelihood(params: Params, data: tuple, lam: float):
     """Negative log-likelihood plus an L2 (ridge) penalty lam * sum(beta^2) on the transition betas."""
     return negative_likelihood(params, data) + lam * jnp.sum(params.transition.beta ** 2)
 
+def ridge_beta_sigma(params: Params, data: tuple, lam: float):
+    return ridge_negative_likelihood(params, data, lam) + lam*jnp.sum(jnp.exp(params.emission.log_sigma) ** 2)
+
 
 def number_of_clipped_ft(params: Params, data: tuple) -> int:
     ys, xs, init_dist = data

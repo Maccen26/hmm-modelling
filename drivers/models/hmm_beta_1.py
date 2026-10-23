@@ -11,13 +11,16 @@ from src.api.v5 import DynamicTransition, Params
 from src.api.v5.solvers.base_solver import SolverResult
 
 NAME = "HMM(b,1)"
-RIDGE_LAMBDA = 1e-2  # L2 penalty on beta; without it some betas diverge and the fit never converges
+RIDGE_LAMBDA = 1  # L2 penalty on beta; without it some betas diverge and the fit never converges
 
 
 def build(cfg: Config, data: Data) -> Params:
     base = load_fit(cfg, "hmm_1")
     beta = jnp.ones((len(cfg.covariate_cols), cfg.states, cfg.states - 1)) * 0.05
-    transition = DynamicTransition.from_params(transition_matrix=base.transition.transition_matrix(), beta=beta)
+    # Floor Γ: entries that underflowed to 0 in hmm_1 would give -inf logits, which L-BFGS turns into NaN on step 1
+    gamma = jnp.maximum(base.transition.transition_matrix(), 1e-8)
+    gamma = gamma / gamma.sum(axis=1, keepdims=True)
+    transition = DynamicTransition.from_params(transition_matrix=gamma, beta=beta)
     return Params(emission=base.emission, transition=transition)
 
 

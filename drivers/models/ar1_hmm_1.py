@@ -2,7 +2,15 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 from drivers.models.evaluate import evaluate
-from drivers.models.utils import Config, Data, ar1_emission_from, fit_and_report, load_data, parse_states, load_fit, save_result
+from drivers.models.utils import (Config, 
+                                  Data, 
+                                  ar1_emission_from, 
+                                  fit_and_report, 
+                                  load_data, 
+                                  parse_states, 
+                                  load_fit, 
+                                  save_result
+                                  )
 from src.api.v5 import Params
 from src.api.v5.solvers.base_solver import SolverResult
 

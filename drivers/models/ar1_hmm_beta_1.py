@@ -4,7 +4,7 @@ jax.config.update("jax_enable_x64", True)
 from functools import partial
 
 from drivers.models.evaluate import evaluate
-from drivers.models.utils import Config, Data, fit_and_report, load_data, load_fit, parse_states, ridge_negative_likelihood, save_result
+from drivers.models.utils import Config, Data, fit_and_report, load_data, load_fit, parse_states, ridge_beta_sigma, save_result
 from src.api.v5 import Params
 from src.api.v5.solvers.base_solver import SolverResult
 
@@ -21,7 +21,7 @@ def build(cfg: Config, data: Data) -> Params:
 def fit(cfg: Config, data: Data | None = None) -> SolverResult:
     data = load_data(cfg) if data is None else data
     return fit_and_report(NAME, build(cfg, data), data.dynamic(), cfg,
-                          loss_fn=partial(ridge_negative_likelihood, lam=RIDGE_LAMBDA))
+                          loss_fn=partial(ridge_beta_sigma, lam=RIDGE_LAMBDA))
 
 
 if __name__ == "__main__":
