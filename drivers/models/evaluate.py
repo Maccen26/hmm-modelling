@@ -10,7 +10,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf
 
-from drivers.models.utils import HORIZONS, PLOTS_DIR, RESULTS_DIR, Config, Data
+from drivers.models.utils import HORIZONS, PLOT_HORIZONS, PLOTS_DIR, RESULTS_DIR, Config, Data
 from drivers.utils import mape
 from src.api.v5 import Params
 from src.api.v5.analysis import Diagnostics, Predictor
@@ -36,12 +36,13 @@ def rolling_predictions(params: Params, train: Data, val: Data, horizons=HORIZON
             for k in horizons}
 
 
-def pseudo_residuals(name: str, params: Params, train: Data, val: Data) -> np.ndarray:
-    """One-step forecast pseudo-residuals of the validation points, filtered through the training set."""
+def pseudo_residuals(name: str, params: Params, train: Data, val: Data) -> tuple[np.ndarray, np.ndarray]:
+    """One-step forecast pseudo-residuals of one filter pass over train then val, split into (train, val)."""
     ys = jnp.concatenate([train.ys, val.ys])
     xs = None if _covariates(params, train) is None else jnp.concatenate([train.xs, val.xs])
     diag = Diagnostics().add_model(name, params, train.init_dist, ys=ys, xs=xs)
-    return _columns(np.asarray(diag.residuals(name)))[len(train.ys):]
+    res = _columns(np.asarray(diag.residuals(name)))
+    return res[:len(train.ys)], res[len(train.ys):]
 
 
 def metrics_table(name: str, slug: str, cfg: Config, y_val: np.ndarray, preds: dict[int, np.ndarray]) -> pd.DataFrame:
@@ -83,13 +84,27 @@ def plot_diagnostics(name: str, y: np.ndarray, preds: dict[int, np.ndarray], res
     ax_hist.set(title="Histogram of prediction residuals", xlabel="Observed − predicted", ylabel="Count")
     ax_hist.legend()
 
+    _plot_qq_acf(res, ax_qq, ax_acf)
+    _save(fig, f"{name}: validation set", path)
+
+
+def plot_residual_diagnostics(name: str, res: np.ndarray, split: str, path: str):
+    """QQ/ACF of the forecast pseudo-residuals alone, e.g. for the training set."""
+    fig, (ax_qq, ax_acf) = plt.subplots(1, 2, figsize=(12, 4.5))
+    _plot_qq_acf(res, ax_qq, ax_acf)
+    _save(fig, f"{name}: {split} set", path)
+
+
+def _plot_qq_acf(res: np.ndarray, ax_qq, ax_acf):
     res = res[~np.isnan(res)]
     sm.qqplot(res, line="45", ax=ax_qq)
     ax_qq.set_title("QQ plot of forecast pseudo-residuals")
     plot_acf(res, ax=ax_acf, lags=48)
     ax_acf.set_title("ACF of forecast pseudo-residuals")
 
-    fig.suptitle(f"{name}: validation set")
+
+def _save(fig, title: str, path: str):
+    fig.suptitle(title)
     fig.tight_layout()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fig.savefig(path, dpi=150)
@@ -127,7 +142,7 @@ def evaluate(name: str, slug: str, params: Params, cfg: Config, train: Data, val
     """Rolling k-step forecasts on the validation set: save R2/RMSE/MAPE to CSV and the diagnostic plots."""
     y_val = _columns(np.asarray(val.ys))
     preds = rolling_predictions(params, train, val, horizons)
-    res = pseudo_residuals(name, params, train, val)
+    res_train, res = pseudo_residuals(name, params, train, val)
 
     table = metrics_table(name, slug, cfg, y_val, preds)
     print(table.to_string(index=False))
@@ -135,11 +150,14 @@ def evaluate(name: str, slug: str, params: Params, cfg: Config, train: Data, val
 
     plot_dir = cfg.run_dir(PLOTS_DIR)
     label = run_label(name, cfg)
+    shown = {k: p for k, p in preds.items() if k in PLOT_HORIZONS}
     for d, col in enumerate(cfg.obs_cols):
         file = f"{slug}.png" if not cfg.multivariate else f"{slug}_{col}.png"
-        plot_diagnostics(f"{label} [{col}]", y_val[:, d], {k: p[:, d] for k, p in preds.items()},
+        plot_diagnostics(f"{label} [{col}]", y_val[:, d], {k: p[:, d] for k, p in shown.items()},
                          res[:, d], os.path.join(plot_dir, file))
-        plot_first_week(label, col, val.datetime, y_val[:, d], {k: p[:, d] for k, p in preds.items()},
+        plot_residual_diagnostics(f"{label} [{col}]", res_train[:, d], "training",
+                                  os.path.join(plot_dir, file.replace(".png", "_train_residuals.png")))
+        plot_first_week(label, col, val.datetime, y_val[:, d], {k: p[:, d] for k, p in shown.items()},
                         table, os.path.join(plot_dir, file.replace(".png", "_first_week.png")))
     print(f"Saved plots to {plot_dir}")
     return table
