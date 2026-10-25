@@ -182,17 +182,14 @@ def calibrate_humidity(seg_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     """Replace indoor RH with the moisture excess `Δx = x_in - x_out` (g/kg dry air).
 
     `x_in` uses the room's own `temperature`; `x_out` is the hourly DMI series matched to each
-    local, tz-naive bin time (same convention as `drivers.utils.weather_features`). Raises if
+    tz-naive bin time, which is UTC (same convention as `drivers.utils.weather_features`). Raises if
     the segment runs outside the outdoor data's span rather than extrapolating.
 
     Returns the frame with `humidity` replaced and the `x_out` that was subtracted.
     """
     x_out_hourly = load_outdoor_humidity()
 
-    local = pd.DatetimeIndex(seg_df.index).tz_localize(
-        "Europe/Copenhagen", ambiguous="NaT", nonexistent="shift_forward"
-    )
-    utc = local.tz_convert("UTC")
+    utc = pd.DatetimeIndex(seg_df.index).tz_localize("UTC")
     lo, hi = x_out_hourly.index[0], x_out_hourly.index[-1]
     tol = pd.Timedelta("1h")
     if utc.min() < lo - tol or utc.max() > hi + tol:
@@ -206,7 +203,7 @@ def calibrate_humidity(seg_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     x_out = (
         merged.set_index("order")["x_out"]
         .reindex(np.arange(len(utc)))
-        .ffill().bfill()        # bins dropped as ambiguous at the DST switch
+        .ffill().bfill()
         .to_numpy()
     )
     x_out = pd.Series(x_out, index=seg_df.index, name="x_out")
