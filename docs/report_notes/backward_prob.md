@@ -26,7 +26,7 @@ $$
 We need to find the probability
 
 $$
-P(C_t = i \mid C_{t+1} = j, Y_{1:T})
+P(C_t = i \mid C_{t+1} = j, Y_{1:t})
 $$
 
 where $Y_{1:T}$ is the entire sequence of observations.
@@ -36,7 +36,7 @@ We can find this using the filtered probabilities and the transition matrix, whe
 Given $C_{t+1}$, the future observations $Y_{t+1:T}$ carry no further information about $C_t$, so $P(C_t = i \mid C_{t+1} = j, Y_{1:T}) = P(C_t = i \mid C_{t+1} = j, Y_{1:t})$. Using Bayes' rule, we get:
 
 $$
-P(C_t = i \mid C_{t+1} = j, Y_{1:T}) = \frac{P(C_{t+1} = j \mid C_t = i)\, P(C_t = i \mid Y_{1:t})}{\sum_{k=1}^{K} P(C_{t+1} = j \mid C_t = k)\, P(C_t = k \mid Y_{1:t})}
+P(C_t = i \mid C_{t+1} = j, Y_{1:t}) = \frac{P(C_{t+1} = j \mid C_t = i)\, P(C_t = i \mid Y_{1:t})}{\sum_{k=1}^{K} P(C_{t+1} = j \mid C_t = k)\, P(C_t = k \mid Y_{1:t})}
 $$
 
 where $K$ is the number of states. This can be written in vector form by defining the vector $p_t$ with entries $(p_t)_i = P(C_t = i \mid C_{t+1} = j, Y_{1:T})$:
