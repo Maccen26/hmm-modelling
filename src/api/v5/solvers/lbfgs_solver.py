@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Any, Callable
 import jax
+import jax.numpy as jnp
 import optax
 import optax.tree_utils as otu
 from src.api.v5.hmm.params import Params
@@ -8,7 +9,7 @@ from src.api.v5.solvers.base_solver import BaseSolver
 
 
 class LBFGSSolver(BaseSolver):
-    """L-BFGS with line search; stops when the gradient norm drops below tol or after n_iter steps."""
+    """L-BFGS with line search; stops when the gradient norm drops below tol, after n_iter steps, or when params turn non-finite."""
 
     def __init__(self, n_iter: int = 200, tol: float = 1e-6):
         self.n_iter = n_iter
@@ -18,7 +19,7 @@ class LBFGSSolver(BaseSolver):
     def _minimise(self, trainable: Params, objective: Callable, data: Any) -> tuple[Params, float, bool]:
         params, state = self._run(objective, trainable, data)
         loss, grad = otu.tree_get(state, "value"), otu.tree_get(state, "grad")
-        return params, float(loss), bool(otu.tree_norm(grad) < self.tol)
+        return params, float(loss), bool((otu.tree_norm(grad) < self.tol) & self._finite(params))
 
     @partial(jax.jit, static_argnums=(0, 1))
     def _run(self, objective: Callable, params: Params, data: Any):
@@ -32,6 +33,11 @@ class LBFGSSolver(BaseSolver):
         return optax.apply_updates(params, updates), state
 
     def _should_continue(self, carry) -> jax.Array:
-        _, state = carry
+        params, state = carry
         count, grad = otu.tree_get(state, "count"), otu.tree_get(state, "grad")
-        return (count == 0) | ((count < self.n_iter) & (otu.tree_norm(grad) >= self.tol))
+        return (count == 0) | ((count < self.n_iter) & (otu.tree_norm(grad) >= self.tol) & self._finite(params))
+
+    @staticmethod
+    def _finite(params) -> jax.Array:
+        """False once any leaf is NaN/inf; the optimiser state keeps the last finite grad, so it can't tell."""
+        return jnp.all(jnp.array([jnp.all(jnp.isfinite(leaf)) for leaf in jax.tree_util.tree_leaves(params)]))

@@ -138,7 +138,7 @@ def fourier_columns(angle, harmonics, label):
 
 
 def weather_features(datetimes, weather_cols: list[str]) -> np.ndarray:
-    """Match hourly weather (UTC) to each local, tz-naive observation time."""
+    """Match hourly weather (UTC) to each tz-naive observation time, which is also UTC."""
     if not weather_cols:
         return np.empty((len(datetimes), 0))
 
@@ -150,10 +150,7 @@ def weather_features(datetimes, weather_cols: list[str]) -> np.ndarray:
         .reset_index(drop=True)
     )
 
-    local = pd.DatetimeIndex(datetimes).tz_localize(
-        "Europe/Copenhagen", ambiguous="NaT", nonexistent="shift_forward"
-    )
-    left = pd.DataFrame({"t": local.tz_convert("UTC")})
+    left = pd.DataFrame({"t": pd.DatetimeIndex(datetimes).tz_localize("UTC")})
     left["order"] = np.arange(len(left))
     left = left.sort_values("t")
     merged = pd.merge_asof(
