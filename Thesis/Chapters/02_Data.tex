@@ -1,0 +1,22 @@
+\chapter{Data}
+The data used in this project are $\text{CO}_2$ data collected from the 
+office building 303B and the censors and data providers are 
+climify [\textcolor{red}{MISSING REFERENCE}]. 
+When collecting $\text{CO}_2$ data, the censors tend to drift over time [\textcolor{red}{MISSING REFERENCE}], and therefore, the data collected from the censors
+are not always accurate. To correct for this, we have used a method called
+\textit{Automatic Baseline Correction} (ABC) Algorithm.  [\textcolor{red}{MISSING REFERENCE}]
+In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
+is equal to the outside $\text{CO}_2$ ppm values. From literature, it's common to set 
+the outside $\text{CO}_2$ ppm values to 400 ppm [\textcolor{red}{MISSING REFERENCE}], which we have also done. 
+\bigskip
+
+%Lets write up the function for the ABC algorithm and how it works.
+Let $C_{t}$ be the $\text{CO}_2$ ppm value at time $t$,  $\tilde{C_{t}}$ be the corrected $\text{CO}_2$ ppm value at time $t$.
+
+We then define the modified ABC algorithm as
+\begin{equation}
+\tilde{C}_{t} = C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) + 400,
+\end{equation}
+where $Q_{0.02}\left(C_{t-\Delta t:t}\right)$ is the 2\% quantile of the $\text{CO}_2$ ppm values over the time period $[t-\Delta t, t]$ and 
+$\Delta t$ is a fixed time period. 
+In this project, we have set $\Delta t = 7$ days,

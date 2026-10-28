@@ -464,6 +464,9 @@ OUTPUT main.toc
 INPUT ./Chapters/01_Introduction.tex
 INPUT ./Chapters/01_Introduction.tex
 INPUT Chapters/01_Introduction.tex
+INPUT ./Chapters/02_Data.tex
+INPUT ./Chapters/02_Data.tex
+INPUT Chapters/02_Data.tex
 INPUT ./Backmatter/Appendix.tex
 INPUT ./Backmatter/Appendix.tex
 INPUT Backmatter/Appendix.tex
