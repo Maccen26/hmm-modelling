@@ -24,8 +24,9 @@ from src.api.v5 import (
 )
 from src.api.v5.solvers.base_solver import SolverResult
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
-PLOTS_DIR = os.path.join(os.path.dirname(__file__), "plots")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo root
+RESULTS_DIR = os.path.join(ROOT, "results")
+PLOTS_DIR = os.path.join(ROOT, "plots")
 HORIZONS = (1, 2, 4, 6, 8)  # rolling-forecast horizons (steps ahead) for the validation set
 PLOT_HORIZONS = (6, 8)  # subset of HORIZONS drawn in the residual and first-week plots
 TAG = "30min"               # all room data is binned to 30 min; only used to locate the CSVs

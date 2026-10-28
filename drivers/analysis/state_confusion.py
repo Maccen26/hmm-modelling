@@ -4,7 +4,7 @@ For every point t of the split, the predicted state is the argmax of P(z_t | y_1
 H-step forecast, and the inferred state is the argmax of P(z_t | y_1:T) from ForwardBackwardAlgorithm.
 The split is filtered through the training set first.
 
-    uv run python -m drivers.models.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4
+    uv run python -m drivers.analysis.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4
 """
 import jax
 jax.config.update("jax_enable_x64", True)

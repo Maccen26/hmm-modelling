@@ -1,6 +1,6 @@
 """Clean a DATA303B room's raw sensor series into train/val/test arrays under `data/<room>/<tag>/`.
 
-Sibling of `drivers/clean_dtu_data.py` for the `raw/DATA303B/climify_office_NNN.csv` export, which
+Sibling of `drivers/data/clean_dtu_data.py` for the `raw/DATA303B/climify_office_NNN.csv` export, which
 holds the same sensors over 2023-01 -> 2026 but with per-device column names
 (`device_<id>_co2`, ...) and a tz-aware UTC `Time` column. Only loading differs; segmentation,
 CO2 floor calibration, feedback and splitting reuse the DTU pipeline unchanged.
@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from drivers.clean_dtu_data import (
+from drivers.data.clean_dtu_data import (
     Y_COL_RANGES,
     add_feedback,
     calibrate_baseline_co2,

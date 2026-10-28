@@ -55,7 +55,7 @@ The library is layered: abstract bases in `src/base/`, concrete JAX implementati
 
 ## Drivers
 
-`drivers/models/` holds the current experiment entry points: one driver per model variant (`hmm_1`, `hmm_beta_1`, `ar1_hmm_1`, …), `run.py` to fit them all in seed order, and tools for saved fits (`replot`, `decode_states`, `show_params`, `state_confusion`, `feedback_states`, `transition_plots`). Its `README.md` documents the CLI, losses, fit order and output layout. The top-level `drivers/` keeps only what these depend on: `utils.py` (shared IO/covariate helpers) and the data-cleaning scripts that write `{DATA_PATH}/room_XXX/30min/` (`clean_303b_data.py`, `clean_dtu_data.py`, `fetch_humidity.py`). The old b1 workflow (`fit_model_b1.py`, `{transition,emission,beta}_params.py`, `main_plots.py`, `test_statistics.py`, `latex.py`, …) lives in `drivers/legacy/`.
+`drivers/` is split by stage (see `drivers/README.md`). `data/` holds the cleaning scripts that write `{DATA_PATH}/room_XXX/30min/` (`clean_303b_data.py`, `clean_dtu_data.py`, `fetch_humidity.py`). `models/` holds one driver per model variant (`hmm_1`, `hmm_beta_1`, `ar1_hmm_1`, …), plus `run.py` to fit them all in seed order and `evaluate.py`; its `README.md` documents the CLI, losses, fit order and outputs. `analysis/` holds tools for saved fits (`replot`, `decode_states`, `show_params`, `state_confusion`, `feedback_states`, `transition_plots`). Fits and plots are written to the repo-root `results/{room}/{loss}/states_{K}/` and `plots/...` (`RESULTS_DIR`/`PLOTS_DIR` in `drivers/models/utils.py`). `drivers/utils.py` has the shared IO and covariate helpers. The old b1 workflow (`fit_model_b1.py`, `{transition,emission,beta}_params.py`, `main_plots.py`, …) lives in `drivers/legacy/`.
 
 ## Report
 

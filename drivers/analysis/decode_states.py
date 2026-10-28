@@ -4,8 +4,8 @@ Smoothed state probabilities P(z_t = s | y_1:T) are estimated as the share of pa
 with BackwardSampler that are in state s at time t; the top panel colours each observation by
 its most probable state. The validation split is filtered through the training set first.
 
-    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 --room 9 -K 4
-    uv run python -m drivers.models.decode_states ar1_hmm_beta_1 --room 9 -K 4 --split train --start-day 14 --days 7
+    uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 4
+    uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 4 --split train --start-day 14 --days 7
 """
 import jax
 jax.config.update("jax_enable_x64", True)

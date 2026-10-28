@@ -5,8 +5,8 @@ curves are Gamma_t[from_state, :] as the fitted dynamic transition sees it. By d
 first one in the training span without a holiday on Mon-Fri. The stay probability is drawn on its own
 panel since it is usually close to 1 and would flatten the leaving probabilities.
 
-    uv run python -m drivers.models.transition_plots ar1_hmm_beta_1 --room 9 -K 3 --state 1
-    uv run python -m drivers.models.transition_plots ar1_hmm_beta_1 --room 9 -K 4 --state 2 --week 2023-11-27
+    uv run python -m drivers.analysis.transition_plots ar1_hmm_beta_1 --room 9 -K 3 --state 1
+    uv run python -m drivers.analysis.transition_plots ar1_hmm_beta_1 --room 9 -K 4 --state 2 --week 2023-11-27
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from drivers.models.state_confusion import load_saved
+from drivers.analysis.state_confusion import load_saved
 from drivers.models.utils import PLOTS_DIR, covariates
 
 STEPS_PER_WEEK = 7 * 48  # 30-min bins

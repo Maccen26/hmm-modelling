@@ -6,8 +6,8 @@ per path; the bars are the mean over paths and the error bars the 2.5-97.5 % ran
 The grey bars are the share of all time steps spent in each state; the exact value from the
 forward-backward smoothed probabilities is printed as a check. Validation/test splits are filtered through the training set first.
 
-    uv run python -m drivers.models.feedback_states ar1_hmm_beta_1 --room 9 -K 6
-    uv run python -m drivers.models.feedback_states ar1_hmm_beta_1 --room 9 -K 6 --split val --paths 2000
+    uv run python -m drivers.analysis.feedback_states ar1_hmm_beta_1 --room 9 -K 6
+    uv run python -m drivers.analysis.feedback_states ar1_hmm_beta_1 --room 9 -K 6 --split val --paths 2000
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -23,8 +23,8 @@ from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 
+from drivers.analysis.state_confusion import load_saved
 from drivers.models.evaluate import _covariates
-from drivers.models.state_confusion import load_saved
 from drivers.models.utils import PLOTS_DIR, load_data
 from drivers.utils import load_y_df
 from src.api.v5 import BackwardSampler, ForwardAlgorithm

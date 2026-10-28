@@ -39,21 +39,27 @@ If a seed is missing, the driver raises an error naming the command to run. `run
 
 ## Outputs
 
+Both folders sit at the repo root, not inside `drivers/`.
+
 - `results/{room}/{loss}/states_{K}/{model}.pkl`: the fitted model, its config, and the training data
 - `results/{room}/{loss}/states_{K}/predictive_metrics.csv`: validation R², RMSE, and MAPE per forecast horizon, shared by the models fitted with that loss
 - `plots/{room}/{loss}/states_{K}/{model}.png` and `{model}_first_week.png`: residual diagnostics and forecast plots; titles show room, K and loss
 
 ## Tools for saved fits
 
+The post-hoc analysis tools live in `drivers/analysis/` and read the fits above:
+
 ```bash
-uv run python -m drivers.models.replot --room 9 [--loss nll] [--states 6] [--models hmm_1]
-uv run python -m drivers.models.decode_states ar1_hmm_beta_1 --room 9 -K 6
-uv run python -m drivers.models.show_params ar1_hmm_beta_1 --room 9 -K 6
-uv run python -m drivers.models.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4 [--split val|test]
-uv run python -m drivers.models.feedback_states ar1_hmm_beta_1 --room 9 -K 6 [--split train|val|test] [--paths 10000]
+uv run python -m drivers.analysis.replot --room 9 [--loss nll] [--states 6] [--models hmm_1]
+uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 6
+uv run python -m drivers.analysis.show_params ar1_hmm_beta_1 --room 9 -K 6
+uv run python -m drivers.analysis.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4 [--split val|test]
+uv run python -m drivers.analysis.feedback_states ar1_hmm_beta_1 --room 9 -K 6 [--split train|val|test] [--paths 10000]
+uv run python -m drivers.analysis.transition_plots ar1_hmm_beta_1 --room 9 -K 4 --state 2 [--week 2023-11-27]
 ```
 
 `state_confusion` plots the confusion matrix of the H-step predicted state (argmax of the rolling forecast's state distribution) against the smoothed state (argmax of `ForwardBackwardAlgorithm`).
 `feedback_states` samples state paths with `BackwardSampler` and plots which states the feedback events fall in, with the exact forward-backward share as a check.
+`transition_plots` plots the covariate-driven transition probabilities out of one state.
 
-`decode_states`, `show_params`, `state_confusion` and `feedback_states` look in the driver's own loss folder unless `--loss` is given.
+`decode_states`, `show_params`, `state_confusion`, `feedback_states` and `transition_plots` look in the driver's own loss folder unless `--loss` is given.

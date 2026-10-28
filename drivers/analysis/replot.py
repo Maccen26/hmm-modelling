@@ -1,8 +1,8 @@
 """Re-evaluate saved fits on the validation split (plots + metrics CSV) without refitting.
 
-    uv run python -m drivers.models.replot                       # every saved model
-    uv run python -m drivers.models.replot --room 9 --states 6 --models ar1_hmm_beta_1
-    uv run python -m drivers.models.replot --room 9 --loss ridge_beta_lam1
+    uv run python -m drivers.analysis.replot                       # every saved model
+    uv run python -m drivers.analysis.replot --room 9 --states 6 --models ar1_hmm_beta_1
+    uv run python -m drivers.analysis.replot --room 9 --loss ridge_beta_lam1
 """
 import jax
 jax.config.update("jax_enable_x64", True)

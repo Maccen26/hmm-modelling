@@ -98,7 +98,7 @@ def load_time_covariates(period: int = 48) -> jnp.ndarray:
 # --------------------------------------------------------------------------- #
 # Covariate construction
 #
-# Shared by `drivers/clean_dtu_data.py`, `week_5.ipynb` and
+# Shared by `drivers/data/clean_dtu_data.py`, `week_5.ipynb` and
 # `week_5_optimal_parameters.ipynb` so the three cannot drift apart.
 # --------------------------------------------------------------------------- #
 
