@@ -18,8 +18,8 @@ uv run python -m unittest discover -s tests -p "test_*.py"
 uv run python -m unittest tests.v4.test_modules.test_hmm
 uv run python -m unittest tests.v4.test_modules.test_hmm.TestHMM.<method>
 
-# Fit + save all models for a dataset (edit DATA_NAME/TAG/MODEL_NAME in __main__)
-uv run python -m drivers.fit_model_b1
+# Fit every model on one room, in seed order (see drivers/models/README.md)
+uv run python -m drivers.models.run --room 9 --states K
 
 # Add a dependency
 uv add <package>
@@ -31,10 +31,10 @@ The full run takes minutes (JAX compile + 121 tests ≈ 2.5 min). Run tests in t
 
 ## Critical conventions
 
-- **Only `src/api/v4` is live.** There is no `src/api/v1`–`v3` anymore; everything under `drivers/legacy/` is historical and must not be extended. New drivers, tests, and report results target `src/api/v4` exclusively. (The `README.md` "Drivers"/"API versioning" sections describe the old `drivers/main.py` + `drivers/models/` layout and are stale — trust `drivers/fit_model_b1.py` instead.)
+- **Only `src/api/v4` is live.** There is no `src/api/v1`–`v3` anymore; everything under `drivers/legacy/` is historical and must not be extended. New drivers, tests, and report results target `src/api/v4` exclusively. (The `README.md` "Drivers"/"API versioning" sections describe the old `drivers/main.py` + `drivers/models/` layout and are stale — trust `drivers/models/README.md` instead.)
 - **Enable float64.** Fitting is numerically sensitive; drivers set `jax.config.update("jax_enable_x64", True)` at the top of the file before importing anything. Do the same in any new fitting entry point or notebook.
 - **`DATA_PATH` env var (`.env`) points to the data root**, which is gitignored. `drivers.utils.load_train_data(data_name, tag)` reads `{DATA_PATH}/{data_name}/{tag}/{y,X}_{train,test}.csv`. `data_name` is a dataset (`b1`, `dtu`); `tag` is a split (e.g. `jans-split`).
-- **Fitted models are pickled** to `results/models/{data_name}/{tag}/{model}.pkl`; other outputs go under `results/`. Models seed from previously-fitted ones (e.g. `ar_hmm` loads `ordinary_hmm`), so fit in dependency order — the `INIT_MODELS` registry in `fit_model_b1.py` (run with `MODEL_NAME="all"`) enforces this.
+- **Fitted models are pickled** to `results/models/{data_name}/{tag}/{model}.pkl`; other outputs go under `results/`. Models seed from previously-fitted ones (e.g. `ar_hmm` loads `ordinary_hmm`), so fit in dependency order — the `INIT_MODELS` registry in `drivers/legacy/fit_model_b1.py` (run with `MODEL_NAME="all"`) enforces this.
 
 ## Architecture
 
@@ -55,7 +55,7 @@ The library is layered: abstract bases in `src/base/`, concrete JAX implementati
 
 ## Drivers
 
-`drivers/` holds runnable experiment entry points that use `src/api/v4`. `fit_model_b1.py` is the current one: `init_<model>()` functions build each variant (seeding from earlier fits), `fit_model()` fits and pickles, and `INIT_MODELS` maps names → initialisers. `drivers/utils.py` has the shared IO/plot helpers (`load_train_data`, `save_model`/`load_model`, `plot_hmm_diagnostics`, `write_latex_table`). `drivers/{transition,emission,beta}_params.py`, `main_plots.py`, and `test_statistics.py` produce the report tables/figures.
+`drivers/models/` holds the current experiment entry points: one driver per model variant (`hmm_1`, `hmm_beta_1`, `ar1_hmm_1`, …), `run.py` to fit them all in seed order, and tools for saved fits (`replot`, `decode_states`, `show_params`, `state_confusion`, `feedback_states`, `transition_plots`). Its `README.md` documents the CLI, losses, fit order and output layout. The top-level `drivers/` keeps only what these depend on: `utils.py` (shared IO/covariate helpers) and the data-cleaning scripts that write `{DATA_PATH}/room_XXX/30min/` (`clean_303b_data.py`, `clean_dtu_data.py`, `fetch_humidity.py`). The old b1 workflow (`fit_model_b1.py`, `{transition,emission,beta}_params.py`, `main_plots.py`, `test_statistics.py`, `latex.py`, …) lives in `drivers/legacy/`.
 
 ## Report
 
