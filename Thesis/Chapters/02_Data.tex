@@ -1,10 +1,22 @@
 \chapter{Data}
+%Goal in this chapter is to communicate what data is used, how it has been collected, 
+%how it has been processed, 
 The data used in this project are $\text{CO}_2$ data collected from the 
 office building 303B and the censors and data providers are 
-climify [\textcolor{red}{MISSING REFERENCE}]. 
-When collecting $\text{CO}_2$ data, the censors tend to drift over time [\textcolor{red}{MISSING REFERENCE}], and therefore, the data collected from the censors
-are not always accurate. To correct for this, we have used a method called
-\textit{Automatic Baseline Correction} (ABC) Algorithm.  [\textcolor{red}{MISSING REFERENCE}]
+climify [\textcolor{red}{MISSING REFERENCE}]. The data is collected in the fall and winter period of 2023, 
+and the raw data period spans from [\textcolor{red}{MISSING REFERENCE}] to [\textcolor{red}{MISSING REFERENCE}].
+The data collected from the censors are in intervals of around 10 minutes. Because our HMM models works 
+in discrete time, the data have been aggregated into 30 minutes such that each time step $\Delta t = 1$ represents 30 minutes. 
+
+
+When collecting $\text{CO}_2$ data, the censors tend to drift over time [\textcolor{red}{MISSING REFERENCE}], 
+and therefore, the data collected from the censors
+are not always accurate. To empty rooms, that have the same $\text{CO}_2$ levels may show different
+readins based on how much the censors have drifted over time. 
+This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of the occupants in the building and a 
+higher baseline of the $\text{CO}_2$ data may lead to a false positive of the presence of the occupants in the building.
+To correct for this, we have used a method called
+\textit{Automatic Baseline Correction} (ABC) Algorithm.  [\textcolor{red}{MISSING REFERENCE}]. 
 In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
 is equal to the outside $\text{CO}_2$ ppm values. From literature, it's common to set 
 the outside $\text{CO}_2$ ppm values to 400 ppm [\textcolor{red}{MISSING REFERENCE}], which we have also done. 
@@ -19,4 +31,10 @@ We then define the modified ABC algorithm as
 \end{equation}
 where $Q_{0.02}\left(C_{t-\Delta t:t}\right)$ is the 2\% quantile of the $\text{CO}_2$ ppm values over the time period $[t-\Delta t, t]$ and 
 $\Delta t$ is a fixed time period. 
-In this project, we have set $\Delta t = 7$ days,
+In this project, we have set $\Delta t = 8$ days, such that the weekday overlaps. The reason for using 
+a 2\% quantile is to avoid the effect of erradic readings of the $\text{CO}_2$ ppm values, 
+which may occur if the censors are not working properly. 
+\bigskip
+Because we are interrested in predicting future presence of the o
+
+

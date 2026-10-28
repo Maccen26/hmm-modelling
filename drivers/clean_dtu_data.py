@@ -94,31 +94,25 @@ def longest_gap_free_segment(df_raw: pd.DataFrame, y_cols: list[str], bin: str =
 
 
 def sensor_floor(
-    seg: pd.Series, window: str = "28D", quantile: float = 0.02, min_periods: int = 10,
+    seg: pd.Series, window: str = "8D", quantile: float = 0.02, min_periods: int = 10,
 ) -> pd.Series:
     """Estimate what the sensor reads with the room empty, as a function of time.
 
-    A centred rolling low quantile: for each bin, the window is every bin within half of
-    `window` either side of it, and the floor is that window's `quantile`. Stepping one bin
-    forward drops one observation off the back and adds one to the front, so the estimate can
-    only creep -- which is the whole point, since a floor that jumps injects a fake step into
-    the series (see `calibrate_baseline`).
+    A trailing rolling low quantile: for each bin, the window is that bin and every bin in the
+    `window` before it, and the floor is that window's `quantile`. Only past data is used, so a
+    bin's calibration never depends on later observations (in particular, val/test data never
+    informs the training calibration).
 
     Choosing `quantile`: it must stay below the fraction of bins in which the room is genuinely
     empty, or the "floor" starts tracking occupancy and the calibration subtracts real CO2.
     For Room 009 ~16% of bins sit below 500 ppm, so 0.02 is comfortably clear of occupancy
-    while still resting on ~27 observations rather than a single noisy minimum.
-
-    The window straddles the train/val/test boundaries, so a held-out bin's calibration is
-    informed by held-out data. That is a property of sensor calibration rather than of the
-    model -- no CO2 *level* crosses the split, only a low quantile of the surrounding weeks --
-    but it is worth stating explicitly when the held-out scores are reported.
+    while still resting on ~8 observations of an 8-day window rather than a single noisy minimum.
     """
-    return seg.rolling(window, center=True, min_periods=min_periods).quantile(quantile)
+    return seg.rolling(window, center=False, min_periods=min_periods).quantile(quantile)
 
 
 def calibrate_baseline_co2(
-    seg_df: pd.DataFrame, baseline: float = 400.0, window: str = "28D", quantile: float = 0.02,
+    seg_df: pd.DataFrame, baseline: float = 400.0, window: str = "8D", quantile: float = 0.02,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """Remove the CO2 sensor's drifting zero: `co2_cal = co2_raw - floor(t) + baseline`.
 
@@ -130,16 +124,17 @@ def calibrate_baseline_co2(
     Must run on the *aggregated* series, not the raw readings: a 30min bin averages several
     readings, so calibrating the raw series leaves the binned floor above `baseline`.
 
+    The first `window` of the segment is dropped: it has less than a full window of history, so
+    its floor would rest on a handful of readings.
+
     Returns the frame with `co2` calibrated and the floor that was subtracted (saved alongside
     the data so the transform can be undone).
     """
     floor = sensor_floor(seg_df["co2"], window=window, quantile=quantile)
-    if floor.isna().any():
-        raise ValueError(
-            f"sensor floor undefined for {int(floor.isna().sum())} of {len(floor)} bins -- "
-            f"the segment is too short for a {window} window"
-        )
-    seg_df = seg_df.copy()
+    keep = seg_df.index >= seg_df.index[0] + pd.Timedelta(window)
+    if not keep.any():
+        raise ValueError(f"segment of {len(seg_df)} bins is too short for a {window} window")
+    seg_df, floor = seg_df[keep].copy(), floor[keep]
     seg_df["co2"] = seg_df["co2"] - floor + baseline
     return seg_df, floor
 
@@ -277,7 +272,7 @@ def clean_dtu_data(
     test_size: float = 0.20,
     bin: str = "30min",
     baseline_ppm: float = 400.0,
-    baseline_window: str = "28D",
+    baseline_window: str = "8D",
     baseline_quantile: float = 0.02,
     y_cols: tuple[str, ...] = ("co2", "humidity"),
 ) -> None:
@@ -298,6 +293,8 @@ def clean_dtu_data(
     seg_df, co2_floor = calibrate_baseline_co2(
         seg_df, baseline=baseline_ppm, window=baseline_window, quantile=baseline_quantile,
     )
+    start = seg_df.index[0]
+    print(f"  dropped first {baseline_window} (floor warm-up): {len(seg_df)} bins from {start}")
 
     x_out = None
     if calibrate_hum:

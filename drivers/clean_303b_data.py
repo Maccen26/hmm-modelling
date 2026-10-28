@@ -88,7 +88,7 @@ def clean_303b_data(
     test_size: float = 0.20,
     bin: str = "30min",
     baseline_ppm: float = 400.0,
-    baseline_window: str = "28D",
+    baseline_window: str = "8D",
     baseline_quantile: float = 0.02,
     y_cols: tuple[str, ...] = ("co2",),
 ) -> None:
@@ -105,6 +105,8 @@ def clean_303b_data(
     seg_df, co2_floor = calibrate_baseline_co2(
         seg_df, baseline=baseline_ppm, window=baseline_window, quantile=baseline_quantile,
     )
+    start = seg_df.index[0]
+    print(f"  dropped first {baseline_window} (floor warm-up): {len(seg_df)} bins from {start}")
     seg_df = add_feedback(seg_df, room_name, bin=bin)
 
     co2_floor_arr = np.asarray(co2_floor.values, dtype=float)
