@@ -16,5 +16,47 @@
   {}
 \endgroup
 
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{iacus2008}{book}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=4214d8cc13872588bf25bbada2844597}{%
+           family={Iacus},
+           familyi={I\bibinitperiod},
+           given={Stefano\bibnamedelima M.},
+           giveni={S\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{location}{1}{%
+        {New York}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{4214d8cc13872588bf25bbada2844597}
+      \strng{fullhash}{4214d8cc13872588bf25bbada2844597}
+      \strng{fullhashraw}{4214d8cc13872588bf25bbada2844597}
+      \strng{bibnamehash}{4214d8cc13872588bf25bbada2844597}
+      \strng{authorbibnamehash}{4214d8cc13872588bf25bbada2844597}
+      \strng{authornamehash}{4214d8cc13872588bf25bbada2844597}
+      \strng{authorfullhash}{4214d8cc13872588bf25bbada2844597}
+      \strng{authorfullhashraw}{4214d8cc13872588bf25bbada2844597}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-0-387-75838-1}
+      \field{series}{Springer Series in Statistics}
+      \field{title}{Simulation and Inference for Stochastic Differential Equations: With {R} Examples}
+      \field{year}{2008}
+      \verb{doi}
+      \verb 10.1007/978-0-387-75839-8
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
 \endinput
 

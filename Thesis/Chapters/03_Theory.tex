@@ -1,0 +1,73 @@
+\chapter{Theory}
+In this chapter, a physical model of the underlying system will be presented
+and shown to be equivalent to a discrete-time AR(1)-HMM.
+A overview of the theory behind the models and inference
+algorithms will be presented as well. 
+
+
+\section{The Diffusion Process}
+The underlying physical model of the $\text{CO}_2$ dynamics of a room can 
+be described by a diffusion process. The diffusion process is a 
+continuous-time stochastic process that describes the change of $\text{CO}_2$ in a room. 
+\\
+Let $\tilde{C(t)} = C(t) - \min_{\forall t}(C(t))$ such that the process
+reverts back to a baseline of 0. The diffusion process can then be desbribed as
+\begin{equation}
+    \Delta \tilde{C(t)} = (P(t) - \alpha \tilde{C(t)}) \Delta t + \sigma \Delta W(t),
+\end{equation}
+where $P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room, 
+$\alpha$ is the decay rate of the $\text{CO}_2$ in the room, $\sigma$ is the diffusion coefficient and $W(t)$ is a Wiener process, which is 
+interpretated as the noise in the sensors.\\
+This models tells us, that if the production rate of the occupants at time $t$ is higher than 
+the decay rate (or air change rate) of the room, then the $\text{CO}_2$ levels in the room will increase. 
+The argument for this physical model that $\text{CO}_2$ accumate and that it
+does not decay by itself [\textcolor{red}{MISSING REFERENCE}], unless it's 
+ventilated out of the room. \\
+
+\bigskip
+\subsection{Proof of AR(1) process} 
+We now want to show, that the underlying physical model of the $\text{CO}_2$ dynamics of a room can be described as a discrete-time AR(1) process. \\
+Firstly, we recognize the diffusion process as a Ornstein-Uhlenbeck, and the solution
+of this process is given by \textcite[Sec.~1.13.1]{iacus2008} as 
+\begin{equation}
+\tilde{C}(t) = \frac{P}{\alpha}
+      + \left( x_0 - \frac{P}{\alpha} \right) e^{-\alpha t}
+      + \theta_3 \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u
+\end{equation}
+or, in the second parametrization,
+\begin{equation}
+\tilde{C}(t) = \mu + (x_0 - \mu) e^{-\alpha t}
+      + \sigma \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u ,
+      \qquad \mu = \frac{P}{\alpha}.
+\end{equation}
+where $x_0$ is the initial value of the process at time $t=0$.\\
+\bigskip
+If we then discretize the process with a time step $\Delta t$, we can write the process as
+\begin{subequations}\label{eq:ar1-proof}
+    \begin{align}
+&\tilde{C}_{t+\Delta t} = \mu + (\tilde{C}_0 - \mu) e^{-\alpha (t + \Delta t)}
+      + \sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t-u)} \, \mathrm{d}W_u 
+    \intertext{where we can split the interal into two parts as} 
+    &\sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t-u)} \, \mathrm{d}W_u = 
+\sigma \left( e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u
+  + \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \right). 
+\intertext{We can then write out the process as}
+&\tilde{C}_{t+\Delta t} = (1 - e^{-\alpha \Delta t}) + \mue^{-\alpha \Delta t} + (\tilde{C}_0 - \mu) e^{-\alpha t} e^{-\alpha \Delta t} \notag\\
+      + \sigma e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\\
+\intertext{due to $\delta t > 0$ and $\alpha > 0 $}
+\end{align}
+\end{subequations}
+
+\subsection{Modelling Production Rate}
+
+By assuming that the prodction rate of the occupants is only depented on the 
+amount of occupants in the room, we can model the production rate as a function of the
+occupancy state of the room. Let $S(t)$ be the occupancy state of the room
+at time $t$, then we can model the production rate as
+\begin{equation}
+    P(t) = \beta_{S(t)},
+\end{equation}
+where $\beta_{S(t)}$ is the production rate of the occupants in the room,
+which is dependent on the occupancy state of the room.
+

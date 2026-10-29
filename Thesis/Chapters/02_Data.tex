@@ -38,7 +38,46 @@ which may occur if the censors are not working properly.
 \bigskip
 Because we are interrested in predicting future presence of the occupants in the building, we dont need the data to be as granular as 10 minutes. 
 \bigskip
+\include{Tables/raw_co2_summary}
+TO DO: \\
+\begin{itemize}
+    \item Make summary table of the data with before and after the ABC algorithm
+          (n, mean, sd, min, quantiles, max, \% of bins below 450 ppm; one row per room if several rooms).
+    \item Make ACF plots to show the AR structure of the data. Add PACF (shows AR order); note daily cycle at lag 48.
+    \item Make a plot of the data before and after the ABC algorithm (raw, estimated floor, calibrated + zoom on one week).
+    \item Histogram/density of calibrated CO$_2$ (multimodality motivates hidden states).
+    \item Average daily profile, weekday vs.\ off-day (motivates off-day + Fourier covariates).
+    \item Overview plot of full series with train/val/test boundaries and feedback events.
+    \item Short chapter introduction and conclusion.
+\end{itemize}
 
+Fix in existing text:
+\begin{itemize}
+    \item $\Delta t$ used both as 30-min step and as 8-day window: rename window to $W$.
+    \item Dates: Room 009 segment is 2023-11-21 to 2024-02-09 (3860 bins, $\approx$ 80 days), not ``fall and winter 2023''.
+          Clarify 303B vs.\ DTU dataset (live \texttt{room\_009/30min} data comes from \texttt{clean\_dtu\_data.py}).
+    \item Reason for 8 days: every window contains a full weekend (an empty-room period).
+    \item Merge the duplicated aggregation paragraph; state that bins are means of the readings.
+    \item Typos: censors $\to$ sensors, ``To empty rooms'' $\to$ Two, readins, erradic, interrested, dont, climify $\to$ Climify.
+    \item Define a \verb|\COtwo| macro instead of retyping \verb|$\text{CO}_2$|.
+\end{itemize}
 
+Missing processing steps to describe:
+\begin{itemize}
+    \item Raw cleaning: drop NaNs, keep 0--4000 ppm (sensor saturation), remove duplicates.
+    \item Gap handling: only the longest gap-free segment is kept (discrete model needs equal spacing).
+    \item ABC details: applied after 30-min binning (and why); trailing window, so no leakage into val/test;
+          first 8 days dropped as warm-up; justify 2\% quantile (must be below share of empty bins, $\approx$16\% below 500 ppm in Room 009).
+    \item Report floor drift (Room 009: 388 $\to$ 500 ppm).
+    \item State ABC assumption: room is empty and ventilated to outdoor level at some point in every window.
+          Outdoor CO$_2$ was $\approx$420 ppm in 2023--24: justify 400 or mention it.
+    \item Feedback data: how collected, number of responses, binary flag per 30-min bin.
+    \item Humidity: calibration against outdoor humidity, or state that it is excluded.
+    \item Covariates: off-day flag (weekends + holidays), daily (3 harmonics) and weekly (1 harmonic) Fourier terms,
+          weather variables; z-scored with training statistics only.
+    \item Time zone: timestamps in UTC (no DST change in Nov--Feb).
+    \item Split: chronological 65/15/20, boundaries 2024-01-12 and 2024-01-24; Christmas break falls in training.
+    \item Rooms and sensors: which rooms and why, single/shared offices, ventilation type, sensor type (NDIR), accuracy, sampling interval.
+\end{itemize}
 
-
+Missing references: Climify, NDIR sensor drift, ABC (Senseair firmware; check whether your sensors already run it), outdoor CO$_2$ baseline (e.g.\ NOAA).

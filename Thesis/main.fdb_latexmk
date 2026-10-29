@@ -1,17 +1,18 @@
 # Fdb version 4
-["biber main"] 1793182556.51618 "main.bcf" "main.bbl" "main" 1793205815.05881 0
-  "main.bcf" 1793205814.75533 107729 3606050920929982c2ce2a0bd69bc35b "xelatex"
+["biber main"] 1793274262.47608 "main.bcf" "main.bbl" "main" 1793277599.92081 0
+  "bibliography.bib" 1793274193.53827 612 e56e1b505f3e91d3570943cdd4c2aa4c ""
+  "main.bcf" 1793277599.86199 107793 1704f7f70ff33bfb0d5078d6aeee675d "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1793205814.81242 "main.xdv" "main.pdf" "main" 1793205815.06066 0
-  "main.xdv" 1793205814.75602 80424 a66d25c3f61220b7bf51d6f10ee2c20e "xelatex"
+["xdvipdfmx"] 1793277534.21961 "main.xdv" "main.pdf" "main" 1793277534.46853 0
+  "main.xdv" 1793277599.86276 147028 4ce1f3972c059b465896ec1fa44c07c7 "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1793205813.56221 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793205815.05887 0
-  "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793188704.06294 981 1c4fd9d5881ecf063018f26b1cada63c ""
+["xelatex"] 1793277598.55624 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793277599.92109 2
+  "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793270575.9045 1030 31d72ff17b30c9c317ba39bb3013b95b ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -242,7 +243,8 @@
   "Backmatter/Appendix.tex" 1676123969 15 2b7f080d022547c995b67eee8a153a5e ""
   "Backmatter/Backpage.tex" 1676123969 397 9ad66b3ddc884e568628ea53296d4e01 ""
   "Chapters/01_Introduction.tex" 1793199439.38834 2412 7a38999956f33c9681cb7b067d4af610 ""
-  "Chapters/02_Data.tex" 1793205813.41299 2689 9494de38563b69197c650b9e71d96d69 ""
+  "Chapters/02_Data.tex" 1793270090.52803 5911 3a7b65b0fdd8c9f1e847689550e3c7fe ""
+  "Chapters/03_Theory.tex" 1793277596.95482 3841 aafb30c60ce0ae553f8e08f5c5b51aba ""
   "Frontmatter/Abstract.tex" 1793111712.10453 108 ec2a154c20bcd94a9bc08a554813afb9 ""
   "Frontmatter/Acknowledgements.tex" 1676123969 285 2b517ec22223103073d5a442120b6484 ""
   "Frontmatter/Approval.tex" 1676123969 473 cc1ab6b80d551f07d8654c06f38f8311 ""
@@ -253,13 +255,15 @@
   "Setup/Preamble.tex" 1676123969 1869 cf15becf4d44e46b8c92ea04e1260f0e ""
   "Setup/Settings.tex" 1793182617.2503 9830 1dd07b8c32aa067f5a8c843c0893778c ""
   "Setup/Statics.tex" 1793111513.79245 670 42e4c001fa8ddbfa4fe1190a6c90eb5b ""
-  "main.aux" 1793205814.75117 1365 17050adaa692f95d6311b4010c9ac990 "xelatex"
-  "main.bbl" 1793182557.87633 466 76d65a242ec496c9b4361af646ff12cb "biber main"
-  "main.out" 1793205814.75459 556 5b01e456035634112d175cd950fd4b92 "xelatex"
-  "main.run.xml" 1793205814.7559 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
-  "main.tex" 1793188704.06294 981 1c4fd9d5881ecf063018f26b1cada63c ""
-  "main.toc" 1793205814.75599 382 4b41fcfca0179e00136812f83904169f "xelatex"
+  "Tables/raw_co2_summary.aux" 1793277599.78918 5029 3299dd59f41b2d6d6d9b4abd04949281 "xelatex"
+  "Tables/raw_co2_summary.tex" 1793270021.39311 1307 d8c20e8b84b620a1efb0b6f5f4b3edb5 ""
+  "main.aux" 1793277599.85746 2399 59adca3d9c2e2dae681070c7962c776d "xelatex"
+  "main.bbl" 1793274263.93889 2045 26a259aa7b9779524e9be4850e6ea22a "biber main"
+  "main.out" 1793277599.8612 937 ba3b65ceb97acc628f4d8b242b95f9eb "xelatex"
+  "main.tex" 1793270575.9045 1030 31d72ff17b30c9c317ba39bb3013b95b ""
+  "main.toc" 1793277599.86273 775 53f2b2e1f13b874e9cc9e48ab7d9e07e "xelatex"
   (generated)
+  "Tables/raw_co2_summary.aux"
   "main.aux"
   "main.bcf"
   "main.log"
@@ -268,3 +272,4 @@
   "main.toc"
   "main.xdv"
   (rewritten before read)
+  "Tables/raw_co2_summary.aux"
