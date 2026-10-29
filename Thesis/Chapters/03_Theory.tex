@@ -29,33 +29,48 @@ ventilated out of the room. \\
 We now want to show, that the underlying physical model of the $\text{CO}_2$ dynamics of a room can be described as a discrete-time AR(1) process. \\
 Firstly, we recognize the diffusion process as a Ornstein-Uhlenbeck, and the solution
 of this process is given by \textcite[Sec.~1.13.1]{iacus2008} as 
-\begin{equation}
-\tilde{C}(t) = \frac{P}{\alpha}
+\begin{subequations}\label{eq:ou-solution}
+\begin{align}
+\tilde{C}(t) &= \frac{P}{\alpha}
       + \left( x_0 - \frac{P}{\alpha} \right) e^{-\alpha t}
       + \theta_3 \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u
-\end{equation}
-or, in the second parametrization,
-\begin{equation}
-\tilde{C}(t) = \mu + (x_0 - \mu) e^{-\alpha t}
+      \label{eq:ou-param1} \\
+\intertext{or, in the second parametrization,}
+\tilde{C}(t) &= \mu + (x_0 - \mu) e^{-\alpha t}
       + \sigma \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u ,
-      \qquad \mu = \frac{P}{\alpha}.
-\end{equation}
-where $x_0$ is the initial value of the process at time $t=0$.\\
+      \qquad \mu = \frac{P}{\alpha},
+      \label{eq:ou-param2}
+\end{align}
+\end{subequations}
+where $x_0$ is the initial value of the process at time $t = 0$.
+
 \bigskip
+
 If we then discretize the process with a time step $\Delta t$, we can write the process as
 \begin{subequations}\label{eq:ar1-proof}
-    \begin{align}
-&\tilde{C}_{t+\Delta t} = \mu + (\tilde{C}_0 - \mu) e^{-\alpha (t + \Delta t)}
-      + \sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t-u)} \, \mathrm{d}W_u 
-    \intertext{where we can split the interal into two parts as} 
-    &\sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t-u)} \, \mathrm{d}W_u = 
-\sigma \left( e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u
-  + \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \right). 
+\begin{align}
+\tilde{C}_{t+\Delta t} &= \mu + (\tilde{C}_0 - \mu) e^{-\alpha (t + \Delta t)}
+      + \sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t - u)} \, \mathrm{d}W_u ,
+      \label{eq:ar1-full} \\
+\intertext{where we can split the integral into two parts as}
+\sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t - u)} \, \mathrm{d}W_u
+  &= \sigma \biggl( e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u \notag \\
+  &\qquad + \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \biggr) .
+      \label{eq:ar1-split} \\
 \intertext{We can then write out the process as}
-&\tilde{C}_{t+\Delta t} = (1 - e^{-\alpha \Delta t}) + \mue^{-\alpha \Delta t} + (\tilde{C}_0 - \mu) e^{-\alpha t} e^{-\alpha \Delta t} \notag\\
-      + \sigma e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u
-      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\\
-\intertext{due to $\delta t > 0$ and $\alpha > 0 $}
+\tilde{C}_{t+\Delta t} &= \mu(1 - e^{-\alpha \Delta t}) + \mu e^{-\alpha \Delta t}
+      + (\tilde{C}_0 - \mu) e^{-\alpha t} e^{-\alpha \Delta t} \notag \\
+  \quad + \sigma e^{-\alpha \Delta t} \int_0^{t} &e^{-\alpha (t-u)} \, \mathrm{d}W_u
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u
+      \label{eq:ar1-expanded}
+\intertext{We see then that}
+\tilde{C}_{t+\Delta t} &= \biggl( \mu + (\tilde{C}_0 - \mu) e^{-\alpha t}
+      + \sigma \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u \biggr) e^{-\alpha \Delta t} \notag \\
+  &\quad + \mu (1 - e^{-\alpha \Delta t})
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \notag \\
+    &= \tilde{C}_t e^{-\alpha \Delta t} + \mu (1 - e^{-\alpha \Delta t})
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u
+      \label{eq:ar1-recursion}
 \end{align}
 \end{subequations}
 
