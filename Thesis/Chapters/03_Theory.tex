@@ -73,7 +73,23 @@ If we then discretize the process with a time step $\Delta t$, we can write the 
       \label{eq:ar1-recursion}
 \end{align}
 \end{subequations}
-
+We have now shown that diffusion process is dependent on the previous emission $\tilde{C}_t$.\\ 
+But for it to be an AR(1) process, we nedd to show that the drift term 
+has mean 0, constant variance and is unoccorelated over time. [\textcolor{red}{MISSING REFERENCE}].\\
+Let $\Delta t = c \in \mathbb{N}$ be a constant time step and given that $\alpha, t \in \mathbb{R}_{\geq 0}$, then from 
+\ref{eq:ar1-recursion}, we can see that the drift term is given by
+\begin{equation}
+    \sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u = 
+\end{equation}
+We recognize $e^{-\alpha (t+\Delta t-u)} $ as our stochastic term, which is determinitics, meaning that
+that its ito intergratable as $\int_{0}^{T}e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}W_u < + \infty$. \\
+Therefore, from \textcite[Thm.~1.9.1]{iacus2008},
+We now know that the mean of the drit term is 0 
+\begin{equation}
+    \mathbb{E}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right] = 0
+\end{equation}
+%Show that t to t + \delta T is 0 
+%Show that the variance is independtent of t
 \subsection{Modelling Production Rate}
 
 By assuming that the prodction rate of the occupants is only depented on the 
