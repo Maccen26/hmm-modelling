@@ -84,12 +84,39 @@ Let $\Delta t = c \in \mathbb{N}$ be a constant time step and given that $\alpha
 We recognize $e^{-\alpha (t+\Delta t-u)} $ as our stochastic term, which is determinitics, meaning that
 that its ito intergratable as $\int_{0}^{T}e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}W_u < + \infty$. \\
 Therefore, from \textcite[Thm.~1.9.1]{iacus2008},
-We now know that the mean of the drit term is 0 
+We now know that the mean of the drit term is
 \begin{equation}
     \mathbb{E}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right] = 0
 \end{equation}
+And that the variance is
+\begin{equation}
+    \text{Var}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right] = 
+    \sigma^2 \int_{t}^{t+\Delta t} e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}u
+\end{equation}
 %Show that t to t + \delta T is 0 
-%Show that the variance is independtent of t
+%Show that the variance is independtent of t given Delta t
+\begin{subequations}
+\begin{aligned}
+    \text{Var}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right]
+    &= \sigma^2 \int_{t}^{t+\Delta t} e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}u \\
+    &= \sigma^2 e^{-2\alpha (t+\Delta t)} \int_{t}^{t+\Delta t} e^{2\alpha u} \, \mathrm{d}u \\
+    &= \sigma^2 e^{-2\alpha (t+\Delta t)} \left[\frac{1}{2\alpha} e^{2\alpha u}\right]_{t}^{t+\Delta t} \\
+    &= \frac{\sigma^2}{2\alpha} e^{-2\alpha (t+\Delta t)} \left(e^{2\alpha (t+\Delta t)} - e^{2\alpha t}\right) \\
+    &= \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
+\end{aligned}
+\end{subequations}
+We see that the variance is independent of $t$ and 
+that its constant over time. \\
+We now only need to show that the covariance of the drift is 0. \\
+We define that time steps as $t_1, t_2 \in \mathbb{R}_{\geq 0}$ such that $t_1 < t_2$ and that the time steps are disjoint, meaning that $[t_1, t_1 + \Delta t] \cap [t_2, t_2 + \Delta t] = \emptyset$ 
+and that $t_1 + \Delta t = t_2$.
+We then define $e_k$ as the drift term at time $t_k$ such that
+\begin{equation}
+\begin{aligned}
+    \mathbb{E}\left[e_k\right] &= 0 \\ 
+    Var(e_k) &= \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
+\end{aligned}
+\end{equation}
 \subsection{Modelling Production Rate}
 
 By assuming that the prodction rate of the occupants is only depented on the 
