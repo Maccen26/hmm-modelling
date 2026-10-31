@@ -5,7 +5,11 @@ A overview of the theory behind the models and inference
 algorithms will be presented as well. 
 
 
-\section{The Diffusion Process}
+\section{The Diffusion Process \& and it's properties}
+This subsection present the underlying physical model of the $\text{CO}_2$ dynamics of a room 
+and show that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
+can be modelled as a function of the occupancy state of the room. 
+\subsection{Diffusion Process (Ornstein-Uhlenbeck)}
 The underlying physical model of the $\text{CO}_2$ dynamics of a room can 
 be described by a diffusion process. The diffusion process is a 
 continuous-time stochastic process that describes the change of $\text{CO}_2$ in a room. 
@@ -96,14 +100,14 @@ And that the variance is
 %Show that t to t + \delta T is 0 
 %Show that the variance is independtent of t given Delta t
 \begin{subequations}
-\begin{aligned}
+\begin{align}
     \text{Var}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right]
     &= \sigma^2 \int_{t}^{t+\Delta t} e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}u \\
     &= \sigma^2 e^{-2\alpha (t+\Delta t)} \int_{t}^{t+\Delta t} e^{2\alpha u} \, \mathrm{d}u \\
     &= \sigma^2 e^{-2\alpha (t+\Delta t)} \left[\frac{1}{2\alpha} e^{2\alpha u}\right]_{t}^{t+\Delta t} \\
     &= \frac{\sigma^2}{2\alpha} e^{-2\alpha (t+\Delta t)} \left(e^{2\alpha (t+\Delta t)} - e^{2\alpha t}\right) \\
     &= \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
-\end{aligned}
+\end{align}
 \end{subequations}
 We see that the variance is independent of $t$ and 
 that its constant over time. \\
@@ -114,9 +118,59 @@ We then define $e_k$ as the drift term at time $t_k$ such that
 \begin{equation}
 \begin{aligned}
     \mathbb{E}\left[e_k\right] &= 0 \\ 
-    Var(e_k) &= \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
+    \text{Var}(e_k) &= \sigma \int_{t_{k-1}}^{t_k} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u = \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
 \end{aligned}
 \end{equation}
+
+We now then see that the covariance of the drift term is given by, 
+given that $j \neq k$
+\begin{equation}
+\begin{aligned}
+      \text{Var}(e_k + e_j) &= \text{Var}(e_k) +  \text{Var}(e_j) + 2\text{Cov}(e_k, e_j) \\
+      \Leftrightarrow 
+\end{aligned}
+\end{equation}
+
+
+
+To compute $\text{Var}(e_k + e_j)$, we write both drift terms as integrals over
+the same interval $[0, T]$, where $T \geq \max(t_k, t_j) + \Delta t$, by
+introducing the deterministic functions
+\begin{equation}
+    f_k(u) = \mathbb{1}_{[t_k,\, t_k + \Delta t)}(u)\, e^{-\alpha (t_k + \Delta t - u)},
+\end{equation}
+such that
+\begin{equation}
+    e_k = \sigma \int_0^T f_k(u) \, \mathrm{d}W_u .
+\end{equation}
+Since $j \neq k$, the intervals $[t_k, t_k + \Delta t)$ and $[t_j, t_j + \Delta t)$
+are disjoint, and therefore
+\begin{equation}
+    f_k(u) f_j(u) = 0 \quad \forall u \in [0, T].
+\end{equation}
+The sum $e_k + e_j = \sigma \int_0^T \left(f_k(u) + f_j(u)\right) \mathrm{d}W_u$
+is again an Itô integral with a deterministic integrand, so by
+\textcite[Thm.~1.9.1]{iacus2008}
+\begin{equation}
+\begin{aligned}
+    \text{Var}(e_k + e_j)
+    &= \sigma^2 \int_0^T \left(f_k(u) + f_j(u)\right)^2 \mathrm{d}u \\
+    &= \sigma^2 \int_0^T f_k(u)^2 \, \mathrm{d}u
+     + \sigma^2 \int_0^T f_j(u)^2 \, \mathrm{d}u
+     + 2\sigma^2 \int_0^T f_k(u) f_j(u) \, \mathrm{d}u \\
+    &= \text{Var}(e_k) + \text{Var}(e_j) + 0 .
+\end{aligned}
+\end{equation}
+Comparing with
+$\text{Var}(e_k + e_j) = \text{Var}(e_k) + \text{Var}(e_j) + 2\,\text{Cov}(e_k, e_j)$
+gives
+\begin{equation}
+    \text{Cov}(e_k, e_j) = 0, \qquad j \neq k .
+\end{equation}
+Hence the drift terms have mean zero, constant variance and are uncorrelated,
+and the discretized process is an AR(1) process.
+
+
 \subsection{Modelling Production Rate}
 
 By assuming that the prodction rate of the occupants is only depented on the 
@@ -127,5 +181,89 @@ at time $t$, then we can model the production rate as
     P(t) = \beta_{S(t)},
 \end{equation}
 where $\beta_{S(t)}$ is the production rate of the occupants in the room,
-which is dependent on the occupancy state of the room.
+which is dependent on the occupancy state of the room. This gives a 
+stepwise prodiuction rate function, which is only dependnt on the occupancy state of the room. 
 
+
+
+%% --------- HMMM ----------
+\section{Hidden Markov Model (HMM) theory} 
+This section will present the underlying models and the theory behind it 
+that models the diffusion process. Here to, inference algorithms and 
+analysis methods will be presented. 
+
+\subsection{The underlying theory}
+%% Write some generel theory on HMM
+Hidden markov models are markov chains where the underlying states are hidden and only a 
+random variable that is dependent on the underlying state is observed. \\
+This can be described as a markov chain with a set of hidden states $S = \{s_1, s_2, ..., s_N\}$ 
+and a set of observations $O = \{o_1, o_2, ..., o_M\}$. 
+The transition between the hidden states is governed by a transition matrix $\Gamma$ 
+and the observations are generated by an emission matrix $B$. 
+The initial state distribution is given by $\pi$. 
+The HMM stucture can then debsrib the emissions as 
+\begin{equation}
+    P(O_t | S_t) = B_{S_t, O_t},
+\end{equation}
+where $B_{S_t, O_t}$ is the probability of observing $O_t$ given the hidden state $S_t$. 
+The transition between the hidden states is given by
+\begin{equation}
+    P(S_t | S_{t-1}) = \Gamma_{S_{t-1}, S_t},
+\end{equation}
+where $\Gamma_{S_{t-1}, S_t}$ is the probability of transitioning from hidden state $S_{t-1}$ to hidden state $S_t$. 
+The initial state distribution is given by
+\begin{equation}
+    P(S_1) = \pi_{S_1},
+\end{equation}
+where $\pi_{S_1}$ is the probability of starting in hidden state $S_1$.
+
+\subsection{Likelihood}
+Several methods can be used to estimate the parameters of a HMM, where at 
+some of the more common methods are the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\ 
+In this project, we will however use the method of maximum likelihood estimation (MLE) 
+to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
+
+The forward algorithm implemented is called recursive filtering
+\parencite{moller2024}, as it constructs the current state distribution
+$p(X_t \mid Y_{1:t})$ recursively from the previous state distribution
+$p(X_t \mid Y_{1:t-1})$.
+
+\begin{algorithm}[H]
+\caption{Recursive Filtering Forward Algorithm}
+\label{alg:forward}
+\begin{algorithmic}[1]
+\Require Observations $\mathbf{y} = (y_1, \dots, y_T)$, covariates
+    $\mathbf{x} = (x_1, \dots, x_T)$, initial state distribution
+    $u_0 \in \mathbb{R}^{1 \times N}$, HMM parameters $\theta$
+\Ensure Predicted distributions $\{u_t\}$, filtered distributions
+    $\{u_{t|t}\}$, step likelihoods $\{f_t\}$
+\For{$t = 1, \dots, T$}
+    \State $\Gamma_t \gets \textsc{TransitionMatrix}(\theta, t, y_t, x_t)$
+        \Comment{$N \times N$ transition matrix}
+    \State $u_{t|t-1} \gets u_{t-1|t-1} \cdot \Gamma_t$
+        \Comment{Predicted state distribution, $1 \times N$}
+    \State $g_t \gets \textsc{Density}(\theta, t, y_t, x_t)$
+        \Comment{Emission densities for all states, $1 \times N$}
+    \State $f_t \gets \sum_{i=1}^{N} \left[ u_t \odot g_t \right]_i$
+        \Comment{Marginal likelihood at time $t$}
+    \State $f_t \gets \max(f_t, 10^{-10})$
+        \Comment{Clip to avoid division by zero}
+    \State $u_{t|t} \gets \dfrac{u_t \odot g_t}{f_t}$
+        \Comment{Filtered state distribution (normalized)}
+\EndFor
+\State \Return $\{u_t\}$, $\{u_{t|t}\}$, $\{f_t\}$
+\end{algorithmic}
+\end{algorithm}
+
+\noindent where $\odot$ denotes element-wise multiplication of vectors.
+The log-likelihood is obtained by summing the log of the step likelihoods:
+\begin{equation}
+    \mathcal{L}(\theta) = \sum_{t=1}^{T} \log f_t .
+\end{equation}
+Each likelihood step $f_t$ is the sum of the predicted state distribution $u_t$ multiplied by the emission densities $g_t$ for all states, 
+which gives the marginal likelihood of observing $y_t$ given the previous observations $y_{1:t-1}$.
+
+\subsection{Forward Backward Filtering} 
+
+\subsection{Backward Sampling} 
+\subsection{Model Diagnostics}

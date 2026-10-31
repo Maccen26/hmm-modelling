@@ -56,6 +56,75 @@
       \verb 10.1007/978-0-387-75839-8
       \endverb
     \endentry
+    \entry{moller2024}{book}{}{}
+      \name{author}{7}{}{%
+        {{un=0,uniquepart=base,hash=de341522d92c0810968059270c804930}{%
+           family={M{ø}ller},
+           familyi={M\bibinitperiod},
+           given={Jan\bibnamedelima Kloppenborg},
+           giveni={J\bibinitperiod\bibinitdelim K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b63029d0db2ee3cca1ea2bfde4bc3088}{%
+           family={Schweiker},
+           familyi={S\bibinitperiod},
+           given={Marcel},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bdcba18148333ae1701384d1aa49a87f}{%
+           family={Andersen},
+           familyi={A\bibinitperiod},
+           given={Rune\bibnamedelima Korsholm},
+           giveni={R\bibinitperiod\bibinitdelim K\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=665d9fbcf4cd7f8ec758adaae9f37ae8}{%
+           family={Gunay},
+           familyi={G\bibinitperiod},
+           given={Burak},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bf7a8d90acdc6d3ec1ebe72ba52ba788}{%
+           family={Yilmaz},
+           familyi={Y\bibinitperiod},
+           given={Selin},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=4a823f26fce112dd140d3c6392f319d9}{%
+           family={Barthelmes},
+           familyi={B\bibinitperiod},
+           given={Verena\bibnamedelima Marie},
+           giveni={V\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ac5d1263fca18a1f2d85317607e7d734}{%
+           family={Madsen},
+           familyi={M\bibinitperiod},
+           given={Henrik},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{location}{1}{%
+        {London}%
+      }
+      \list{publisher}{1}{%
+        {Routledge}%
+      }
+      \strng{namehash}{9adcc6db8db856f492fef7def43db1a4}
+      \strng{fullhash}{7407f553a68fea652fcd63cab8cab124}
+      \strng{fullhashraw}{7407f553a68fea652fcd63cab8cab124}
+      \strng{bibnamehash}{9adcc6db8db856f492fef7def43db1a4}
+      \strng{authorbibnamehash}{9adcc6db8db856f492fef7def43db1a4}
+      \strng{authornamehash}{9adcc6db8db856f492fef7def43db1a4}
+      \strng{authorfullhash}{7407f553a68fea652fcd63cab8cab124}
+      \strng{authorfullhashraw}{7407f553a68fea652fcd63cab8cab124}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{978-1-032-33460-8}
+      \field{title}{Statistical Modelling of Occupant Behaviour}
+      \field{year}{2024}
+    \endentry
   \enddatalist
 \endrefsection
 \endinput
