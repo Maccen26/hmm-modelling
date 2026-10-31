@@ -15,5 +15,10 @@
 \contentsline {subsection}{\numberline {3.2.3}Forward Backward Filtering}{10}{subsection.0.3.2.3}%
 \contentsline {subsection}{\numberline {3.2.4}Backward Sampling}{10}{subsection.0.3.2.4}%
 \contentsline {subsection}{\numberline {3.2.5}Model Diagnostics}{10}{subsection.0.3.2.5}%
-\contentsline {chapter}{Bibliography}{11}{chapter*.3}%
-\contentsline {chapter}{\numberline {A}Title}{13}{appendix.A}%
+\contentsline {chapter}{\numberline {4}Implementation}{11}{chapter.0.4}%
+\contentsline {chapter}{\numberline {5}Model Results}{12}{chapter.0.5}%
+\contentsline {chapter}{\numberline {6}Discussion}{13}{chapter.0.6}%
+\contentsline {chapter}{\numberline {7}Conclusion}{14}{chapter.0.7}%
+\contentsline {chapter}{\numberline {8}Future Work}{15}{chapter.0.8}%
+\contentsline {chapter}{Bibliography}{17}{chapter*.3}%
+\contentsline {chapter}{\numberline {A}Title}{19}{appendix.A}%

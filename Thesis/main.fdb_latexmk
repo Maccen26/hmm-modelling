@@ -1,18 +1,18 @@
 # Fdb version 4
-["biber main"] 1793443824.0615 "main.bcf" "main.bbl" "main" 1793444338.24102 0
+["biber main"] 1793443824.0615 "main.bcf" "main.bbl" "main" 1793444694.63037 0
   "bibliography.bib" 1793443594.01293 978 39aa397e601811d97e543520d7069412 ""
-  "main.bcf" 1793444337.91481 107986 437226003c3f136850488c52830a033f "xelatex"
+  "main.bcf" 1793444694.30469 107986 437226003c3f136850488c52830a033f "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1793444337.97755 "main.xdv" "main.pdf" "main" 1793444338.24296 0
-  "main.xdv" 1793444337.91554 216484 685dbcd11d1a2d365c12b61d245379cd "xelatex"
+["xdvipdfmx"] 1793444694.36559 "main.xdv" "main.pdf" "main" 1793444694.6323 0
+  "main.xdv" 1793444694.3054 236376 3aae727aa00b3768e5e60ea4238a5bd2 "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1793444336.51223 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793444338.24107 0
-  "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793270575.9045 1030 31d72ff17b30c9c317ba39bb3013b95b ""
+["xelatex"] 1793444692.98188 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793444694.63043 0
+  "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793444689.84944 1252 16c84abc80f5ed1588333c28003f59f4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -256,6 +256,11 @@
   "Chapters/01_Introduction.tex" 1793199439.38834 2412 7a38999956f33c9681cb7b067d4af610 ""
   "Chapters/02_Data.tex" 1793270090.52803 5911 3a7b65b0fdd8c9f1e847689550e3c7fe ""
   "Chapters/03_Theory.tex" 1793444336.40958 13329 7bde23ae5a1de39167ed34e3f46e9a13 ""
+  "Chapters/04_Implementation.tex" 1793444602.85713 24 94087c0d609967c3443ab6de9fbaa3b2 ""
+  "Chapters/05_Results.tex" 1793444619.14975 23 9970b02b89f4b52b41d61f06a41d99ff ""
+  "Chapters/06_Discussion.tex" 1793444627.73282 20 07c3c62fae229e8aeefb3c12ae11151a ""
+  "Chapters/07_Conclusion.tex" 1793444635.55538 20 62fe8ebce78c4d50a9606c96530c0c05 ""
+  "Chapters/08_Future_work.tex" 1793444641.76735 21 76142d8c3a25818ac78e77228f67c8da ""
   "Frontmatter/Abstract.tex" 1793111712.10453 108 ec2a154c20bcd94a9bc08a554813afb9 ""
   "Frontmatter/Acknowledgements.tex" 1676123969 285 2b517ec22223103073d5a442120b6484 ""
   "Frontmatter/Approval.tex" 1676123969 473 cc1ab6b80d551f07d8654c06f38f8311 ""
@@ -264,16 +269,16 @@
   "Pictures/DTU_stock_photo.jpg" 1676123969 2480821 1a2d27990674c372d6eae204eacf5626 ""
   "Pictures/Logos/white_cmyk.pdf" 1676123969 745068 7e868c6f6f65a3109f7a0c8e8a4f09ac ""
   "Setup/Preamble.tex" 1793443706.54168 2095 e4fd0389cb020b99870312039659b3df ""
-  "Setup/Settings.tex" 1793182617.2503 9830 1dd07b8c32aa067f5a8c843c0893778c ""
+  "Setup/Settings.tex" 1793444516.09533 9826 5ec655a97aa73c5cf341084d74d4366f ""
   "Setup/Statics.tex" 1793111513.79245 670 42e4c001fa8ddbfa4fe1190a6c90eb5b ""
-  "Tables/raw_co2_summary.aux" 1793444337.79866 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
+  "Tables/raw_co2_summary.aux" 1793444694.14541 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
   "Tables/raw_co2_summary.tex" 1793270021.39311 1307 d8c20e8b84b620a1efb0b6f5f4b3edb5 ""
-  "main.aux" 1793444337.90983 5112 dfc6bbfd0d33b8627f1ef7be05cff303 "xelatex"
+  "main.aux" 1793444694.29982 6050 07672b60c874912e1902dbb772b5d1b6 "xelatex"
   "main.bbl" 1793443825.42786 4834 4e130771a2e691a690b98918616d55d6 "biber main"
-  "main.out" 1793444337.91403 1321 a803051aca346e585874cf0e7e40c505 "xelatex"
-  "main.run.xml" 1793444337.91541 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
-  "main.tex" 1793270575.9045 1030 31d72ff17b30c9c317ba39bb3013b95b ""
-  "main.toc" 1793444337.9155 1457 5baf86d4b2b4b5a80bba91b5b739ebed "xelatex"
+  "main.out" 1793444694.30393 3622 ba7074d8fae47910bd0ebc3b914df90d "xelatex"
+  "main.run.xml" 1793444694.30528 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
+  "main.tex" 1793444689.84944 1252 16c84abc80f5ed1588333c28003f59f4 ""
+  "main.toc" 1793444694.30536 1810 83883a4685f8aba248fa0568d0edd497 "xelatex"
   (generated)
   "Tables/raw_co2_summary.aux"
   "main.aux"
