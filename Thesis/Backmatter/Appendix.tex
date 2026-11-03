@@ -1,1 +1,145 @@
-\chapter{Title}
+\chapter{Proof of the AR(1) representation}
+\label{app:ar1-proof}
+
+Given our model of the $\text{CO}_2$ dynamics with noise in \ref{eq:sde},
+we now want to show that the process can be described as a discrete-time AR(1) process. \\
+Firstly, we recognize the diffusion process as a Ornstein-Uhlenbeck, and the solution
+of this process is given by \textcite[Sec.~1.13.1]{iacus2008} as 
+\begin{subequations}\label{eq:ou-solution}
+\begin{align}
+\tilde{C}(t) &= \frac{P}{\alpha}
+      + \left( \tilde{C}_0 - \frac{P}{\alpha} \right) e^{-\alpha t}
+      + \sigma \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u
+      \label{eq:ou-param1} \\
+\intertext{or, in the second parametrization,}
+\tilde{C}(t) &= \mu + (\tilde{C}_0 - \mu) e^{-\alpha t}
+      + \sigma \int_0^t e^{-\alpha (t-u)} \, \mathrm{d}W_u ,
+      \qquad \mu = \frac{P}{\alpha},
+      \label{eq:ou-param2}
+\end{align}
+\end{subequations}
+where $\tilde{C}_0$ is the initial value of the process at time $t = 0$. $\mu$ should be interpretated
+as the equilibrium state of the process, which is the state that the process tends to oscillate around.
+
+
+\bigskip
+
+If we then discretize the process with a time step $\Delta t$, we can write the process as
+\begin{subequations}\label{eq:ar1-proof}
+\begin{align}
+\tilde{C}_{t+\Delta t} &= \mu + (\tilde{C}_0 - \mu) e^{-\alpha (t + \Delta t)}
+      + \sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t - u)} \, \mathrm{d}W_u ,
+      \label{eq:ar1-full} \\
+\intertext{where we can split the integral into two parts as}
+\sigma \int_0^{t + \Delta t} e^{-\alpha (t + \Delta t - u)} \, \mathrm{d}W_u
+  &= \sigma \biggl( e^{-\alpha \Delta t} \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u \notag \\
+  &\qquad + \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \biggr) .
+      \label{eq:ar1-split} \\
+\intertext{We can then write out the process as}
+\tilde{C}_{t+\Delta t} &= \mu(1 - e^{-\alpha \Delta t}) + \mu e^{-\alpha \Delta t}
+      + (\tilde{C}_0 - \mu) e^{-\alpha t} e^{-\alpha \Delta t} \notag \\
+  \quad + \sigma e^{-\alpha \Delta t} \int_0^{t} &e^{-\alpha (t-u)} \, \mathrm{d}W_u
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u
+      \label{eq:ar1-expanded}
+\intertext{We see then that}
+\tilde{C}_{t+\Delta t} &= \biggl( \mu + (\tilde{C}_0 - \mu) e^{-\alpha t}
+      + \sigma \int_0^{t} e^{-\alpha (t-u)} \, \mathrm{d}W_u \biggr) e^{-\alpha \Delta t} \notag \\
+  &\quad + \mu (1 - e^{-\alpha \Delta t})
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u \notag \\
+    &= \tilde{C}_t e^{-\alpha \Delta t} + \mu (1 - e^{-\alpha \Delta t})
+      + \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u
+      \label{eq:ar1-recursion}
+\end{align}
+\end{subequations}
+We have now shown that diffusion process is dependent on the previous emission $\tilde{C}_t$.\\ 
+But for it to be an AR(1) process, we nedd to show that the drift term 
+has mean 0, constant variance and is unoccorelated over time. [\textcolor{red}{MISSING REFERENCE}].\\
+Let $\Delta t = c \in \mathbb{N}$ be a constant time step and given that $\alpha, t \in \mathbb{R}_{\geq 0}$, then from 
+\ref{eq:ar1-recursion}, we can see that the drift term is given by
+\begin{equation}
+    \sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u = 
+\end{equation}
+We recognize $e^{-\alpha (t+\Delta t-u)} $ as our stochastic term, which is determinitics, meaning that
+that its ito intergratable as $\int_{0}^{T}e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}W_u < + \infty$. \\
+Therefore, from \textcite[Thm.~1.9.1]{iacus2008},
+We now know that the mean of the drit term is
+\begin{equation}
+    \mathbb{E}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right] = 0
+\end{equation}
+And that the variance is
+\begin{equation}
+    \text{Var}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right] = 
+    \sigma^2 \int_{t}^{t+\Delta t} e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}u
+\end{equation}
+%Show that t to t + \delta T is 0 
+%Show that the variance is independtent of t given Delta t
+\begin{subequations}
+\begin{align}
+    \text{Var}\left[\sigma \int_{t}^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u\right]
+    &= \sigma^2 \int_{t}^{t+\Delta t} e^{-2\alpha (t+\Delta t-u)} \, \mathrm{d}u \\
+    &= \sigma^2 e^{-2\alpha (t+\Delta t)} \int_{t}^{t+\Delta t} e^{2\alpha u} \, \mathrm{d}u \\
+    &= \sigma^2 e^{-2\alpha (t+\Delta t)} \left[\frac{1}{2\alpha} e^{2\alpha u}\right]_{t}^{t+\Delta t} \\
+    &= \frac{\sigma^2}{2\alpha} e^{-2\alpha (t+\Delta t)} \left(e^{2\alpha (t+\Delta t)} - e^{2\alpha t}\right) \\
+    &= \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
+\end{align}
+\end{subequations}
+We see that the variance is independent of $t$ and 
+that its constant over time. \\
+We now only need to show that the covariance of the drift is 0. \\
+We define that time steps as $t_1, t_2 \in \mathbb{R}_{\geq 0}$ such that $t_1 < t_2$ and that the time steps are disjoint, meaning that $[t_1, t_1 + \Delta t] \cap [t_2, t_2 + \Delta t] = \emptyset$ 
+and that $t_1 + \Delta t = t_2$.
+We then define $e_k$ as the drift term at time $t_k$ such that
+\begin{equation}
+\begin{aligned}
+    \mathbb{E}\left[e_k\right] &= 0 \\ 
+    \text{Var}(e_k) &= \sigma \int_{t_{k-1}}^{t_k} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u = \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)
+\end{aligned}
+\end{equation}
+
+We now then see that the covariance of the drift term is given by, 
+given that $j \neq k$
+\begin{equation}
+\begin{aligned}
+      \text{Var}(e_k + e_j) &= \text{Var}(e_k) +  \text{Var}(e_j) + 2\text{Cov}(e_k, e_j) \\
+      \Leftrightarrow 
+\end{aligned}
+\end{equation}
+
+
+
+To compute $\text{Var}(e_k + e_j)$, we write both drift terms as integrals over
+the same interval $[0, T]$, where $T \geq \max(t_k, t_j) + \Delta t$, by
+introducing the deterministic functions
+\begin{equation}
+    f_k(u) = \mathbb{1}_{[t_k,\, t_k + \Delta t)}(u)\, e^{-\alpha (t_k + \Delta t - u)},
+\end{equation}
+such that
+\begin{equation}
+    e_k = \sigma \int_0^T f_k(u) \, \mathrm{d}W_u .
+\end{equation}
+Since $j \neq k$, the intervals $[t_k, t_k + \Delta t)$ and $[t_j, t_j + \Delta t)$
+are disjoint, and therefore
+\begin{equation}
+    f_k(u) f_j(u) = 0 \quad \forall u \in [0, T].
+\end{equation}
+The sum $e_k + e_j = \sigma \int_0^T \left(f_k(u) + f_j(u)\right) \mathrm{d}W_u$
+is again an Itô integral with a deterministic integrand, so by
+\textcite[Thm.~1.9.1]{iacus2008}
+\begin{equation}
+\begin{aligned}
+    \text{Var}(e_k + e_j)
+    &= \sigma^2 \int_0^T \left(f_k(u) + f_j(u)\right)^2 \mathrm{d}u \\
+    &= \sigma^2 \int_0^T f_k(u)^2 \, \mathrm{d}u
+     + \sigma^2 \int_0^T f_j(u)^2 \, \mathrm{d}u
+     + 2\sigma^2 \int_0^T f_k(u) f_j(u) \, \mathrm{d}u \\
+    &= \text{Var}(e_k) + \text{Var}(e_j) + 0 .
+\end{aligned}
+\end{equation}
+Comparing with
+$\text{Var}(e_k + e_j) = \text{Var}(e_k) + \text{Var}(e_j) + 2\,\text{Cov}(e_k, e_j)$
+gives
+\begin{equation}
+    \text{Cov}(e_k, e_j) = 0, \qquad j \neq k .
+\end{equation}
+Hence the drift terms have mean zero, constant variance and are uncorrelated,
+and the discretized process is an AR(1) process.

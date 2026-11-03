@@ -1,17 +1,17 @@
 # Fdb version 4
-["biber main"] 1793721808.74416 "main.bcf" "main.bbl" "main" 1793723800.05574 0
+["biber main"] 1793725273.41971 "main.bcf" "main.bbl" "main" 1793725749.08145 0
   "bibliography.bib" 1793710780.20716 2082 57ca1ab3f83d882064fcff98868f68ea ""
-  "main.bcf" 1793723799.71515 108181 7fb45590ac54828d13da97fbfa829fb3 "xelatex"
+  "main.bcf" 1793725748.73163 108309 c09ac8d8df1721920c0f63e5de616940 "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1793723799.78077 "main.xdv" "main.pdf" "main" 1793723800.0578 0
-  "main.xdv" 1793723799.71585 275512 330348881d46775a3e4ac2c7a39a14f0 "xelatex"
+["xdvipdfmx"] 1793725748.79872 "main.xdv" "main.pdf" "main" 1793725749.0835 0
+  "main.xdv" 1793725748.7323 279540 fd6c4abd64cd6be40a601fa4922e5d89 "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1793723798.2232 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793723800.0558 0
+["xelatex"] 1793725747.22363 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793725749.08151 0
   "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
@@ -252,11 +252,11 @@
   "/usr/local/texlive/2025/texmf-dist/web2c/texmf.cnf" 1739380943 42148 61becc7c670cd061bb319c643c27fdd4 ""
   "/usr/local/texlive/2025/texmf-var/web2c/xetex/xelatex.fmt" 1747660068 5639810 eabaf9cb0a743eead1b7cfde91ae2eb6 ""
   "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
-  "Backmatter/Appendix.tex" 1676123969 15 2b7f080d022547c995b67eee8a153a5e ""
+  "Backmatter/Appendix.tex" 1793723887.88963 7168 9faa2adc7e76957ea05f05448217f10f ""
   "Backmatter/Backpage.tex" 1676123969 397 9ad66b3ddc884e568628ea53296d4e01 ""
   "Chapters/01_Introduction.tex" 1793199439.38834 2412 7a38999956f33c9681cb7b067d4af610 ""
   "Chapters/02_Data.tex" 1793270090.52803 5911 3a7b65b0fdd8c9f1e847689550e3c7fe ""
-  "Chapters/03_Theory.tex" 1793723796.47367 17253 e4b1433f54791b84ae8f5c507f0cceac ""
+  "Chapters/03_Theory.tex" 1793725743.72083 11214 eca89e832bf7cab613b1a8bd0cecfeec ""
   "Chapters/04_Implementation.tex" 1793444602.85713 24 94087c0d609967c3443ab6de9fbaa3b2 ""
   "Chapters/05_Results.tex" 1793444619.14975 23 9970b02b89f4b52b41d61f06a41d99ff ""
   "Chapters/06_Simulation.tex" 1793612681.46817 28 0532687cdd8c3e0188e2944d619eeef7 ""
@@ -273,14 +273,14 @@
   "Setup/Preamble.tex" 1793443706.54168 2095 e4fd0389cb020b99870312039659b3df ""
   "Setup/Settings.tex" 1793444516.09533 9826 5ec655a97aa73c5cf341084d74d4366f ""
   "Setup/Statics.tex" 1793111513.79245 670 42e4c001fa8ddbfa4fe1190a6c90eb5b ""
-  "Tables/raw_co2_summary.aux" 1793723799.509 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
+  "Tables/raw_co2_summary.aux" 1793725748.51361 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
   "Tables/raw_co2_summary.tex" 1793270021.39311 1307 d8c20e8b84b620a1efb0b6f5f4b3edb5 ""
-  "main.aux" 1793723799.71034 7349 119e04c174434df7350362b19d0c587d "xelatex"
-  "main.bbl" 1793721810.42896 8075 2f96aba70d52c5872a65430166052d79 "biber main"
-  "main.out" 1793723799.7144 4051 9a3c594218af7b0068bf8338cb7a60a0 "xelatex"
-  "main.run.xml" 1793723799.7157 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
+  "main.aux" 1793725748.72674 7817 1451816890745f922c87c061782a2c8b "xelatex"
+  "main.bbl" 1793725274.79244 8075 fdcf7dc1feaecf29807c3076890fbf9e "biber main"
+  "main.out" 1793725748.73086 4087 8870dbf2d30dc4f1df5cdd3f923a56bd "xelatex"
+  "main.run.xml" 1793725748.73216 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
   "main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
-  "main.toc" 1793723799.71581 2007 06717c661d1010ca50ca704f9b9a19f5 "xelatex"
+  "main.toc" 1793725748.73226 1953 9d078abb2d58c51e30c3d70ab60397f5 "xelatex"
   (generated)
   "Tables/raw_co2_summary.aux"
   "main.aux"
