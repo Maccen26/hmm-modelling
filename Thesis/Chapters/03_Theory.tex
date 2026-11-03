@@ -13,66 +13,84 @@ and show that it can be described as a discrete-time AR(1) process and how the p
 can be modelled as a function of the occupancy state of the room. 
 
 \subsection{The underlying physical model \& assumptions} %Different name for this subsection
-We adopt the mass balance model from litterature (\cite{batterman2017}, \cite{wang1999}), the mass balance equation of 
-$\text{CO}_2$ in a room can be described as a ordinary differential equation (ODE)
-of the form
-
+Due to $\text{CO}_2$ does not decay by itself, 
+the perfect mixtured mass balance model of a room (\cite{batterman2017}; \cite{wang1999})
+is given as a first-order ordinary differential equation (ODE) as
 \begin{equation}
-    V \frac{d C_{\text{indoor}}(t)}{dt} = P(t) + \alpha V \left( C_{\text{outdoor}}(t) - C_{\text{indoor}}(t) \right),
+    V \frac{d C_{\text{indoor}}(t)}{dt} = G(t) + Q \left( C_{\text{outdoor}}(t) - C_{\text{indoor}}(t) \right),
     \label{eq:mass-balance}
 \end{equation}
-where $V$ is the volume of the room (m$^3$),
-$C_{\text{indoor}}(t)$ is the indoor $\text{CO}_2$ concentration at time $t$ (mg$\cdot$m$^{-3}$),
-$C_{\text{outdoor}}(t)$ is the outdoor $\text{CO}_2$ concentration at time $t$ (mg$\cdot$m$^{-3}$),
-$P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room (mg$\cdot$h$^{-1}$), and
-$\alpha$ is the air change rate of the room (h$^{-1}$), 
-such that $\alpha V$ is the outdoor air flow rate (m$^3\cdot$h$^{-1}$).\\
+where $V$ is the room volume (m$^3$), $C_{\text{indoor}}$ and $C_{\text{outdoor}}$ are the
+indoor and outdoor $\text{CO}_2$ concentrations (mg$\cdot$m$^{-3}$), $G(t)$ is the occupant
+production rate (mg$\cdot$h$^{-1}$) and $Q$ is the outdoor air flow rate (m$^3\cdot$h$^{-1}$).
 \bigskip
 
-Since the sensors report $\text{CO}_2$ in ppm, measurements are converted using
-$C\,[\text{mg}\cdot\text{m}^{-3}] = C\,[\text{ppm}] \cdot M_{\text{CO}_2} / V_m$,
-where $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and $V_m$ is the molar volume of air ($\approx 24.45$ L$\cdot$mol$^{-1}$ at 25$^\circ$C and 1 atm).
-
-The underlying physical model of the $\text{CO}_2$ dynamics of a room can be descibed as a odinary differential equation (ODE) of the form
-\begin{equation} 
+Dividing by $V$ gives
+\begin{equation}
+    \frac{d C_{\text{indoor}}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \left( C_{\text{indoor}}(t) - C_{\text{outdoor}}(t) \right).
+\end{equation}
+Assuming $C_{\text{outdoor}}$ is constant, the excess concentration
+$\tilde{C}(t) = C_{\text{indoor}}(t) - C_{\text{outdoor}}$ satisfies
+$d\tilde{C}/dt = dC_{\text{indoor}}/dt$, so
+\begin{equation}
+    \frac{d \tilde{C}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \tilde{C}(t).
+\end{equation}
+The sensors report ppm, related by $C\,[\text{ppm}] = C\,[\text{mg}\cdot\text{m}^{-3}] \cdot V_m / M_{\text{CO}_2}$,
+with $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and $V_m \approx 24.45$ L$\cdot$mol$^{-1}$
+(25$^\circ$C, 1 atm). Multiplying by the constant $V_m / M_{\text{CO}_2}$ gives the model in ppm,
+\begin{equation}
     \frac{d \tilde{C}(t)}{dt} = P(t) - \alpha \tilde{C}(t),
+    \qquad
+    P(t) = \frac{G(t)\, V_m}{M_{\text{CO}_2}\, V},
+    \qquad
+    \alpha = \frac{Q}{V},
     \label{eq:ODE}
 \end{equation}
-where $\tilde{C}(t) = C_{\text{indoor}}(t) - C_{\text{outdoor}}(t)$ is the $\text{CO}_2$ ppm value at time $t$, 
-$P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room, 
-and $\alpha$ is the decay rate of the $\text{CO}_2$ in the room. \\
-The decay rate $\alpha$ can also be interpreted as the air change rate of the room i.e. 
-how much of the $\text{CO}_2$ in the room is ventilated out of the room at time $t$.\\
+where $\tilde{C}(t)$ is now the excess $\text{CO}_2$ concentration (ppm), $P(t)$ is the
+production rate (ppm$\cdot$h$^{-1}$) and $\alpha$ is the air change rate (h$^{-1}$),
+i.e.\ the fraction of excess $\text{CO}_2$ ventilated out per hour.
 \bigskip
 
-The assumptions in \ref{eq:ODE} is the following: 
+The assumptions in \ref{eq:mass-balance}, and therefore in \ref{eq:ODE}, are that
 \begin{itemize}
-    \item The $\text{CO}_2$ in the room is well mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room.
-    \item There is no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room.
+    \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This ensures that the sensors are not biased by location. 
+    \item There is no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room. 
 \end{itemize}
+However, it's important to note that the model in \ref{eq:ODE} is a 
+simplification of the real-world $\text{CO}_2$ dynamics of a room, and that 
+there are many factors that can affect the $\text{CO}_2$ levels in a room, 
+such as the number of occupants, the activity level of the occupants, 
+the ventilation system, and the outdoor $\text{CO}_2$ levels. \\
+One of the main limitations of the model is that it does not assume noise in the system, which is invenatiable as we use sensors. \\
+Therefore, the next step to make the model more realistics is to add noise to the system in form of a stochastic differential equation (SDE), which will be presented in the next subsection.
 
-\subsection{Diffusion Process (Ornstein-Uhlenbeck)}
-The underlying physical model of the $\text{CO}_2$ dynamics of a room can 
-be described by a diffusion process. The diffusion process is a 
-continuous-time stochastic process that describes the change of $\text{CO}_2$ in a room. 
-\\
-Let $\tilde{C(t)} = C(t) - \min_{\forall t}(C(t))$ such that the process
-reverts back to a baseline of 0. The diffusion process can then be desbribed as
+\subsection{The ODE as a diffusion Process (Ornstein-Uhlenbeck)}
+As previous described, the model in \ref{eq:ODE} desvibe the dynamics of the $\text{CO}_2$ in a room, 
+but it does not take into account the noise in the system. \\
+By adding noise to the system in form of a linear diffusion tern with constant diffusion coefficient $\sigma$, 
+we can write the model as a stochastic differential equation (SDE) as
 \begin{equation}
-    \Delta \tilde{C(t)} = (P(t) - \alpha \tilde{C(t)}) \Delta t + \sigma \Delta W(t),
+    d \tilde{C(t)} = (P(t) - \alpha \tilde{C(t)}) d t + \sigma d W(t),
+    \label{eq:sde}
 \end{equation}
-where $P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room, 
-$\alpha$ is the decay rate of the $\text{CO}_2$ in the room, $\sigma$ is the diffusion coefficient and $W(t)$ is a Wiener process, which is 
-interpretated as the noise in the sensors.\\
-This models tells us, that if the production rate of the occupants at time $t$ is higher than 
-the decay rate (or air change rate) of the room, then the $\text{CO}_2$ levels in the room will increase. 
-The argument for this physical model that $\text{CO}_2$ accumate and that it
-does not decay by itself [\textcolor{red}{MISSING REFERENCE}], unless it's 
-ventilated out of the room. \\
-
+where $W(t)$ is a standard Brownian motion. \\
+\ref{eq:sde} is regornized as an Ornstein-Uhlenbeck process, 
+which is a mean-reverting process, where the process tends to oscillate 
+around some equilibrium state (chap. 1.13.1, \cite{iacus2008}) \\
 \bigskip
+
+It is important to stress that the noise term in \ref{eq:sde} was 
+assumed to be a linear diffusion term with constant diffusion coefficient $\sigma$,
+as this is the simpelst noise to add to the system. However, one could also add
+a non-linear difussion term, where the diffusion coefficient is a function of the state of the system. 
+This is however out of the scope of this project, as this would require more
+in depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. \\
+\\
+Next we want to derive some important properties of our SDE in \ref{eq:sde}, which will be used to show that the process can be described as a discrete-time AR(1) process.
+
 \subsection{Proof of AR(1) process} 
-We now want to show, that the underlying physical model of the $\text{CO}_2$ dynamics of a room can be described as a discrete-time AR(1) process. \\
+Given our model of the $\text{CO}_2$ dynamics with noise in \ref{eq:sde},
+we now want to show that the process can be described as a discrete-time AR(1) process. \\
 Firstly, we recognize the diffusion process as a Ornstein-Uhlenbeck, and the solution
 of this process is given by \textcite[Sec.~1.13.1]{iacus2008} as 
 \begin{subequations}\label{eq:ou-solution}
