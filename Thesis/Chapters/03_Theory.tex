@@ -1,14 +1,56 @@
 \chapter{Theory}
-In this chapter, a physical model of the underlying system will be presented
-and shown to be equivalent to a discrete-time AR(1)-HMM.
-A overview of the theory behind the models and inference
-algorithms will be presented as well. 
+In this chapter, a ODE of the physical model of the $\text{CO}_2$ dynamics will be presented and
+how the process is descibed as a stochastic differential equation (SDE), where noise has been added to the system. \\
+Given the presented SDE, it will be shown that the process can be desbribed as 
+a discrete-time AR(1) process, where the production rate of the occupants in the room is modelled as a function of the occupancy state of the room. \\
+Hereafter, the generel theory of the hidden markov models (HMM) will be presented along
+with the inference algorithms used in this project. 
 
 
-\section{The Diffusion Process \& and it's properties}
+\section{Modelling $\text{CO}_2$ dynamics}
 This subsection present the underlying physical model of the $\text{CO}_2$ dynamics of a room 
 and show that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
 can be modelled as a function of the occupancy state of the room. 
+
+\subsection{The underlying physical model \& assumptions} %Different name for this subsection
+We adopt the mass balance model from litterature (\cite{batterman2017}, \cite{wang1999}), the mass balance equation of 
+$\text{CO}_2$ in a room can be described as a ordinary differential equation (ODE)
+of the form
+
+\begin{equation}
+    V \frac{d C_{\text{indoor}}(t)}{dt} = P(t) + \alpha V \left( C_{\text{outdoor}}(t) - C_{\text{indoor}}(t) \right),
+    \label{eq:mass-balance}
+\end{equation}
+where $V$ is the volume of the room (m$^3$),
+$C_{\text{indoor}}(t)$ is the indoor $\text{CO}_2$ concentration at time $t$ (mg$\cdot$m$^{-3}$),
+$C_{\text{outdoor}}(t)$ is the outdoor $\text{CO}_2$ concentration at time $t$ (mg$\cdot$m$^{-3}$),
+$P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room (mg$\cdot$h$^{-1}$), and
+$\alpha$ is the air change rate of the room (h$^{-1}$), 
+such that $\alpha V$ is the outdoor air flow rate (m$^3\cdot$h$^{-1}$).\\
+\bigskip
+
+Since the sensors report $\text{CO}_2$ in ppm, measurements are converted using
+$C\,[\text{mg}\cdot\text{m}^{-3}] = C\,[\text{ppm}] \cdot M_{\text{CO}_2} / V_m$,
+where $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and $V_m$ is the molar volume of air ($\approx 24.45$ L$\cdot$mol$^{-1}$ at 25$^\circ$C and 1 atm).
+
+The underlying physical model of the $\text{CO}_2$ dynamics of a room can be descibed as a odinary differential equation (ODE) of the form
+\begin{equation} 
+    \frac{d \tilde{C}(t)}{dt} = P(t) - \alpha \tilde{C}(t),
+    \label{eq:ODE}
+\end{equation}
+where $\tilde{C}(t) = C_{\text{indoor}}(t) - C_{\text{outdoor}}(t)$ is the $\text{CO}_2$ ppm value at time $t$, 
+$P(t)$ is the $\text{CO}_2$ production rate of the occupants in the room, 
+and $\alpha$ is the decay rate of the $\text{CO}_2$ in the room. \\
+The decay rate $\alpha$ can also be interpreted as the air change rate of the room i.e. 
+how much of the $\text{CO}_2$ in the room is ventilated out of the room at time $t$.\\
+\bigskip
+
+The assumptions in \ref{eq:ODE} is the following: 
+\begin{itemize}
+    \item The $\text{CO}_2$ in the room is well mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room.
+    \item There is no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room.
+\end{itemize}
+
 \subsection{Diffusion Process (Ornstein-Uhlenbeck)}
 The underlying physical model of the $\text{CO}_2$ dynamics of a room can 
 be described by a diffusion process. The diffusion process is a 

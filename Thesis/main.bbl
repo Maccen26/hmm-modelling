@@ -19,6 +19,82 @@
 
 \refsection{0}
   \datalist[entry]{none/global//global/global/global}
+    \entry{batterman2017}{article}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=7e0b7ece22bb70a28eaba61227323a16}{%
+           family={Batterman},
+           familyi={B\bibinitperiod},
+           given={Stuart},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{fullhash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{fullhashraw}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{bibnamehash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{authorbibnamehash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{authornamehash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{authorfullhash}{7e0b7ece22bb70a28eaba61227323a16}
+      \strng{authorfullhashraw}{7e0b7ece22bb70a28eaba61227323a16}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International Journal of Environmental Research and Public Health}
+      \field{number}{2}
+      \field{title}{Review and Extension of {CO$_2$}-Based Methods to Determine Ventilation Rates with Application to School Classrooms}
+      \field{volume}{14}
+      \field{year}{2017}
+      \field{pages}{145}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/ijerph14020145
+      \endverb
+    \endentry
+    \entry{wang1999}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=82bd74adc141e71aa2d08ba62b989cd9}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Shengwei},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=10ccc4f1cf860327f36543c2b71591a0}{%
+           family={Burnett},
+           familyi={B\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=54cae6ebc9f18d1a3ebdf794cb0da387}{%
+           family={Chong},
+           familyi={C\bibinitperiod},
+           given={Hoishing},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{fullhash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{fullhashraw}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{bibnamehash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{authorbibnamehash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{authornamehash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{authorfullhash}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \strng{authorfullhashraw}{b44dbf7bf7e0826e5fc15382a99cd1a1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Indoor and Built Environment}
+      \field{title}{Experimental Validation of {CO$_2$}-Based Occupancy Detection for Demand-Controlled Ventilation}
+      \field{volume}{8}
+      \field{year}{1999}
+      \field{pages}{377\bibrangedash 391}
+      \range{pages}{15}
+    \endentry
     \entry{iacus2008}{book}{}{}
       \name{author}{1}{}{%
         {{un=0,uniquepart=base,hash=4214d8cc13872588bf25bbada2844597}{%
@@ -42,8 +118,8 @@
       \strng{authornamehash}{4214d8cc13872588bf25bbada2844597}
       \strng{authorfullhash}{4214d8cc13872588bf25bbada2844597}
       \strng{authorfullhashraw}{4214d8cc13872588bf25bbada2844597}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{extradatescope}{labelyear}
       \field{labeldatesource}{}
       \field{labelnamesource}{author}
@@ -115,8 +191,8 @@
       \strng{authornamehash}{9adcc6db8db856f492fef7def43db1a4}
       \strng{authorfullhash}{7407f553a68fea652fcd63cab8cab124}
       \strng{authorfullhashraw}{7407f553a68fea652fcd63cab8cab124}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{extradatescope}{labelyear}
       \field{labeldatesource}{}
       \field{labelnamesource}{author}

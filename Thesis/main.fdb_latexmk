@@ -1,17 +1,17 @@
 # Fdb version 4
-["biber main"] 1793443824.0615 "main.bcf" "main.bbl" "main" 1793445582.72892 0
-  "bibliography.bib" 1793443594.01293 978 39aa397e601811d97e543520d7069412 ""
-  "main.bcf" 1793445582.40166 107986 437226003c3f136850488c52830a033f "xelatex"
+["biber main"] 1793710935.35348 "main.bcf" "main.bbl" "main" 1793711360.1556 0
+  "bibliography.bib" 1793710780.20716 2082 57ca1ab3f83d882064fcff98868f68ea ""
+  "main.bcf" 1793711359.82572 108117 7b9932969f699f3264bd935d9d6b0fa7 "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1793445582.46445 "main.xdv" "main.pdf" "main" 1793445582.73084 0
-  "main.xdv" 1793445582.40242 237268 50ab31bbddc49cee12990e8a34d2b81e "xelatex"
+["xdvipdfmx"] 1793711359.88944 "main.xdv" "main.pdf" "main" 1793711360.15764 0
+  "main.xdv" 1793711359.82657 264856 7583509e88d11d678d96e95bf7b1d39e "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1793445581.06088 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793445582.72898 0
+["xelatex"] 1793711358.4191 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1793711360.15565 0
   "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
@@ -27,6 +27,7 @@
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmmi6.tfm" 1136768653 1512 f21f83efb36853c0b70002322c1ab3ad ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmmi8.tfm" 1136768653 1520 eccf95517727cb11801f4f1aee3a21b4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr10.tfm" 1136768653 1296 45809c5a464d5f32c8f98ba97c1bb47f ""
+  "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr12.tfm" 1136768653 1288 655e228510b4c2a1abe905c368440826 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr17.tfm" 1136768653 1292 296a67155bdbfc32aa9c636f21e91433 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr6.tfm" 1136768653 1300 b62933e007d01cfd073f79b963c01526 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr8.tfm" 1136768653 1292 21c1c5bfeaebccffdb478fd231a0997d ""
@@ -255,10 +256,10 @@
   "Backmatter/Backpage.tex" 1676123969 397 9ad66b3ddc884e568628ea53296d4e01 ""
   "Chapters/01_Introduction.tex" 1793199439.38834 2412 7a38999956f33c9681cb7b067d4af610 ""
   "Chapters/02_Data.tex" 1793270090.52803 5911 3a7b65b0fdd8c9f1e847689550e3c7fe ""
-  "Chapters/03_Theory.tex" 1793444336.40958 13329 7bde23ae5a1de39167ed34e3f46e9a13 ""
+  "Chapters/03_Theory.tex" 1793711356.6926 16027 9514e484bcb11e122a27a18a1d92dba0 ""
   "Chapters/04_Implementation.tex" 1793444602.85713 24 94087c0d609967c3443ab6de9fbaa3b2 ""
   "Chapters/05_Results.tex" 1793444619.14975 23 9970b02b89f4b52b41d61f06a41d99ff ""
-  "Chapters/06_Simulation.tex" 1793445579.46448 26 e232dc0f6b0fea78d361862143e2faf4 ""
+  "Chapters/06_Simulation.tex" 1793612681.46817 28 0532687cdd8c3e0188e2944d619eeef7 ""
   "Chapters/07_Discussion.tex" 1793444627.73282 20 07c3c62fae229e8aeefb3c12ae11151a ""
   "Chapters/08_Conclusion.tex" 1793444635.55538 20 62fe8ebce78c4d50a9606c96530c0c05 ""
   "Chapters/09_Future_work.tex" 1793444641.76735 21 76142d8c3a25818ac78e77228f67c8da ""
@@ -272,14 +273,14 @@
   "Setup/Preamble.tex" 1793443706.54168 2095 e4fd0389cb020b99870312039659b3df ""
   "Setup/Settings.tex" 1793444516.09533 9826 5ec655a97aa73c5cf341084d74d4366f ""
   "Setup/Statics.tex" 1793111513.79245 670 42e4c001fa8ddbfa4fe1190a6c90eb5b ""
-  "Tables/raw_co2_summary.aux" 1793445582.23798 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
+  "Tables/raw_co2_summary.aux" 1793711359.62978 5247 87e59c326f77ca406bfaf81811f3d425 "xelatex"
   "Tables/raw_co2_summary.tex" 1793270021.39311 1307 d8c20e8b84b620a1efb0b6f5f4b3edb5 ""
-  "main.aux" 1793445582.39682 6242 3235c20e8b57e1ab7d6dd708c0c9c3d5 "xelatex"
-  "main.bbl" 1793443825.42786 4834 4e130771a2e691a690b98918616d55d6 "biber main"
-  "main.out" 1793445582.40084 3763 dae43714c162ec4bb9aceead6cb4cd31 "xelatex"
-  "main.run.xml" 1793445582.40227 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
+  "main.aux" 1793711359.821 7091 bffa69c89567a590e11b9c41143af9d6 "xelatex"
+  "main.bbl" 1793710936.45961 8075 fdcf7dc1feaecf29807c3076890fbf9e "biber main"
+  "main.out" 1793711359.82497 3974 5c91ea15a13983defddd1f08f52bebcd "xelatex"
+  "main.run.xml" 1793711359.82626 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
   "main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
-  "main.toc" 1793445582.40239 1885 a2821a7b09b4576fd85507963888cd5c "xelatex"
+  "main.toc" 1793711359.82636 1993 56f9a03d2723c898a7dd46aaf36b84da "xelatex"
   (generated)
   "Tables/raw_co2_summary.aux"
   "main.aux"
