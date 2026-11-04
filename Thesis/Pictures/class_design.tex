@@ -1,0 +1,148 @@
+% UML class diagram of the model library (fig:class_design).
+% Needs the TikZ libraries positioning, fit, backgrounds, shapes.multipart and
+% arrows.meta, and the colours umlfill, umlborder, pkgborder and pkgtext (all
+% in Setup/Settings.tex). Font sizes are fixed so the layout does not depend on
+% the document's base size; it is drawn to fit a 15 cm text width, so do not
+% scale it.
+\begin{tikzpicture}[
+    font=\fontsize{8}{9.6}\selectfont,
+    % Class with a name compartment and a member compartment.
+    cls/.style={draw=umlborder, fill=umlfill, line width=0.6pt,
+        rectangle split, rectangle split parts=2,
+        rectangle split part align={center, left},
+        inner xsep=5pt, inner ysep=4pt},
+    % Class with only a name compartment.
+    leaf/.style={draw=umlborder, fill=umlfill, line width=0.6pt,
+        inner xsep=5pt, inner ysep=4pt},
+    % Concrete class: fixed text height so boxes in a row line up.
+    concrete/.style={leaf, text height=1.6ex, text depth=0.4ex},
+    pkg/.style={draw=pkgborder, line width=0.6pt, inner xsep=6pt, inner ysep=6pt},
+    pkgname/.style={anchor=north west, font=\fontsize{9.5}{11}\selectfont\bfseries, text=pkgtext,
+        inner sep=5pt},
+    line/.style={umlborder, line width=0.7pt},
+    inherit/.style={line, -{Triangle[open, length=8pt, width=9pt]}},
+    realize/.style={inherit, dashed},
+    uses/.style={line, -{Stealth[length=7pt]}},
+    depends/.style={uses, dashed},
+    composed/.style={line, {Diamond[length=10pt, width=7pt]}-},
+    aggregates/.style={line, {Diamond[open, length=10pt, width=7pt]}-},
+    lbl/.style={ text=black, fill=white, inner sep=2pt},
+]
+\def\namefont{\fontsize{9}{11}\selectfont}
+% \name{<stereotype>}{<name>} and \members{<line>\\<line>...}.
+\def\name#1#2{\begin{tabular}{@{}c@{}}\fontsize{6.5}{8}\selectfont\guillemotleft#1\guillemotright\\\namefont#2\end{tabular}}
+\def\members#1{\begin{tabular}{@{}l@{}}#1\end{tabular}}
+
+% ================================================================ fitting
+\node[cls, anchor=north west] (loss) at (0.3, 0) {
+    \name{interface}{LossFunction}
+    \nodepart{second}\members{(params, data) $\to$ float}};
+\node[leaf, below=0.6cm of loss] (nll) {\name{function}{negative\_log\_likelihood}};
+% Common left and right edge for the packages.
+\coordinate (L) at (nll.west);
+\coordinate (R) at (14.1, 0);
+\node[cls, anchor=north east] (solver) at (14.1, 0) {
+    \name{abstract}{\textit{BaseSolver}}
+    \nodepart{second}\members{+ fit(params, loss\_fn, data) : HMMParams}};
+\node[concrete, anchor=north east] (grad) at ([yshift=-0.6cm] solver.south east) {GradientSolver};
+\node[concrete, anchor=north west] (lbfgs) at ([yshift=-0.6cm] solver.south west) {LBFGSSolver};
+
+\draw[inherit] (lbfgs) -- (lbfgs |- solver.south);
+\draw[inherit] (grad) -- (grad |- solver.south);
+\draw[uses] (solver.west) -- node[lbl, above=2pt] {minimises} (solver.west -| loss.east);
+\draw[realize] (nll) -- (loss);
+
+% ================================================================ inference
+\node[cls, anchor=north west] (forward) at ([yshift=-1.15cm] nll.south -| 0.3, 0) {
+    \namefont ForwardAlgorithm
+    \nodepart{second}\members{+ run(params, data) : ForwardOutput}};
+\node[cls, anchor=north east] (inference) at (14.1, 0 |- forward.north) {
+    \name{abstract}{\textit{BaseInference}}
+    \nodepart{second}\members{+ run(params, data) : BaseOutput}};
+
+\draw[inherit] (forward.east |- inference.text split) -- (inference.west |- inference.text split);
+\draw[depends] (nll) -- node[lbl, pos=0.37, right=2pt] {calls} (nll |- forward.north);
+
+% ================================================================ data
+\node[cls, anchor=north west] (data) at ([yshift=-1.15cm] inference.south -| 0.3, 0) {
+    \name{pydantic dataclass}{Data}
+    \nodepart{second}\members{+ ys : Array\\
+        + ts : Array | None\\
+        + xs : Array | None\\
+        + initial\_distribution : Array}};
+
+% ================================================================ analysis
+\node[cls, anchor=north east] (diagnostics) at (14.1, 0 |- data.north) {
+    \namefont Diagnostics
+    \nodepart{second}\members{+ params : HMMParams\\
+        + data : Data\\
+        + inference : BaseInference\\[2pt]\hline\rule{0pt}{10pt}%
+        + log\_likelihood() : float\\
+        + state\_results() : StateResults\\
+        + pseudo\_residuals() : Array}};
+\node[cls, anchor=north east] (prediction) at ([xshift=-0.9cm] diagnostics.north west) {
+    \name{abstract}{\textit{BasePrediction}}
+    \nodepart{second}\members{+ predict(params, data,\\
+        \hspace{2em}t\_pred, x\_pred) : Array}};
+\node[cls, below=0.6cm of prediction] (meanpred) {
+    \namefont EmissionMeanPrediction
+    \nodepart{second}\members{+ inference : BaseInference}};
+
+\draw[inherit] (meanpred) -- (prediction);
+\draw[aggregates] (diagnostics.north -| inference.south) -- (inference.south);
+\draw[aggregates] (meanpred.east) -- ++(0.45, 0)
+    |- ([yshift=-0.6cm] inference.south west)
+    -- ++(0.6, 0) -- ([xshift=0.6cm] inference.south west);
+
+% ================================================================ model
+\node[cls] (hmm) at ([yshift=-1.85cm] meanpred.south -| 7.1, 0) {
+    \namefont HMMParams
+    \nodepart{second}\members{+ transition : BaseTransition\\
+        + emission : BaseEmission}};
+\node[cls, anchor=north] (transition) at ([yshift=-0.7cm] hmm.south -| 3.5, 0) {
+    \name{abstract}{\textit{BaseTransition}}
+    \nodepart{second}\members{+ transition\_matrix(t, ys, xs, dt) : Array}};
+\node[cls, anchor=north] (emission) at ([yshift=-0.7cm] hmm.south -| 11.6, 0) {
+    \name{abstract}{\textit{BaseEmission}}
+    \nodepart{second}\members{+ density(t, ys, xs, ts) : Array\\
+        + cdf(t, ys, xs, ts) : Array\\
+        + mu(t, ys, xs, ts) : Array}};
+
+\draw[composed] (hmm.west |- hmm.text split) -| (transition.north);
+\draw[composed] (hmm.east |- hmm.text split) -| (emission.north);
+
+% Concrete classes hang off a vertical trunk to the left of each column.
+\coordinate (trunkA) at (0.35, 0);
+\coordinate (trunkB) at (4.95, 0);
+\coordinate (trunkC) at (9.65, 0);
+\node[concrete, anchor=north west] (static) at ([xshift=0.3cm, yshift=-0.9cm] trunkA |- emission.south) {StaticTransition};
+\node[concrete, below=0.4cm of static.south west, anchor=north west] (cstatic) {ContinuousStaticTransition};
+\node[concrete, anchor=north west] (dynamic) at ([xshift=0.3cm] trunkB |- static.north) {DynamicTransition};
+\node[concrete, below=0.4cm of dynamic.south west, anchor=north west] (cdynamic) {ContinuousDynamicTransition};
+\node[concrete, anchor=north west] (gauss) at ([xshift=0.3cm] trunkC |- static.north) {GaussEmission};
+\node[concrete, below=0.4cm of gauss.south west, anchor=north west] (argauss) {AutoregressiveGaussEmission};
+
+\coordinate (tbus) at ([yshift=0.55cm] static.north -| transition.south);
+\draw[inherit] (tbus) -- (transition.south);
+\draw[line] (trunkA |- cstatic) |- (tbus) -| (trunkB |- cdynamic);
+\foreach \c in {static, cstatic} \draw[line] (trunkA |- \c) -- (\c.west);
+\foreach \c in {dynamic, cdynamic} \draw[line] (trunkB |- \c) -- (\c.west);
+\coordinate (ebus) at ([yshift=0.55cm] gauss.north -| emission.south);
+\draw[inherit] (ebus) -- (emission.south);
+\draw[line] (trunkC |- argauss) |- (ebus);
+\foreach \c in {gauss, argauss} \draw[line] (trunkC |- \c) -- (\c.west);
+
+% ================================================================ packages
+\begin{scope}[on background layer]
+    \node[pkg, fit={(loss)(nll)(solver)(lbfgs)(grad)(L)(R)([yshift=16pt] loss.north)}] (pFit) {};
+    \node[pkg, fit={(forward)(inference)(L |- forward)(R |- forward)([yshift=16pt] inference.north)}] (pInf) {};
+    \node[pkg, fit={(data)(L |- data)([yshift=16pt] data.north)}] (pData) {};
+    \node[pkg, fit={(prediction)(meanpred)(diagnostics)([yshift=16pt] diagnostics.north)}] (pAna) {};
+    \node[pkg, fit={(hmm)(transition)(emission)(cstatic)(cdynamic)(argauss)(L |- static)(R |- static)([yshift=16pt] hmm.north)}] (pMod) {};
+\end{scope}
+\node[pkgname] at (pFit.north west) {Fitting};
+\node[pkgname] at (pInf.north west) {Inference};
+\node[pkgname] at (pData.north west) {Data};
+\node[pkgname] at (pAna.north west) {Analysis};
+\node[pkgname] at (pMod.north west) {Model};
+\end{tikzpicture}

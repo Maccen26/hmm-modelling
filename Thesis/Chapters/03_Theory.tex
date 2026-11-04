@@ -133,7 +133,8 @@ This section will present the underlying models and the theory behind it
 that models the diffusion process. Here to, inference algorithms and 
 analysis methods will be presented. 
 
-\subsection{The underlying theory}
+\subsection{HMM Models}
+\subsubsection{Generel Theory}
 %% Write some generel theory on HMM
 Hidden markov models are markov chains where the underlying states are hidden and only a 
 random variable that is dependent on the underlying state is observed. \\
@@ -157,6 +158,111 @@ The initial state distribution is given by
     P(S_1) = \pi_{S_1},
 \end{equation}
 where $\pi_{S_1}$ is the probability of starting in hidden state $S_1$.
+\subsubsection{HMM(1)-Model}
+The ordinary HMM is the simplest model implemented in this project and the one most
+commonly used in the literature. The transition probabilities are constant and do not
+depend on time, the observations or any covariates, and neither does the emission density.
+For this model, we want to estimate the parameters $\theta = \{\Gamma, \mu, \sigma\}$, where
+$\Gamma \in \mathbb{R}^{n \times n}$ is the transition matrix, $\mu \in \mathbb{R}^{n}$ is the
+mean vector of the Gaussian emission density and $\sigma \in \mathbb{R}^{n}$ is the standard
+deviation vector of the Gaussian emission density. Because the Markov chain is finite,
+discrete and homogeneous, a unique strictly positive stationary distribution $\delta$ exists
+(chapter 1.3.2, \cite{zucchini2016}) and is given by
+\begin{equation}
+    \delta = \mathbf{1}^{T} \left( I - \Gamma + E \right)^{-1},
+    \label{eq:stationary}
+\end{equation}
+where $E$ is an $n \times n$ matrix of ones.
+
+To handle the natural bounds on the standard deviations and the transition probabilities,
+the parameters are reparameterised. The standard deviations are given by
+\begin{equation}
+    \sigma_i = \exp(\eta_i).
+    \label{eq:sigma-reparam}
+\end{equation}
+For the transition matrix, the $n(n-1)$ off-diagonal entries are parameterised. The diagonal
+is used as the reference category with log-odds fixed to zero, such that the logits form a
+matrix of the form
+\begin{equation}
+    \xi =
+    \begin{pmatrix}
+        -          & \xi_{12} & \cdots & \xi_{1n} \\
+        \xi_{21}   & -        & \cdots & \xi_{2n} \\
+        \vdots     & \vdots   & \ddots & \vdots   \\
+        \xi_{n1}   & \xi_{n2} & \cdots & -
+    \end{pmatrix}.
+    \label{eq:xi-matrix}
+\end{equation}
+Concretely, the unconstrained parameters are stored as a matrix
+$\xi \in \mathbb{R}^{n \times (n-1)}$ that holds the off-diagonal logits. The transition
+matrix is then obtained by exponentiating these logits in the off-diagonal positions of an
+identity matrix (so the diagonal is $\exp(0) = 1$) and row-normalising:
+\begin{equation}
+    \Gamma_{ij} =
+    \begin{cases}
+        \dfrac{\exp(\xi_{ij})}{1 + \sum_{k \neq i} \exp(\xi_{ik})}, & j \neq i, \\[2ex]
+        \dfrac{1}{1 + \sum_{k \neq i} \exp(\xi_{ik})}, & j = i.
+    \end{cases}
+    \label{eq:gamma-reparam}
+\end{equation}
+
+The $\mu$ parameters are not bounded, but to avoid label switching between the Gaussian
+emission distributions, the means are ordered as $\mu_1 < \mu_2 < \dots < \mu_n$ by the
+reparameterisation
+\begin{equation}
+    \mu_1 = \zeta_1, \qquad
+    \mu_i = \zeta_1 + \sum_{k=2}^{i} \exp(\zeta_k), \quad i = 2, \dots, n,
+    \label{eq:mu-reparam}
+\end{equation}
+where $\zeta \in \mathbb{R}^{n}$. The unconstrained parameters $\eta \in \mathbb{R}^{n}$,
+$\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are thus the quantities
+that are optimised during the fitting process.
+\subsubsection{HMM($\beta, 1$)-model} 
+In this model, we let the transition probabilities depend on covariates which can include
+time-of-day, weekday, type of day and etc. The motivation for this is the assumption, 
+that the occupancy state of the room is dependent 
+on the time-of-day and weekday, as the room is used for work.  \\
+
+Let $x_t \in \mathbb{R}^{p}$ be a vector of $p$ covariates at time $t$. 
+The transition logits is then defined as
+\begin{equation}
+    \xi_{ij}(t) = \beta_{ij}^{T} x_t + \tilde{\xi}_{ij}, \qquad i \neq j,
+\end{equation}
+where $\beta_{ij} \in \mathbb{R}^{p}$ is a vector of regression 
+coefficients for the transition from state $i$ to state $j$ and 
+$\tilde{\xi}_{ij}$ is the intercept term. 
+The transition matrix is then obtained as in \ref{eq:gamma-reparam} and we now need denote
+the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j|S_{t-1} = i)$. 
+
+
+\subsubsection{AR(1)-HMM(1)}
+The autoregressive HMM (AR(1)-HMM(1)) extends the ordinary HMM by letting the emission
+distribution depend on the previous observation. Conditional on being in state $i$ at time
+$t$, the observation is modelled as
+\begin{equation}
+    Y_t \mid X_t = i,\, Y_{t-1} = y_{t-1} \sim
+    \mathcal{N}\!\left( \mu_i + \phi_i \left( y_{t-1} - \mu_i \right),\, \sigma_i^2 \right).
+    \label{eq:ar-emission}
+\end{equation}
+Each state therefore has its own AR(1) coefficient $\phi_i \in (-1, 1)$ in addition to a
+mean and a standard deviation. This may be enough to capture the temporal correlation of the
+$\text{CO}_2$ signal that the ordinary HMM leaves in the pseudo-residuals. The transition
+matrix $\Gamma$, the means $\mu$ and the standard deviations $\sigma$ are parameterised
+exactly as in the HMM(1)-model, and the AR coefficients are reparameterised as
+\begin{equation}
+    \phi_i = 2\, s(\psi_i) - 1, \qquad s(z) = \frac{1}{1 + e^{-z}},
+    \label{eq:phi-reparam}
+\end{equation}
+where $s(\cdot)$ is the logistic sigmoid, to enforce the stationarity constraint
+$|\phi_i| < 1$. The unconstrained parameter $\psi_i \in \mathbb{R}$ is the one passed to the
+optimiser, with the inverse mapping
+\begin{equation}
+    \psi_i = \operatorname{logit}\!\left( \frac{\phi_i + 1}{2} \right).
+\end{equation}
+\subsubsection{AR(1)-HMM($\beta, 1$)} 
+This model is the combination of the AR(1)-HMM(1) and the HMM($\beta, 1$)-model, 
+where the transition probabilities depend on covariates as in 
+and the emission distribution is autoregressive.
 
 \subsection{Likelihood}
 Several methods can be used to estimate the parameters of a HMM, where at 
@@ -204,7 +310,105 @@ The log-likelihood is obtained by summing the log of the step likelihoods:
 Each likelihood step $f_t$ is the sum of the predicted state distribution $u_t$ multiplied by the emission densities $g_t$ for all states, 
 which gives the marginal likelihood of observing $y_t$ given the previous observations $y_{1:t-1}$.
 
-\subsection{Forward Backward Filtering} 
+
+%\subsection{Forward Backward Filtering} 
+%% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 
 \subsection{Backward Sampling} 
+When sampling a path from a hidden markov model, we can use the method 
+defined in (chapter. 7.2.1, \cite{zucchini2016}) and we will call it backward sampling. \\
+We want to sample a path of the hidden states $S_{1:T}$ given the observations 
+$O_{1:T}$ and the model parameters $\theta$. This method is very useful, as it 
+does not depend on the inital state distribution $\pi$, which is often unknown. \\
+Let $u_{t|t} = P(S_t | O_{1:t}, \theta)$ be the filtered state distribution. 
+We can then sample the last state $S_T$ from the filtered distribution $u_{T|T}$. 
+We can then sample the previous state $S_{T-1}$ from the condition distribution
+
+\begin{subequations}
+\begin{align}
+    P(S_{t-1}=j | S_t = i, O_{1:t}, \theta) &= 
+    \frac{P(S_{t-1}=j, S_t=i | O_{1:t}, \theta )}{P(S_t=i | O_{1:t}, \theta)} \\
+    &=\frac{P(S_{t} = i|S_{t-1} = j, \theta) P(S_{t-1} = j | O_{1:t}, \theta)}{P(S_t=i | O_{1:t}, \theta)}\\
+    &=\frac{\Gamma^t_{ji} u_{t-1|t-1}(j)}{u_{t|t}(i)}
+\end{align}
+\end{subequations}
+
+%% ---------------------------------------------------------------------------
+%% CORRECTED VERSION (for comparison) -- delete the version above once merged
+%% ---------------------------------------------------------------------------
+\paragraph{Corrected derivation.}
+Let $\Gamma^{(t)}_{ji} = P(S_t = i \mid S_{t-1} = j, \theta)$ denote the transition
+from time $t-1$ to time $t$. We sample the last state $S_T$ from the filtered
+distribution $u_{T|T}$, and then recursively, for $t = T, T-1, \dots, 2$, sample
+$S_{t-1}$ given the already sampled $S_t = i$ from the conditional distribution
+$P(S_{t-1} = j \mid S_t = i, O_{1:T}, \theta)$. By the Markov property, the future
+observations $O_{t:T}$ carry no further information about $S_{t-1}$ once $S_t$ is
+known, so
+\begin{subequations}
+\begin{align}
+    P(S_{t-1}=j \mid S_t = i, O_{1:T}, \theta)
+    &= P(S_{t-1}=j \mid S_t = i, O_{1:t-1}, \theta) \\
+    &= \frac{P(S_{t-1}=j, S_t=i \mid O_{1:t-1}, \theta)}{P(S_t=i \mid O_{1:t-1}, \theta)} \\
+    &= \frac{P(S_t = i \mid S_{t-1} = j, \theta)\, P(S_{t-1} = j \mid O_{1:t-1}, \theta)}
+            {\sum_{k} P(S_t = i \mid S_{t-1} = k, \theta)\, P(S_{t-1} = k \mid O_{1:t-1}, \theta)} \\
+    &= \frac{\Gamma^{(t)}_{ji}\, u_{t-1|t-1}(j)}{\sum_{k} \Gamma^{(t)}_{ki}\, u_{t-1|t-1}(k)}
+     = \frac{\Gamma^{(t)}_{ji}\, u_{t-1|t-1}(j)}{u_{t|t-1}(i)},
+\end{align}
+\end{subequations}
+where $u_{t|t-1}(i) = P(S_t = i \mid O_{1:t-1}, \theta)$ is the one-step-ahead
+predictive state distribution. The method therefore only requires the filtered
+distributions from the forward pass and the transition matrices. Note that it
+still depends on the initial distribution $\pi$ through the forward recursion,
+although this influence decays for large $t$.
+
 \subsection{Model Diagnostics}
+\subsubsection{Goodness-of-fit}
+For asessing the goodnes of fit, we will use the pseudo-residuals 
+defined in (chapter 7.3, \cite{zucchini2016}). The pseudo-residuals are defined as
+\begin{equation}
+    r_t = \Phi^{-1}\left(F_{t|t-1}(y_t \mid y_{1:t-1})\right),
+\end{equation}
+where $\Phi^{-1}$ is the inverse of the standard normal cumulative distribution function (CDF)
+and $F_{t|t-1}(y_t \mid y_{1:t-1})$ is the one-step-ahead predictive CDF of the observation $y_t$ given
+the previous observations $y_{1:t-1}$. The pseudo-residuals are expected to be
+independently and identically distributed (i.i.d.) standard normal if the model is correctly specified. 
+Therefore, we can use the pseudo-residuals to assess 
+the goodness-of-fit of the model by checking 
+if they are normally distributed and uncorrelated. 
+
+\subsubsection{Test Statistics for Comparison}
+For comparing the goodnes-of-fit of different models, 
+we will use the Akaike information criterion (AIC), 
+the Bayesian information criterion (BIC) and the Likelihood ratio test (LRT).
+Let $\hat{L}$ denote the maximised likelihood of a model, $k$ the number of
+estimated parameters and $T$ the number of observations.
+
+The AIC \parencite{wiki_aic} is defined as
+\begin{equation}
+    \mathrm{AIC} = 2k - 2\ln \hat{L},
+\end{equation}
+and the BIC \parencite{wiki_bic} as
+\begin{equation}
+    \mathrm{BIC} = k \ln T - 2\ln \hat{L}.
+\end{equation}
+Both criteria reward a high likelihood and penalise the number of parameters,
+and the model with the lowest value is preferred. Since $\ln T > 2$ for $T > 7$,
+the BIC penalises additional parameters harder than the AIC and therefore
+tends to favour simpler models.
+
+The LRT \parencite{wiki_lrt} compares two nested models, where the null model
+with parameter space $\Theta_0$ is a restricted version of the full model with
+parameter space $\Theta$. The test statistic is
+\begin{equation}
+    \lambda_{LR} = -2\left[\ell(\hat{\theta}_0) - \ell(\hat{\theta})\right],
+\end{equation}
+where $\ell(\hat{\theta}_0)$ and $\ell(\hat{\theta})$ are the maximised
+log-likelihoods under the null and the full model, respectively. By Wilks' theorem,
+$\lambda_{LR}$ is asymptotically $\chi^2$-distributed with degrees of freedom
+equal to $\dim\Theta - \dim\Theta_0$, provided the null hypothesis lies in the
+interior of the parameter space. Note that this condition does not hold when
+comparing HMMs with different numbers of states, as the smaller model corresponds
+to parameters on the boundary of the larger model's parameter space
+(e.g.\ a transition probability equal to zero). The LRT is therefore only used
+for comparing nested models with the same number of states.
+

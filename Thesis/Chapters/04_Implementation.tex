@@ -1,1 +1,85 @@
 \chapter{Implementation}
+This section provides an overview of what envoriment was used to implement the
+models, what libraries were used and why, how the classes were designed.
+\section{Coding envoriment}
+The implementation of the HMM models is in Python 3.11 and is split into two
+parts: a model library, which contains the HMMs themselves, and a set of
+scripts that clean the data, fit the models and evaluate them. The model
+library only depends on a small numerical stack:
+\begin{itemize}
+    \item \textbf{JAX} (0.9.0) \parencite{jax2018}. All model computations,
+    i.e.\ the emission densities, the transition matrices and the forward
+    algorithm, are written in JAX. JAX provides automatic differentiation, so
+    the gradient of the log-likelihood with respect to every model parameter is
+    obtained without deriving it by hand. This is what allows the models to be
+    fitted by direct numerical optimisation of the likelihood instead of the
+    classical Baum-Welch (EM) algorithm, and it makes it cheap to add new
+    emission or transition types, since no new update equations have to be
+    derived. JAX also just-in-time compiles the code, and the recursion over
+    time in the forward algorithm is written with \texttt{jax.lax.scan}, which
+    keeps the fitting fast. Since the likelihood is numerically sensitive, all
+    computations are done in 64-bit floating point.
+    \item \textbf{Equinox} (0.13.7) \parencite{kidger2021equinox}. Equinox lets
+    the model classes be written as ordinary Python classes that are at the same
+    time JAX pytrees. An HMM is therefore a single object whose parameters JAX
+    can differentiate and optimise directly, and Equinox's filtering utilities
+    are used to freeze selected parameters during a fit.
+    \item \textbf{Optax} (0.2.8) \parencite{deepmind2020jax}. Optax provides the
+    optimisers that minimise the negative log-likelihood. The default is the
+    quasi-Newton method L-BFGS, while first-order gradient methods such as Adam
+    are available as an alternative.
+    \item \textbf{NumPy} (2.2) \parencite{harris2020numpy} for array handling
+    outside of the JAX code.
+\end{itemize}
+The scripts around the library additionally use the following libraries:
+\begin{itemize}
+    \item \textbf{pandas} (3.0) for loading, cleaning and aggregating the
+    $\text{CO}_2$ time series into 30 minute intervals.
+    \item \textbf{Matplotlib} (3.10) and \textbf{seaborn} (0.13) for all
+    figures.
+    \item \textbf{statsmodels} (0.14) for the autocorrelation functions and
+    QQ-plots used to evaluate the pseudo-residuals of the fitted models.
+    \item \textbf{holidays} (0.105) to mark Danish public holidays when
+    constructing the time-of-day and weekday covariates.
+    \item \textbf{Requests} (2.34) and \textbf{pyproj} (3.7) to download outdoor
+    humidity data from the open data API of the Danish Meteorological Institute
+    (DMI), where pyproj converts the coordinates of the building into the
+    coordinate system used by DMI.
+    \item \textbf{python-dotenv} (1.2) to read the location of the data from a
+    local configuration file, so that the data itself is kept out of the code
+    repository.
+\end{itemize}
+The package manager used is uv \parencite{uv}. The exact versions of every
+library are recorded in a lock file, so the environment can be reproduced with
+a single \texttt{uv sync} command, and uv also installs the pinned Python
+version. This ensures that the results in this report can be reproduced with
+the same versions of the libraries that produced them.
+
+\section{Class Design}
+The class design of the model library is shown in \cref{fig:class_design}.
+An HMM is described by a \texttt{HMMParams} object, which is composed of a
+transition model and an emission model. Both are given as abstract base classes,
+\texttt{BaseTransition} and \texttt{BaseEmission}, with the concrete models
+from the theory chapter implemented as subclasses. Because the HMM is
+assembled from these two parts, a new model is obtained by combining an existing
+transition with an existing emission, e.g.\ a covariate-driven transition with
+an autoregressive emission, without writing any new code for the combination.
+
+The remaining classes act on such a parameter object. The inference package
+contains the forward algorithm, which is used both by the negative
+log-likelihood that the solvers minimise, and by the diagnostics and the
+predictions on a fitted model. The solvers, the inference algorithm and the
+prediction are each given by an abstract base class, so an alternative
+optimiser or inference algorithm can be substituted without changing the model
+classes.
+
+\begin{figure}[H]
+    \centering
+    \input{Pictures/class_design.tex}
+    \caption{Class diagram of the model library, grouped into packages.
+    Arrows with an open triangle denote inheritance (dashed: implementation of
+    an interface), filled diamonds composition, open diamonds aggregation, and
+    dashed arrows a call. Abstract classes are written in italics.}
+    \label{fig:class_design}
+\end{figure}
+

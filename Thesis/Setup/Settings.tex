@@ -132,6 +132,11 @@ purple,         fill=purple         \\%
 
 % Setup for diagrams and graphs (tikz pictures) 
 \usetikzlibrary{spy}    % For magnifying anything within a tikzpicture, see the line graph
+\usetikzlibrary{positioning, fit, backgrounds, shapes.multipart, arrows.meta} % For the class diagram (Pictures/class_design.tex)
+\definecolor{umlfill}  {HTML}{EAF1FB} % Class diagram: class box fill
+\definecolor{umlborder}{HTML}{4A75B0} % Class diagram: class box border and arrows
+\definecolor{pkgborder}{HTML}{9AA5B1} % Class diagram: package border
+\definecolor{pkgtext}  {HTML}{33415C} % Class diagram: package name
 \usepgfplotslibrary{statistics} % Package for the boxplot
 \pgfplotsset{ % Setup for diagrams
 compat=newest,
