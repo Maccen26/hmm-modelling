@@ -56,10 +56,12 @@ uv run python -m drivers.analysis.show_params ar1_hmm_beta_1 --room 9 -K 6
 uv run python -m drivers.analysis.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4 [--split val|test]
 uv run python -m drivers.analysis.feedback_states ar1_hmm_beta_1 --room 9 -K 6 [--split train|val|test] [--paths 10000]
 uv run python -m drivers.analysis.transition_plots ar1_hmm_beta_1 --room 9 -K 4 --state 2 [--week 2023-11-27]
+uv run python -m drivers.analysis.sample_size --room 9 -K 5 [--p 0.05] [--R 100] [--n-max 150] [--n-step 5] [--tol 1e-3] [--init-noise 0.1]
 ```
 
 `state_confusion` plots the confusion matrix of the H-step predicted state (argmax of the rolling forecast's state distribution) against the smoothed state (argmax of `ForwardBackwardAlgorithm`).
 `feedback_states` samples state paths with `BackwardSampler` and plots which states the feedback events fall in, with the exact forward-backward share as a check.
 `transition_plots` plots the covariate-driven transition probabilities out of one state.
+`sample_size` simulates R datasets from the fit, refits each on its data up to the N-th complaint on the grid N = n_step, 2·n_step, …, N_MAX (warm-started from the previous grid point), and plots the 95 % CI and prediction interval of p̂ = N / Σ P(occupied | y₁:ₜ) against N; datasets, refitted models, `p_hat.csv` and `summary.csv` go to `results/.../sample_size/`, saved after every N.
 
 `decode_states`, `show_params`, `state_confusion`, `feedback_states` and `transition_plots` look in the driver's own loss folder unless `--loss` is given.
