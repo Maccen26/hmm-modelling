@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 from drivers.analysis.state_confusion import load_saved
-from drivers.models.utils import PLOTS_DIR, covariates
+from drivers.models.utils import PLOTS_DIR, TAG, covariates
 
 STEPS_PER_WEEK = 7 * 48  # 30-min bins
 
@@ -81,11 +81,11 @@ if __name__ == "__main__":
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
     parser.add_argument("--state", "-s", type=int, required=True, help="state the transitions are from (0-indexed)")
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--week", help="Monday the week starts on, e.g. 2023-11-20 (default: first normal training week)")
     args = parser.parse_args()
 
-    params, cfg, train = load_saved(args.model, args.room, args.states, args.loss)
+    params, cfg, train = load_saved(args.model, args.room, args.states, args.tag)
     if not hasattr(params.transition, "beta"):
         raise SystemExit(f"{args.model} has a static transition; there is nothing to plot over the week")
     if not 0 <= args.state < cfg.states:

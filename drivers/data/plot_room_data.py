@@ -1,4 +1,4 @@
-"""Plot one room's raw and calibrated CO2 data, each figure saved separately to `plots/<room>/data/`.
+"""Plot one room's raw and calibrated CO2 data, each figure saved separately to `plots/<room>/<tag>/data/`.
 
 Raw readings come from `{DATA_PATH}/raw/dtu/timeseries/<room>.csv` (after the NaN / range /
 duplicate filter in `clean_dtu_data.load_raw_series`); the calibrated series is the saved
@@ -18,7 +18,7 @@ import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf
 
 from drivers.data.clean_dtu_data import load_raw_series, room_slug
-from drivers.models.utils import PLOTS_DIR
+from drivers.models.utils import PLOTS_DIR, TAG
 from drivers.utils import load_base_data_path, load_y_df
 
 
@@ -110,7 +110,7 @@ def plot_room_data(room_name: str, tag: str = "30min") -> list[str]:
     meta = load_metadata(data_name, tag)
     baseline = meta["baseline_ppm"]
 
-    save_dir = os.path.join(PLOTS_DIR, data_name, "data")
+    save_dir = os.path.join(PLOTS_DIR, data_name, TAG, "data")
     os.makedirs(save_dir, exist_ok=True)
     prefix = f"{data_name}_{tag}"
     return [

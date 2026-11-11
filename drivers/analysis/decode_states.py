@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from drivers.models.evaluate import _covariates
-from drivers.models.utils import PLOTS_DIR, fit_path, load_data, room_name, working_hours
+from drivers.models.utils import PLOTS_DIR, TAG, fit_path, load_data, room_name, working_hours
 from drivers.utils import load_model
 from src.api.v5 import BackwardSampler, ForwardAlgorithm, Params
 
@@ -79,14 +79,14 @@ if __name__ == "__main__":
     parser.add_argument("model", help="slug of the saved fit, e.g. ar1_hmm_beta_1")
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--split", choices=["train", "val"], default="val")
     parser.add_argument("--start-day", type=float, default=0, help="window start, days after the split begins")
     parser.add_argument("--days", type=float, default=7, help="window length in days")
     parser.add_argument("--paths", type=int, default=500, help="backward-sampled paths for the smoothed probabilities")
     args = parser.parse_args()
 
-    path = fit_path(room_name(args.room), args.states, args.model, args.loss)
+    path = fit_path(room_name(args.room), args.states, args.model, args.tag)
     if not os.path.exists(path):
         raise SystemExit(f"No saved fit at {path}")
     saved = load_model(path)

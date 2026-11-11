@@ -1,7 +1,7 @@
 """Print the natural and working (unconstrained, optimised) parameters of a saved fit.
 
     uv run python -m drivers.analysis.show_params ar1_hmm_beta_1 --room 9 -K 6
-    uv run python -m drivers.analysis.show_params hmm_1 --room 9 -K 4 --loss nll
+    uv run python -m drivers.analysis.show_params hmm_1 --room 9 -K 4 --tag 30min
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -12,7 +12,7 @@ from dataclasses import fields
 
 import numpy as np
 
-from drivers.models.utils import fit_path, room_name
+from drivers.models.utils import TAG, fit_path, room_name
 from drivers.utils import load_model
 from src.api.v5 import Params
 
@@ -48,10 +48,10 @@ if __name__ == "__main__":
     parser.add_argument("model", help="slug of the saved fit, e.g. ar1_hmm_beta_1")
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     args = parser.parse_args()
 
-    path = fit_path(room_name(args.room), args.states, args.model, args.loss)
+    path = fit_path(room_name(args.room), args.states, args.model, args.tag)
     if not os.path.exists(path):
         raise SystemExit(f"No saved fit at {path}")
     saved = load_model(path)

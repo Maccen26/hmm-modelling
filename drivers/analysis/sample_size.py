@@ -38,7 +38,7 @@ import pandas as pd
 from scipy import stats
 
 from drivers.analysis.state_confusion import load_saved
-from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, covariates
+from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, TAG, covariates
 from drivers.utils import save_model
 from src.api.v5 import ForwardAlgorithm, LBFGSSolver, Params
 from src.api.v5.solvers.base_solver import BaseSolver
@@ -213,16 +213,14 @@ def stack(sims: list[dict], n_max: int) -> tuple[jnp.ndarray, np.ndarray]:
 
 # --- Refitting ----------------------------------------------------------------------
 
-def masked_loss(init_dist, beta_lam: float, sigma_lam: float) -> Callable:
-    """Driver loss (NLL + ridges, as `penalised_negative_likelihood`) with the masked steps left out of the NLL."""
+def masked_loss(init_dist, beta_lam: float) -> Callable:
+    """Driver loss (NLL + β-ridge, as `penalised_negative_likelihood`) with the masked steps left out of the NLL."""
     def loss_fn(params: Params, data) -> jax.Array:
         ys, xs, mask = data
         _, f_t, _ = ForwardAlgorithm.run(params=params, initial_dist=init_dist, ys=ys, xs=xs)
         loss = -jnp.sum(jnp.where(mask, jnp.log(f_t), 0.0))
         if beta_lam:
             loss = loss + beta_lam * jnp.sum(params.transition.beta ** 2)
-        if sigma_lam:
-            loss = loss + sigma_lam * jnp.sum(jnp.exp(params.emission.log_sigma) ** 2)
         return loss
     return loss_fn
 
@@ -255,7 +253,7 @@ def build_refit(params: Params, cfg, init_dist, occupied, n_iter: int, tol: floa
     solver = LBFGSSolver(n_iter=n_iter, tol=tol)
     freezer = Freezer(None)
     trainable, static = eqx.partition(params, freezer.filter_spec(params))
-    loss_fn = masked_loss(init_dist, cfg.loss.beta_lam, cfg.loss.sigma_lam)
+    loss_fn = masked_loss(init_dist, cfg.loss.beta_lam)
     objective = BaseSolver._objective(loss_fn, static, freezer, params)
     occupied = jnp.asarray(occupied)
 
@@ -414,7 +412,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=5)
     parser.add_argument("--model", default="ar1_hmm_beta_1", help="slug of the saved AR(1) fit to simulate from and refit")
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam0.01 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--p", type=float, default=0.05, help="true P(complaint | occupied state)")
     parser.add_argument("--R", type=int, default=100, help="number of simulated datasets")
     parser.add_argument("--n-max", type=int, default=150, help="simulate every dataset until this many complaints")
@@ -434,7 +432,7 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    params, cfg, room_data = load_saved(args.model, args.room, args.states, args.loss)
+    params, cfg, room_data = load_saved(args.model, args.room, args.states, args.tag)
     if not hasattr(params.emission, "phi"):
         raise SystemExit(f"{args.model} has no AR emission; the generator needs an AR(1) model")
     cols, init_dist = cfg.covariate_cols, room_data.init_dist

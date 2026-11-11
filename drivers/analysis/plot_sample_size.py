@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, driver_loss, room_name
+from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, TAG, driver_loss, room_name
 
 
 def plot_p_hat(summary: pd.DataFrame, p: float, title: str, path: str):
@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=5)
     parser.add_argument("--model", default="ar1_hmm_beta_1", help="slug of the model the sample_size run used")
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam0.01 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--p", type=float, default=0.05, help="true P(complaint | occupied state) of the run")
     parser.add_argument("--R", type=int, default=100, help="number of simulated datasets in the run")
     parser.add_argument("--seed", type=int, default=0)
@@ -76,9 +76,9 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    room, loss = room_name(args.room), args.loss or driver_loss(args.model).slug
+    room, loss = room_name(args.room), driver_loss(args.model).slug
     name = f"{args.model}_p{args.p:g}_R{args.R}_seed{args.seed}" + (f"_noise{args.init_noise:g}" if args.init_noise else "")
-    run = os.path.join(room, loss, f"states_{args.states}", "sample_size", name)
+    run = os.path.join(room, args.tag, f"states_{args.states}", "sample_size", name)
 
     summary = pd.read_csv(os.path.join(RESULTS_DIR, run, "summary.csv"))
     plot_dir = os.path.join(PLOTS_DIR, run)

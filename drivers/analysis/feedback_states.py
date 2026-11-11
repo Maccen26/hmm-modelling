@@ -25,7 +25,7 @@ import pandas as pd
 
 from drivers.analysis.state_confusion import load_saved
 from drivers.models.evaluate import _covariates
-from drivers.models.utils import PLOTS_DIR, load_data
+from drivers.models.utils import PLOTS_DIR, TAG, load_data
 from drivers.utils import load_y_df
 from src.api.v5 import BackwardSampler, ForwardAlgorithm
 from src.api.v5.inference.forward_backward import ForwardBackwardAlgorithm
@@ -71,13 +71,13 @@ if __name__ == "__main__":
     parser.add_argument("model", help="slug of the saved fit, e.g. ar1_hmm_beta_1")
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--split", choices=["train", "val", "test"], default="train")
     parser.add_argument("--paths", type=int, default=10_000, help="number of backward-sampled state paths")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
-    params, cfg, train = load_saved(args.model, args.room, args.states, args.loss)
+    params, cfg, train = load_saved(args.model, args.room, args.states, args.tag)
     ys, xs, offset = train.ys, _covariates(params, train), 0
     if args.split != "train":
         split = load_data(cfg, args.split)

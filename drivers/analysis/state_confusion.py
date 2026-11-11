@@ -19,15 +19,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from drivers.models.evaluate import _covariates
-from drivers.models.utils import PLOTS_DIR, Data, fit_path, load_data, room_name
+from drivers.models.utils import PLOTS_DIR, TAG, Data, fit_path, load_data, room_name
 from drivers.utils import load_model
 from src.api.v5 import Params
 from src.api.v5.analysis import Predictor
 from src.api.v5.inference.forward_backward import ForwardBackwardAlgorithm
 
 
-def load_saved(model: str, room: int, states: int, loss: str | None):
-    path = fit_path(room_name(room), states, model, loss)
+def load_saved(model: str, room: int, states: int, tag: str = TAG):
+    path = fit_path(room_name(room), states, model, tag)
     if not os.path.exists(path):
         raise SystemExit(f"No saved fit at {path}")
     saved = load_model(path)
@@ -83,11 +83,11 @@ if __name__ == "__main__":
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=6)
     parser.add_argument("--horizon", "-H", type=int, default=1, help="forecast horizon in steps")
-    parser.add_argument("--loss", help="loss folder, e.g. ridge_beta_lam1 (default: the driver's own loss)")
+    parser.add_argument("--tag", default=TAG, help=f"data tag (default {TAG})")
     parser.add_argument("--split", choices=["val", "test"], default="val")
     args = parser.parse_args()
 
-    params, cfg, train = load_saved(args.model, args.room, args.states, args.loss)
+    params, cfg, train = load_saved(args.model, args.room, args.states, args.tag)
     split = load_data(cfg, args.split)
 
     inferred = smoothed_states(params, train, split)
