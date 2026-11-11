@@ -16,7 +16,6 @@ import pandas as pd
 from drivers.data.clean_room_data import BIN, clean_df
 from drivers.utils import load_base_data_path, save_thesis_table
 
-QUANTILES = [0.025, 0.25, 0.5, 0.75, 0.975]
 DEDUP_WINDOW = pd.Timedelta("60min")
 STEP = pd.Timedelta(BIN)
 TABLES_SUBDIR = "data"  # tables go to `Thesis/Tables/data/`
@@ -83,10 +82,8 @@ def option_label(value: str) -> str:
 
 
 def summarise(x: pd.Series) -> pd.Series:
-    q = x.quantile(QUANTILES)
-    q.index = [f"{p:.1%}" for p in QUANTILES]
-    return pd.concat([pd.Series({"N": x.count(), "Min": x.min()}), q,
-                      pd.Series({"Mean": x.mean(), "Max": x.max()})])
+    return pd.Series({"N": x.count(), "Min": x.min(), "Q1": x.quantile(0.25), "Median": x.median(),
+                      "Mean": x.mean(), "Q3": x.quantile(0.75), "Max": x.max()})
 
 
 def removed_table(raw: dict, clean: dict) -> pd.DataFrame:
@@ -112,10 +109,10 @@ def valid_feedback_table(feedback: dict, valid: dict) -> pd.DataFrame:
     return table.astype(int)
 
 
-def co2_table(clean: dict, feedback: dict) -> pd.DataFrame:
+def co2_table(clean: dict, valid: dict) -> pd.DataFrame:
     table = pd.DataFrame({r: summarise(df["co2"]) for r, df in clean.items()}).T
     table["N"] = table["N"].astype(int)
-    return table.join(feedback_table(feedback))
+    return table.join(feedback_table(valid)["Complaints"])
 
 
 def waiting_time_table(clean: dict) -> pd.DataFrame:
@@ -190,8 +187,8 @@ def create_summary_tables(gap_room: str) -> None:
          f"Complaints per room after removing repeats: a complaint is kept only if the same user has not "
          f"made a kept complaint in the same category within the preceding "
          f"{int(DEDUP_WINDOW.total_seconds() // 60)} minutes.")
-    emit(co2_table(clean, feedback), "raw_co2_quantiles",
-         "Summary statistics of the cleaned raw CO$_2$ readings (ppm) per room, with complaint counts.")
+    emit(co2_table(clean, valid), "raw_co2_quantiles",
+         "Summary statistics of the cleaned raw CO$_2$ readings (ppm) per room, with the number of valid (deduplicated) complaints.")
     emit(waiting_time_table(clean), "raw_waiting_times",
          "Summary statistics of the waiting time (seconds) between consecutive cleaned CO$_2$ readings.")
 

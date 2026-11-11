@@ -7,9 +7,65 @@ present some descriptive analytics, that show some properties in the data.
 %Goal in this chapter is to communicate what data is used, how it has been collected, 
 %how it has been processed, 
 The data used in this project are $\text{CO}_2$ data collected from the 
-office building 303B and the censors and data providers are 
-climify (\cite{climify}).  The data is collected in the fall and winter period of 2023, 
-and the raw data period spans from [\textcolor{red}{MISSING REFERENCE}] to [\textcolor{red}{MISSING REFERENCE}].
+DTU's office building 303B (\textit{Matematiktorvet 303B, 2800 Lundtofte}) 
+and the censors and data providers are 
+climify (\cite{climify}).  The sensors are $\text{CO}_2$ sensors and the data are collected in ppm units.\\
+The data is collected in the period 01-11-2023 to 09-02-2024. This period does not contain the timeshift from summer to winter time
+in Denmark. \\ 
+\\
+The offices in bulding 303B belongs employees on DTU, and the students do not use these rooms. The rooms is 
+either a office rooms (for 1 to multiple persons) or a meeting room . \\ 
+If a student or other party would like to accuire the data used in this specific project, you should 
+contact one of the supervisors of the thesis. 
+\section{Summary Statistics}
+As written in the introduction, our goal is to find and model a systamatic behaviour of 
+the occupants behaviour and simualte a thermal comfort curve. To do this, we will only focus on office rooms, as 
+we hypothesies that they will be much more occupied and show a more reguliar 
+and systematic change in $\text{CO}_2$ ppm levels. For the second part,
+ we will also need complaints from the users as to how the temperature are in the room. 
+\input{Tables/data/raw_co2_quantiles} 
+\ref{tab:raw_co2_quantiles} gives a summary of the office rooms 
+wich also had feedback on the temperature in the period of the data. \\
+We see that there is almost the same amount of observations for each room besides room 54, which 
+has about a 1000 more samples. Room 15 has the higest amount of feedback 
+with 49 samples followed by Room 19, wich has 37 feedback samples. 
+We see that the minimum $\text{CO}_2$ ppm values vary a lot and all is below the outdoor minimum value of 
+around 420 ppm in 2023 (\cite{icos2023ghg}). This is a clear indicator that the sensros need to be calibrated.
+We also see that all the rooms has a max value of 5651 ppm, which either indicates that all co2 ppm levels has been over this threshold
+at some point or there have been a calibration or error in the sensors that made them go up to the maximum threshold. \\
+We also see that the mean of the all the rooms sits higher than the median, 
+wich tells us that the data is right skewed. If we hypethsize that the room is 
+empty more than 50\% of the time (a working day is 8 hours), then this confirms the theory. \\
+\\
+We now want to know how long time there is between the observations of our sensors in our office rooms such 
+that we can choose a reasonable timestep to aggreate the data such that the data is discritized.\\ 
+\input{Tables/data/raw_waiting_times}
+
+In \ref{tab:raw_waiting_times}, we know see a summary table of the 
+waiting time between each co2 reading for the sensors. We notice that Room 54 has about haft 
+the waiting time as the other rooms and this cause the amount of higher samples.\\
+We see that, the Q1 to Q3 sits close togher, so at least 50 \% of the time between each observation
+for all rooms is around 10 minutes. We notice that the mean sits close to the median in generel, 
+wich indicates that the data is only a little right skwewed, probarly caused by a few extreme 
+few waiting times in the rooms. We see that the maximum waiting time for a room is aorund
+1.5 to 2 hours. We shold therefore inspect, the amount of extreme waiting times and when it happens. \\
+\\ 
+Our goal is to discretize the data, but not make granualr enough such that we will have to predict too many steps into the future. 
+We remember, that the goal of the models is to be able to provide information about the state of a room 3 to 4 hours into the future. \\ 
+We therefore resample the data into 30 minutes bins such. This make it such that all bins contains at lest 1 observattion, 
+but most bins will contain around 2 to 3 observations. This give the nice advange that a irregualr observation, will be smoothed out. \\
+\\
+We also need to look at the feedback counts
+As we saw in \ref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minutes interval. \\
+
+
+
+
+\section{Calibration of data}
+
+\section{Descriptive Analytics}
+
+
 The data collected from the censors are in intervals of around 10 minutes. Because our HMM models works 
 in discrete time, the data have been aggregated into 30 minutes such that each time step $\Delta t = 1$ represents 30 minutes. 
 
@@ -46,8 +102,6 @@ Because we are interrested in predicting future presence of the occupants in the
 
 \section{Summary statistics}
 % Tables generated by drivers/data/create_summary_tables.py
-\input{Tables/data/raw_removed_readings}
-\input{Tables/data/raw_co2_quantiles}
 \input{Tables/data/raw_waiting_times}
 \input{Tables/data/room_015_gaps}
 \input{Tables/data/longest_complete_run}
