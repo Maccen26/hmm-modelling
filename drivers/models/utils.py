@@ -62,7 +62,7 @@ class Config:
     states: int
     loss: Loss = Loss()
     tag: str = TAG
-    n_iter: int = 100_000
+    n_iter: int = 10_000
     tol: float = 1e-6
 
     def __post_init__(self):
