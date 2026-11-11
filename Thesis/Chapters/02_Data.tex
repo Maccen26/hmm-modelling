@@ -1,0 +1,83 @@
+\chapter{Data}
+
+%Goal in this chapter is to communicate what data is used, how it has been collected, 
+%how it has been processed, 
+The data used in this project are $\text{CO}_2$ data collected from the 
+office building 303B and the censors and data providers are 
+climify [\textcolor{red}{MISSING REFERENCE}]. The data is collected in the fall and winter period of 2023, 
+and the raw data period spans from [\textcolor{red}{MISSING REFERENCE}] to [\textcolor{red}{MISSING REFERENCE}].
+The data collected from the censors are in intervals of around 10 minutes. Because our HMM models works 
+in discrete time, the data have been aggregated into 30 minutes such that each time step $\Delta t = 1$ represents 30 minutes. 
+
+
+When collecting $\text{CO}_2$ data, the censors tend to drift over time [\textcolor{red}{MISSING REFERENCE}], 
+and therefore, the data collected from the censors
+are not always accurate. To empty rooms, that have the same $\text{CO}_2$ levels may show different
+readins based on how much the censors have drifted over time. 
+This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of the occupants in the building and a 
+higher baseline of the $\text{CO}_2$ data may lead to a false positive of the presence of the occupants in the building.
+To correct for this, we have used a method called
+\textit{Automatic Baseline Correction} (ABC) Algorithm.  [\textcolor{red}{MISSING REFERENCE}]. 
+In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
+is equal to the outside $\text{CO}_2$ ppm values. From literature, it's common to set 
+the outside $\text{CO}_2$ ppm values to 400 ppm [\textcolor{red}{MISSING REFERENCE}], which we have also done. 
+\bigskip
+
+%Lets write up the function for the ABC algorithm and how it works.
+Let $C_{t}$ be the $\text{CO}_2$ ppm value at time $t$,  $\tilde{C_{t}}$ be the corrected $\text{CO}_2$ ppm value at time $t$.
+
+We then define the modified ABC algorithm as
+\begin{equation}
+\tilde{C}_{t} = C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) + 400,
+\end{equation}
+where $Q_{0.02}\left(C_{t-\Delta t:t}\right)$ is the 2\% quantile of the $\text{CO}_2$ ppm values over the time period $[t-\Delta t, t]$ and 
+$\Delta t$ is a fixed time period. 
+In this project, we have set $\Delta t = 8$ days, such that the weekday overlaps. The reason for using 
+a 2\% quantile is to avoid the effect of erradic readings of the $\text{CO}_2$ ppm values, 
+which may occur if the censors are not working properly. 
+\bigskip
+Because we are interrested in predicting future presence of the occupants in the building, we dont need the data to be as granular as 10 minutes. 
+\bigskip
+\include{Tables/raw_co2_summary}
+TO DO: \\
+\begin{itemize}
+    \item Make summary table of the data with before and after the ABC algorithm
+          (n, mean, sd, min, quantiles, max, \% of bins below 450 ppm; one row per room if several rooms).
+    \item Make ACF plots to show the AR structure of the data. Add PACF (shows AR order); note daily cycle at lag 48.
+    \item Make a plot of the data before and after the ABC algorithm (raw, estimated floor, calibrated + zoom on one week).
+    \item Histogram/density of calibrated CO$_2$ (multimodality motivates hidden states).
+    \item Average daily profile, weekday vs.\ off-day (motivates off-day + Fourier covariates).
+    \item Overview plot of full series with train/val/test boundaries and feedback events.
+    \item Short chapter introduction and conclusion.
+\end{itemize}
+
+Fix in existing text:
+\begin{itemize}
+    \item $\Delta t$ used both as 30-min step and as 8-day window: rename window to $W$.
+    \item Dates: Room 009 segment is 2023-11-21 to 2024-02-09 (3860 bins, $\approx$ 80 days), not ``fall and winter 2023''.
+          Clarify 303B vs.\ DTU dataset (live \texttt{room\_009/30min} data comes from \texttt{clean\_dtu\_data.py}).
+    \item Reason for 8 days: every window contains a full weekend (an empty-room period).
+    \item Merge the duplicated aggregation paragraph; state that bins are means of the readings.
+    \item Typos: censors $\to$ sensors, ``To empty rooms'' $\to$ Two, readins, erradic, interrested, dont, climify $\to$ Climify.
+    \item Define a \verb|\COtwo| macro instead of retyping \verb|$\text{CO}_2$|.
+\end{itemize}
+
+Missing processing steps to describe:
+\begin{itemize}
+    \item Raw cleaning: drop NaNs, keep 0--4000 ppm (sensor saturation), remove duplicates.
+    \item Gap handling: only the longest gap-free segment is kept (discrete model needs equal spacing).
+    \item ABC details: applied after 30-min binning (and why); trailing window, so no leakage into val/test;
+          first 8 days dropped as warm-up; justify 2\% quantile (must be below share of empty bins, $\approx$16\% below 500 ppm in Room 009).
+    \item Report floor drift (Room 009: 388 $\to$ 500 ppm).
+    \item State ABC assumption: room is empty and ventilated to outdoor level at some point in every window.
+          Outdoor CO$_2$ was $\approx$420 ppm in 2023--24: justify 400 or mention it.
+    \item Feedback data: how collected, number of responses, binary flag per 30-min bin.
+    \item Humidity: calibration against outdoor humidity, or state that it is excluded.
+    \item Covariates: off-day flag (weekends + holidays), daily (3 harmonics) and weekly (1 harmonic) Fourier terms,
+          weather variables; z-scored with training statistics only.
+    \item Time zone: timestamps in UTC (no DST change in Nov--Feb).
+    \item Split: chronological 65/15/20, boundaries 2024-01-12 and 2024-01-24; Christmas break falls in training.
+    \item Rooms and sensors: which rooms and why, single/shared offices, ventilation type, sensor type (NDIR), accuracy, sampling interval.
+\end{itemize}
+
+Missing references: Climify, NDIR sensor drift, ABC (Senseair firmware; check whether your sensors already run it), outdoor CO$_2$ baseline (e.g.\ NOAA).

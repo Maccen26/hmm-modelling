@@ -98,7 +98,7 @@ def load_time_covariates(period: int = 48) -> jnp.ndarray:
 # --------------------------------------------------------------------------- #
 # Covariate construction
 #
-# Shared by `drivers/clean_dtu_data.py`, `week_5.ipynb` and
+# Shared by `drivers/data/clean_dtu_data.py`, `week_5.ipynb` and
 # `week_5_optimal_parameters.ipynb` so the three cannot drift apart.
 # --------------------------------------------------------------------------- #
 
@@ -386,7 +386,7 @@ def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=No
     os.makedirs(os.path.dirname(path), exist_ok=True)
     float_cols_4dp = set(float_cols_4dp or [])
     col_spec = "l" + "c" * (len(df.columns) - 1)
-    header = " & ".join(_LATEX_HEADER_MAP.get(c, c) for c in df.columns) + " \\\\"
+    header = " & ".join(_LATEX_HEADER_MAP.get(c, c.replace("%", "\\%")) for c in df.columns) + " \\\\"
     body_rows = []
     for _, row in df.iterrows():
         cells = [_fmt_cell(row[col], col, float_cols_4dp) for col in df.columns]
@@ -407,6 +407,16 @@ def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=No
     )
     with open(path, "w") as f:
         f.write(tex)
+
+
+THESIS_TABLES_DIR = Path(__file__).resolve().parent.parent / "Thesis" / "Tables"
+
+
+def save_thesis_table(df: pd.DataFrame, name: str, caption: str, label: str, float_cols_4dp=None) -> str:
+    """Write `df` as a LaTeX table to `Thesis/Tables/<name>.tex`; include it with `\\input{Tables/<name>}`."""
+    path = str(THESIS_TABLES_DIR / f"{name}.tex")
+    write_latex_table(df, path, caption=caption, label=label, float_cols_4dp=float_cols_4dp)
+    return path
 
 
 if __name__ == "__main__":

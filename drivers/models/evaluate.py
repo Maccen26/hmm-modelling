@@ -58,7 +58,7 @@ def metrics_table(name: str, slug: str, cfg: Config, y_val: np.ndarray, preds: d
 
 
 def save_metrics(table: pd.DataFrame, cfg: Config) -> str:
-    """Upsert into one CSV shared by all models of this room/loss/states."""
+    """Upsert into one CSV shared by all models of this room/tag/states."""
     path = os.path.join(cfg.run_dir(RESULTS_DIR), "predictive_metrics.csv")
     if os.path.exists(path):
         old = pd.read_csv(path)

@@ -1,6 +1,6 @@
 # Humidity cleaning: relative humidity → moisture excess
 
-Source: `drivers/clean_dtu_data.py` (`calibrate_humidity` and helpers).
+Source: `drivers/data/clean_dtu_data.py` (`calibrate_humidity` and helpers).
 
 ## Why not use relative humidity directly?
 
@@ -48,7 +48,7 @@ relative size (`humidity_ratio`).
 - **Indoor** $x_\text{in}$: the room's own `humidity` (RH) and `temperature` columns, after
   they have been resampled to the 30 min grid and cut to the longest gap-free segment.
 - **Outdoor** $x_\text{out}$: hourly `mean_relative_hum` and `mean_temp` from DMI's 10 km
-  climate grid cell covering DTU (downloaded by `drivers/fetch_humidity.py` to
+  climate grid cell covering DTU (downloaded by `drivers/data/fetch_humidity.py` to
   `raw/dtu/humidity.csv`). We push them through the same formulas.
 
 ## Step 5: Aligning the two time axes

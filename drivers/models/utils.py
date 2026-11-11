@@ -24,42 +24,34 @@ from src.api.v5 import (
 )
 from src.api.v5.solvers.base_solver import SolverResult
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
-PLOTS_DIR = os.path.join(os.path.dirname(__file__), "plots")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo root
+RESULTS_DIR = os.path.join(ROOT, "results")
+PLOTS_DIR = os.path.join(ROOT, "plots")
 HORIZONS = (1, 2, 4, 6, 8)  # rolling-forecast horizons (steps ahead) for the validation set
 PLOT_HORIZONS = (6, 8)  # subset of HORIZONS drawn in the residual and first-week plots
-TAG = "30min"               # all room data is binned to 30 min; only used to locate the CSVs
+TAG = "30min"               # default data tag: the binning folder of the room CSVs, and a level of the results/plots tree
 
 OBS_COLS = ("co2",)         # ≥2 columns -> multivariate emission
 COVARIATE_COLS = ("off_day", "sin_week_1", "cos_week_1", "sin_tod_1", "cos_tod_1", "working_hours")  # β models only
 
 
-SIGMA_LAM = 1e-4  # ridge on σ²: ~20 nats on a σ≈450 ppm state, negligible on the σ≈20-30 ppm ones
-
-
 @dataclass(frozen=True)
 class Loss:
-    """NLL plus optional ridge penalties; its slug names the results/plots folder.
-
-    beta_lam  * sum(beta^2)  on the transition covariate effects (β models only)
-    sigma_lam * sum(sigma^2) on the emission variances
-    """
+    """NLL plus an optional ridge beta_lam * sum(beta^2) on the transition covariate effects (β models only)."""
     beta_lam: float = 0.0
-    sigma_lam: float = 0.0
 
     @property
     def fn(self) -> Callable:
-        return partial(penalised_negative_likelihood, beta_lam=self.beta_lam, sigma_lam=self.sigma_lam)
+        return partial(penalised_negative_likelihood, beta_lam=self.beta_lam)
 
     @property
     def penalised(self) -> bool:
-        return bool(self.beta_lam or self.sigma_lam)
+        return bool(self.beta_lam)
 
     @property
     def slug(self) -> str:
-        """e.g. nll, ridge_sigma_lam0.0001, ridge_beta_lam1, ridge_beta_lam1_ridge_sigma_lam0.0001"""
-        parts = [f"ridge_{name}_lam{lam:g}" for name, lam in (("beta", self.beta_lam), ("sigma", self.sigma_lam)) if lam]
-        return "_".join(parts) or "nll"
+        """e.g. nll, ridge_beta_lam0.01"""
+        return f"ridge_beta_lam{self.beta_lam:g}" if self.beta_lam else "nll"
 
 
 @dataclass(frozen=True)
@@ -82,8 +74,8 @@ class Config:
         return len(self.obs_cols) > 1
 
     def run_dir(self, base: str) -> str:
-        """{base}/{room}/{loss}/states_{K}: where this run's fits, metrics and plots live."""
-        return os.path.join(base, self.room, self.loss.slug, f"states_{self.states}")
+        """{base}/{room}/{tag}/states_{K}: where this run's fits, metrics and plots live."""
+        return os.path.join(base, self.room, self.tag, f"states_{self.states}")
 
 
 @dataclass(frozen=True)
@@ -109,17 +101,16 @@ def room_name(room: int) -> str:
 
 
 def add_run_args(parser: argparse.ArgumentParser, default_states: int | None = None) -> argparse.ArgumentParser:
-    """--room, --states and --sigma-lam, shared by the single-driver and run-all CLIs."""
+    """--room, --states and --tag, shared by the single-driver and run-all CLIs."""
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=default_states, required=default_states is None,
                         help="number of hidden states" + (f" (default {default_states})" if default_states else ""))
-    parser.add_argument("--sigma-lam", type=float, default=0.0,
-                        help=f"ridge on the emission variances, added to the driver's loss (default 0; suggested {SIGMA_LAM:g})")
+    parser.add_argument("--tag", default=TAG, help=f"data tag, i.e. the binning folder of the room data (default {TAG})")
     return parser
 
 
 def parse_args(default_states: int) -> argparse.Namespace:
-    """Room, number of states and σ-ridge from the command line (`--room 9 --states K [--sigma-lam λ]`)."""
+    """Room, number of states and data tag from the command line (`--room 9 --states K [--tag 30min]`)."""
     return add_run_args(argparse.ArgumentParser(), default_states).parse_args()
 
 
@@ -170,13 +161,11 @@ def negative_likelihood(params: Params, data: tuple):
     return -jnp.sum(jnp.log(f_t))
 
 
-def penalised_negative_likelihood(params: Params, data: tuple, beta_lam: float = 0.0, sigma_lam: float = 0.0):
-    """Negative log-likelihood plus ridge penalties beta_lam * sum(beta^2) and sigma_lam * sum(sigma^2)."""
+def penalised_negative_likelihood(params: Params, data: tuple, beta_lam: float = 0.0):
+    """Negative log-likelihood plus the ridge penalty beta_lam * sum(beta^2)."""
     loss = negative_likelihood(params, data)
     if beta_lam:
         loss = loss + beta_lam * jnp.sum(params.transition.beta ** 2)
-    if sigma_lam:
-        loss = loss + sigma_lam * jnp.sum(jnp.exp(params.emission.log_sigma) ** 2)
     return loss
 
 
@@ -246,10 +235,9 @@ def driver_loss(slug: str) -> Loss:
     return importlib.import_module(f"drivers.models.{slug}").LOSS
 
 
-def fit_path(room: str, states: int, slug: str, loss: str | None = None) -> str:
-    """Path of a saved fit; `loss` is a folder slug, defaulting to the driver's own loss."""
-    loss = loss or driver_loss(slug).slug
-    return os.path.join(RESULTS_DIR, room, loss, f"states_{states}", f"{slug}.pkl")
+def fit_path(room: str, states: int, slug: str, tag: str = TAG) -> str:
+    """Path of a saved fit."""
+    return os.path.join(RESULTS_DIR, room, tag, f"states_{states}", f"{slug}.pkl")
 
 
 def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str:
@@ -261,18 +249,14 @@ def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str
 
 
 def load_fit(cfg: Config, slug: str, covariates: bool = False) -> Params:
-    """Params of a previously fitted seed model for the same room/states.
-
-    The seed is looked up under its own β-ridge but this run's σ-ridge, so each σ-ridge setting is its own chain.
-    """
-    seed_loss = replace(driver_loss(slug), sigma_lam=cfg.loss.sigma_lam)
-    path = result_path(replace(cfg, loss=seed_loss), slug)
+    """Params of a previously fitted seed model for the same room/tag/states."""
+    path = result_path(cfg, slug)
     if not os.path.exists(path):
         raise FileNotFoundError(
-            f"Seed model '{slug}' has not been fitted for {cfg.room}, K={cfg.states} (expected {path}). "
+            f"Seed model '{slug}' has not been fitted for {cfg.room}, tag={cfg.tag}, K={cfg.states} (expected {path}). "
             f"Run `uv run python -m drivers.models.{slug} --room {int(cfg.room.split('_')[-1])} "
             f"--states {cfg.states}"
-            + (f" --sigma-lam {cfg.loss.sigma_lam:g}" if cfg.loss.sigma_lam else "") + "` first.")
+            + (f" --tag {cfg.tag}" if cfg.tag != TAG else "") + "` first.")
     saved = load_model(path)
     fitted = saved["config"]
     if fitted.obs_cols != cfg.obs_cols or (covariates and fitted.covariate_cols != cfg.covariate_cols):
