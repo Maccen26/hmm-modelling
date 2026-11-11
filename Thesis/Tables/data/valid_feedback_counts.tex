@@ -1,0 +1,25 @@
+\begin{table}[ht]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lcccccccc}
+\hline
+Room & Complaints & Valid & Removed & Valid Opt 0 & Valid Opt 1 & Valid Opt 2 & Valid Opt 3 & Valid Opt 4 \\
+\hline
+Room 001 & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 0 \\
+Room 004 & 4 & 2 & 2 & 0 & 0 & 0 & 2 & 0 \\
+Room 007 & 16 & 16 & 0 & 0 & 3 & 8 & 5 & 0 \\
+Room 009 & 29 & 28 & 1 & 0 & 5 & 15 & 8 & 0 \\
+Room 010 & 12 & 11 & 1 & 0 & 4 & 5 & 2 & 0 \\
+Room 012 & 16 & 16 & 0 & 0 & 6 & 10 & 0 & 0 \\
+Room 015 & 49 & 38 & 11 & 1 & 9 & 17 & 8 & 3 \\
+Room 016 & 14 & 14 & 0 & 0 & 3 & 6 & 5 & 0 \\
+Room 019 & 37 & 35 & 2 & 5 & 12 & 16 & 2 & 0 \\
+Room 039 & 3 & 3 & 0 & 0 & 2 & 1 & 0 & 0 \\
+Room 054 & 12 & 11 & 1 & 0 & 0 & 5 & 6 & 0 \\
+Total & 193 & 175 & 18 & 6 & 45 & 83 & 38 & 3 \\
+\hline
+\end{tabular}
+\end{adjustbox}
+\caption{Complaints per room after removing repeats: a complaint is kept only if the same user has not made a kept complaint in the same category within the preceding 60 minutes.}
+\label{tab:valid_feedback_counts}
+\end{table}
