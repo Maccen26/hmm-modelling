@@ -112,7 +112,7 @@ def valid_feedback_table(feedback: dict, valid: dict) -> pd.DataFrame:
 def co2_table(clean: dict, valid: dict) -> pd.DataFrame:
     table = pd.DataFrame({r: summarise(df["co2"]) for r, df in clean.items()}).T
     table["N"] = table["N"].astype(int)
-    return table.join(feedback_table(valid)["Complaints"])
+    return table.join(feedback_table(valid)["Complaints"].rename("Valid complaints"))
 
 
 def waiting_time_table(clean: dict) -> pd.DataFrame:
