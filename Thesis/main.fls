@@ -544,6 +544,12 @@ INPUT ./Tables/data/room_015_gaps.tex
 INPUT ./Tables/data/room_015_gaps.tex
 INPUT ./Tables/data/room_015_gaps.tex
 INPUT Tables/data/room_015_gaps.tex
+INPUT ./Plots/data/room_015_calibrated_acf_pacf.tex
+INPUT ./Plots/data/room_015_calibrated_acf_pacf.tex
+INPUT Plots/data/room_015_calibrated_acf_pacf.tex
+INPUT ../plots/room_015/summary/room_015_calibrated_acf_pacf.png
+INPUT ../plots/room_015/summary/room_015_calibrated_acf_pacf.png
+INPUT ../plots/room_015/summary/room_015_calibrated_acf_pacf.png
 INPUT ./Chapters/03_Theory.tex
 INPUT ./Chapters/03_Theory.tex
 INPUT Chapters/03_Theory.tex

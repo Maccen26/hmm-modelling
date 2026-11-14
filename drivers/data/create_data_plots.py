@@ -23,7 +23,7 @@ from drivers.data.create_summary_tables import STEP, gap_table, load_raw, raw_di
 from drivers.models.utils import PLOTS_DIR
 from drivers.utils import load_y_df
 
-ACF_LAGS = 48 * 3  # three days of 30 min bins
+ACF_LAGS = 48 * 7  # seven days of 30 min bins
 PACF_LAGS = 5
 WORK_START, WORK_END = 8, 17
 DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -112,15 +112,25 @@ def plot_log(co2_bin, room_name):
     return fig
 
 
-def plot_acf_bins(co2_bin, room_name):
-    fig, ax = plt.subplots(figsize=(10, 4))
-    plot_acf(co2_bin, lags=ACF_LAGS, ax=ax, title=f"{room_name}: ACF of calibrated CO$_2$")
-    return fig
-
-
-def plot_pacf_bins(co2_bin, room_name):
-    fig, ax = plt.subplots(figsize=(10, 4))
-    plot_pacf(co2_bin, lags=PACF_LAGS, ax=ax, title=f"{room_name}: PACF of calibrated CO$_2$")
+def plot_acf_pacf(co2_bin, room_name):
+    """ACF over seven days (dotted = whole days) above the PACF of the first few lags."""
+    fig, (ax_acf, ax_pacf) = plt.subplots(2, 1, figsize=(12, 6), gridspec_kw={"height_ratios": [3, 2]})
+    style = {"color": "navy", "vlines_kwargs": {"colors": "navy", "lw": 1}}
+    plot_acf(co2_bin, lags=ACF_LAGS, ax=ax_acf, marker=None, **style)
+    plot_pacf(co2_bin, lags=PACF_LAGS, ax=ax_pacf, method="ywm", markersize=4, **style)
+    bound = 1.96 / np.sqrt(len(co2_bin))  # 95% band under white noise, as shaded by plot_pacf
+    ax_pacf.fill_between([0.5, PACF_LAGS + 0.5], -bound, bound, color="navy", alpha=0.15, lw=0)
+    for sign in (-1, 1):
+        ax_pacf.axhline(sign * bound, color="navy", ls="--", lw=0.8)
+    for lag in range(48, ACF_LAGS + 1, 48):
+        ax_acf.axvline(lag, color="grey", ls=":", lw=1)
+    ax_acf.set(title="ACF", xlabel="Lag (30 min bins)", ylabel="Correlation", xticks=range(0, ACF_LAGS + 1, 48))
+    ax_pacf.set(title="PACF", xlabel="Lag (30 min bins)", ylabel="Partial correlation", xticks=range(PACF_LAGS + 1))
+    for ax in (ax_acf, ax_pacf):
+        ax.set_ylim(-0.5, 1.05)
+        ax.axhline(0, color="black", lw=0.8)
+        ax.spines[["top", "right"]].set_visible(False)
+    fig.suptitle(f"{room_name}: autocorrelation of calibrated CO$_2$")
     return fig
 
 
@@ -251,8 +261,7 @@ def create_data_plots(room_name: str, tag: str = "calibrated") -> list[str]:
         "floor_vs_quantile": plot_floor_vs_quantile(floor, low_q, room_name),
         "calibrated_floor_vs_quantile": plot_calibrated_floors(co2, floor, low_q, room_name),
         "calibrated_log": plot_log(co2_bin, room_name),
-        "calibrated_acf": plot_acf_bins(co2_bin, room_name),
-        "calibrated_pacf": plot_pacf_bins(co2_bin, room_name),
+        "calibrated_acf_pacf": plot_acf_pacf(co2_bin, room_name),
         "diurnal": plot_diurnal(co2_bin),
         "diurnal_off_days": plot_diurnal_off_days(co2_bin, off_day),
         "weekly": plot_weekly(normal),
