@@ -32,7 +32,7 @@ PLOT_HORIZONS = (6, 8)  # subset of HORIZONS drawn in the residual and first-wee
 TAG = "30min"               # default data tag: the binning folder of the room CSVs, and a level of the results/plots tree
 
 OBS_COLS = ("co2",)         # ≥2 columns -> multivariate emission
-COVARIATE_COLS = ("off_day", "sin_week_1", "cos_week_1", "sin_tod_1", "cos_tod_1", "working_hours")  # β models only
+COVARIATE_COLS = ("off_day", "working_hours")  # β models only; beats the tod/week harmonics out of sample (covariates_fit.ipynb)
 
 
 @dataclass(frozen=True)
