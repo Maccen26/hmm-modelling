@@ -153,11 +153,15 @@ def plot_diurnal(co2_bin):
 
 
 def plot_diurnal_off_days(co2_bin, off_day):
+    """Working days and off days on one axis, grouped by time of day at 30 min resolution."""
     fig, ax = plt.subplots(figsize=(10, 5))
+    ax.axvspan(WORK_START, WORK_END, color="lightgrey", alpha=0.6, lw=0,
+               label=f"Working hours ({WORK_START}-{WORK_END})")
+    time_of_day = co2_bin.index.hour + co2_bin.index.minute / 60
     for label, mask, color in [("Working days", ~off_day, "navy"), ("Off days", off_day, "darkorange")]:
-        iqr_band(ax, co2_bin[mask].groupby(co2_bin.index.hour[mask]), color, label)
+        iqr_band(ax, co2_bin[mask].groupby(time_of_day[mask]), color, label)
     ax.set(title="Diurnal Variation and IQR of CO$_2$ Levels: Working vs Off Days",
-           xlabel="Hour of Day (0 - 23)", ylabel="CO$_2$ [ppm]", xticks=range(0, 24))
+           xlabel="Hour of Day (0 - 24)", ylabel="CO$_2$ [ppm]", xticks=range(0, 25, 2), xlim=(0, 24))
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.legend(loc="upper left")
     return fig

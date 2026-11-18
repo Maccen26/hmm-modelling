@@ -109,4 +109,29 @@ after the observations. This indicates that there is a high correlation between 
 as we then can assume that people have the same behavour on any given mondays.\\
 For the partial autocorrelation plot, we see that after 3 bins, there is no more correlation 
 between the previous observations. We also see that the second bind is negative, which contradicts
-the intuition that th
+the intuition that that a previous observation impacts a current observation negatively, but this can also be 
+understood as the previous observation just carries less effect into the current observation. 
+\bigskip
+
+If we look at the whole dataseries and mark the off days \ref{fig:room_015_off_days},
+ which are holidays and weekends, we see a clear drop in the co2 series at off days, which clearly indicates that 
+ off days proberly dont containt any people in the room. 
+\input{Plots/data/room_015_off_days.tex}
+In \ref{fig:room_015_diurnal_off_days}, we see a clear difference in the patteren of working days and off days, that further 
+motivates denoting off days and the working days. We also see that there is a diffence in the co2 values, when seperating
+the two days over the hours of a day. We see a sudden rise at around 8 and a decline from around 17. This motivates that the working hours
+of the offices are 8-17, and that there are people present at those hours. 
+\input{Plots/data/room_015_diurnal_off_days.tex}
+
+We then check that if this is a repetable behavour split out across working days in \ref{fig:room_015_weekly_working_hours} and 
+that the generel patteren is the same across. This motivates for a covariate denoting the working hours and
+also the week day. There doesnt seem to be a weekly patteren like no people is at the office at tuesday. 
+\input{Plots/data/room_015_weekly_working_hours.tex}
+
+\section{Summary}
+In this chapter, the collection method of the data were descibed, and the calibration technice were presented in
+\ref{eq:calibration}. We have shown strong autocorrelation in the data with a cyclic patteren that peaks every 24 hours. \\
+We have seen that the partial autorrelation is strong for 3 lags and can be interpretated as 1 lag with a less postive value as in the plot. \\
+In the data analytics, we have seen strong indication in the difference of behaviour of the office between off days and workdays, 
+and that people are present from 8-17 in room 15. 
+
