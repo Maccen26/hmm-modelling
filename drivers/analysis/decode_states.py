@@ -1,11 +1,14 @@
 """Plot the decoded hidden states of a saved fit over a window of the data.
 
 Smoothed state probabilities P(z_t = s | y_1:T) are estimated as the share of paths drawn
-with BackwardSampler that are in state s at time t; the top panel colours each observation by
-its most probable state. The validation split is filtered through the training set first.
+with BackwardSampler that are in state s at time t; with --filtered the forward filter's
+P(z_t = s | y_1:t) is used instead, i.e. only data up to t, as the model would see it online.
+The top panel colours each observation by its most probable state. The validation split is
+filtered through the training set first.
 
     uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 4
     uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 4 --split train --start-day 14 --days 7
+    uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 4 --filtered
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -35,6 +38,12 @@ def smoothed_probs(params: Params, ys, xs, init_dist, num_paths: int, seed: int 
     return np.stack([(paths == s).mean(axis=0) for s in range(K)], axis=1)
 
 
+def filtered_probs(params: Params, ys, xs, init_dist) -> np.ndarray:
+    """(T, K) forward-filter P(z_t | y_1:t): only data up to t."""
+    utt, _, _ = ForwardAlgorithm.run(params=params, initial_dist=init_dist, ys=ys, xs=xs)
+    return np.asarray(utt).reshape(len(ys), -1)
+
+
 def state_labels(params: Params, ys) -> list[str]:
     em = params.emission
     mu = np.asarray(em.mu_vals(0, ys) if hasattr(em, "mu_vals") else em.mu(0, ys))
@@ -51,7 +60,8 @@ def shade_working_hours(ax, dt: pd.DatetimeIndex):
         ax.axvspan(dt[start], dt[stop - 1], color="grey", alpha=0.12, lw=0)
 
 
-def plot(title: str, dt: pd.DatetimeIndex, y: np.ndarray, probs: np.ndarray, labels: list[str], path: str):
+def plot(title: str, dt: pd.DatetimeIndex, y: np.ndarray, probs: np.ndarray, labels: list[str], path: str,
+         filtered: bool = False):
     colors = plt.cm.tab10(np.arange(probs.shape[1]))
     fig, (ax_y, ax_p) = plt.subplots(2, 1, figsize=(14, 7), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
 
@@ -63,7 +73,8 @@ def plot(title: str, dt: pd.DatetimeIndex, y: np.ndarray, probs: np.ndarray, lab
     ax_y.legend(loc="upper left", fontsize=8)
 
     ax_p.stackplot(dt, probs.T, colors=colors, step="post")
-    ax_p.set(ylabel="P(state | all data)", ylim=(0, 1), title="Smoothed state probabilities")
+    kind, given = ("Filtered", "data up to t") if filtered else ("Smoothed", "all data")
+    ax_p.set(ylabel=f"P(state | {given})", ylim=(0, 1), title=f"{kind} state probabilities")
 
     for ax in (ax_y, ax_p):
         shade_working_hours(ax, dt)
@@ -84,6 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--start-day", type=float, default=0, help="window start, days after the split begins")
     parser.add_argument("--days", type=float, default=7, help="window length in days")
     parser.add_argument("--paths", type=int, default=500, help="backward-sampled paths for the smoothed probabilities")
+    parser.add_argument("--filtered", action="store_true", help="forward-filter P(z_t | y_1:t) instead of smoothed")
     args = parser.parse_args()
 
     path = fit_path(room_name(args.room), args.states, args.model, args.tag)
@@ -98,7 +110,8 @@ if __name__ == "__main__":
         offset = len(train.ys)
         ys, dt = jnp.concatenate([train.ys, val.ys]), train.datetime.append(val.datetime)
         xs = None if xs is None else jnp.concatenate([xs, _covariates(params, val)])
-    probs = smoothed_probs(params, ys, xs, train.init_dist, args.paths)
+    probs = (filtered_probs(params, ys, xs, train.init_dist) if args.filtered
+             else smoothed_probs(params, ys, xs, train.init_dist, args.paths))
 
     start = dt[offset] + pd.Timedelta(days=args.start_day)
     window = np.flatnonzero((dt >= start) & (dt < start + pd.Timedelta(days=args.days)) & (np.arange(len(dt)) >= offset))
@@ -107,8 +120,9 @@ if __name__ == "__main__":
     y = np.asarray(ys)
     y = y if y.ndim == 1 else y[:, 0]
 
-    out = os.path.join(cfg.run_dir(PLOTS_DIR), f"{args.model}_states_{args.split}.png")
-    plot(f"{args.model} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}: decoded states, "
+    kind = "filtered" if args.filtered else "smoothed"
+    out = os.path.join(cfg.run_dir(PLOTS_DIR), f"{args.model}_states_{kind}_{args.split}_{start:%Y%m%d}.png")
+    plot(f"{args.model} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}: {kind} states, "
          f"{args.split} split from {start:%Y-%m-%d}",
-         dt[window], y[window], probs[window], state_labels(params, train.ys), out)
+         dt[window], y[window], probs[window], state_labels(params, train.ys), out, args.filtered)
     print(f"Saved {out}")
