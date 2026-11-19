@@ -1,0 +1,16 @@
+parameter,estimator,n_ci_covers,target_width,n_pi_narrow
+p_0,hmm,,0.02,100.0
+p_1,hmm,,0.02,60.0
+p_2,hmm,,0.02,80.0
+p_3,hmm,,0.02,120.0
+p_4,hmm,10.0,0.02,
+p_0,known,10.0,0.02,10.0
+p_1,known,10.0,0.02,10.0
+p_2,known,10.0,0.02,10.0
+p_3,known,80.0,0.02,120.0
+p_4,known,10.0,0.02,
+c_1,probit,10.0,1.0,110.0
+c_2,probit,40.0,1.0,80.0
+c_3,probit,10.0,1.0,80.0
+c_4,probit,160.0,1.0,90.0
+sigma,probit,,1.0,30.0
