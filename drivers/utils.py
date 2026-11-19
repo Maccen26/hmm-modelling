@@ -382,7 +382,8 @@ def _fmt_cell(value, col, float_cols_4dp):
     return str(value)
 
 
-def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=None):
+def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=None, max_width=False):
+    """`max_width` shrinks the tabular to `\\textwidth` when wider (needs `adjustbox` in the preamble)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     float_cols_4dp = set(float_cols_4dp or [])
     col_spec = "l" + "c" * (len(df.columns) - 1)
@@ -394,14 +395,16 @@ def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=No
     tex = (
         "\\begin{table}[ht]\n"
         "\\centering\n"
-        f"\\begin{{tabular}}{{{col_spec}}}\n"
+        + ("\\begin{adjustbox}{max width=\\textwidth}\n" if max_width else "")
+        + f"\\begin{{tabular}}{{{col_spec}}}\n"
         "\\hline\n"
         f"{header}\n"
         "\\hline\n"
         + "\n".join(body_rows) + "\n"
         "\\hline\n"
         "\\end{tabular}\n"
-        f"\\caption{{{caption}}}\n"
+        + ("\\end{adjustbox}\n" if max_width else "")
+        + f"\\caption{{{caption}}}\n"
         f"\\label{{{label}}}\n"
         "\\end{table}\n"
     )
@@ -412,10 +415,12 @@ def write_latex_table(df, path: str, caption: str, label: str, float_cols_4dp=No
 THESIS_TABLES_DIR = Path(__file__).resolve().parent.parent / "Thesis" / "Tables"
 
 
-def save_thesis_table(df: pd.DataFrame, name: str, caption: str, label: str, float_cols_4dp=None) -> str:
+def save_thesis_table(
+    df: pd.DataFrame, name: str, caption: str, label: str, float_cols_4dp=None, max_width=False,
+) -> str:
     """Write `df` as a LaTeX table to `Thesis/Tables/<name>.tex`; include it with `\\input{Tables/<name>}`."""
     path = str(THESIS_TABLES_DIR / f"{name}.tex")
-    write_latex_table(df, path, caption=caption, label=label, float_cols_4dp=float_cols_4dp)
+    write_latex_table(df, path, caption=caption, label=label, float_cols_4dp=float_cols_4dp, max_width=max_width)
     return path
 
 
