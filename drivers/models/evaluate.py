@@ -57,9 +57,9 @@ def metrics_table(name: str, slug: str, cfg: Config, y_val: np.ndarray, preds: d
     return pd.DataFrame(rows)
 
 
-def save_metrics(table: pd.DataFrame, cfg: Config) -> str:
+def save_metrics(table: pd.DataFrame, cfg: Config, filename: str = "predictive_metrics.csv") -> str:
     """Upsert into one CSV shared by all models of this room/tag/states."""
-    path = os.path.join(cfg.run_dir(RESULTS_DIR), "predictive_metrics.csv")
+    path = os.path.join(cfg.run_dir(RESULTS_DIR), filename)
     if os.path.exists(path):
         old = pd.read_csv(path)
         keys = table[METRICS_KEY].astype(str).agg("|".join, axis=1)
@@ -70,7 +70,8 @@ def save_metrics(table: pd.DataFrame, cfg: Config) -> str:
     return path
 
 
-def plot_diagnostics(name: str, y: np.ndarray, preds: dict[int, np.ndarray], res: np.ndarray, path: str):
+def plot_diagnostics(name: str, y: np.ndarray, preds: dict[int, np.ndarray], res: np.ndarray, path: str,
+                     split: str = "validation"):
     """Residuals vs predicted, residual histogram, and QQ/ACF of the pseudo-residuals for one obs column."""
     fig, axes = plt.subplots(2, 2, figsize=(12, 9))
     ax_res, ax_hist, ax_qq, ax_acf = axes.ravel()
@@ -85,7 +86,7 @@ def plot_diagnostics(name: str, y: np.ndarray, preds: dict[int, np.ndarray], res
     ax_hist.legend()
 
     _plot_qq_acf(res, ax_qq, ax_acf)
-    _save(fig, f"{name}: validation set", path)
+    _save(fig, f"{name}: {split} set", path)
 
 
 def plot_residual_diagnostics(name: str, res: np.ndarray, split: str, path: str):
@@ -112,8 +113,8 @@ def _save(fig, title: str, path: str):
 
 
 def plot_first_week(name: str, col: str, dt: pd.DatetimeIndex, y: np.ndarray, preds: dict[int, np.ndarray],
-                    table: pd.DataFrame, path: str):
-    """Observed vs k-step predicted emission over the first validation week, one subplot per k."""
+                    table: pd.DataFrame, path: str, split: str = "validation"):
+    """Observed vs k-step predicted emission over the first week of the split, one subplot per k."""
     week = np.asarray(dt < dt[0] + pd.Timedelta(days=7))
     fig, axes = plt.subplots(len(preds), 1, figsize=(14, 2.6 * len(preds)), sharex=True, squeeze=False)
 
@@ -125,7 +126,7 @@ def plot_first_week(name: str, col: str, dt: pd.DatetimeIndex, y: np.ndarray, pr
         ax.set_ylabel(col)
         ax.legend(loc="upper right")
 
-    fig.suptitle(f"{name}: first week of the validation set (metrics over the full validation set)")
+    fig.suptitle(f"{name}: first week of the {split} set (metrics over the full {split} set)")
     fig.tight_layout()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fig.savefig(path, dpi=150)

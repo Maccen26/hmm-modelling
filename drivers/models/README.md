@@ -43,6 +43,17 @@ Both folders sit at the repo root, not inside `drivers/`.
 - `results/{room}/{tag}/states_{K}/predictive_metrics.csv`: validation R², RMSE, and MAPE per forecast horizon, shared by all models of that room/tag/K
 - `plots/{room}/{tag}/states_{K}/{model}.png` and `{model}_first_week.png`: residual diagnostics and forecast plots; titles show room, K and loss
 
+## Test-set evaluation
+
+`evaluate_test` scores saved fits on the test split the same way `evaluate` scores the validation split.
+The parameters stay fixed; the filter runs through train and validation first, so the test forecasts start from the state the model would be in online.
+
+```bash
+uv run python -m drivers.models.evaluate_test ar1_hmm_beta_1 --room 15 --states 3 4 5 --tag calibrated_anchor
+```
+
+It writes `results/{room}/{tag}/states_{K}/test_metrics.csv` (R², RMSE and MAPE per horizon, shared by all models of that room/tag/K) and `plots/{room}/{tag}/states_{K}/{model}_test.png` and `{model}_test_first_week.png`.
+
 ## Tools for saved fits
 
 The post-hoc analysis tools live in `drivers/analysis/` and read the fits above:
