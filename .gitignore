@@ -232,3 +232,6 @@ docs/diagrams/plantuml.jar
 
 # Data (untracked, kept locally only)
 /data/
+
+# Sampled state paths (drivers/simulation/sample_paths), regenerable and large
+*.npz

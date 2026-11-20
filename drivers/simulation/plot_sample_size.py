@@ -3,8 +3,8 @@
     p_hat_vs_N_simple.png    the HMM and known-states prediction intervals, the mean p_hat and the true p
     p_hat_distribution.png   per N, the distribution of p_hat over the datasets and a normal QQ plot
 
-    uv run python -m drivers.analysis.plot_sample_size --room 9 -K 5
-    uv run python -m drivers.analysis.plot_sample_size --room 9 -K 5 --p 0.05 --R 100 --seed 0
+    uv run python -m drivers.simulation.plot_sample_size --room 9 -K 5
+    uv run python -m drivers.simulation.plot_sample_size --room 9 -K 5 --p 0.05 --R 100 --seed 0
 """
 import argparse
 import os

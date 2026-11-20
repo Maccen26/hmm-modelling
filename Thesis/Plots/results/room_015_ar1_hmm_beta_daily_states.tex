@@ -1,0 +1,19 @@
+\begin{figure}[H]
+\centering
+\begin{subfigure}{\textwidth}
+\centering
+\includegraphics[width=\textwidth]{../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_daily_states_working_days.png}
+\caption{Working days, working hours (08--17) shaded}
+\label{fig:room_015_ar1_hmm_beta_daily_states_working}
+\end{subfigure}
+
+\bigskip
+\begin{subfigure}{\textwidth}
+\centering
+\includegraphics[width=\textwidth]{../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_daily_states_off_days.png}
+\caption{Off days (weekends and Danish public holidays)}
+\label{fig:room_015_ar1_hmm_beta_daily_states_off}
+\end{subfigure}
+\caption{Room 015: mean probability of each state over the day for the AR(1)-HMM($\beta$) with $K=4$ states, estimated from 100{,}000 state paths sampled from $P(z_{1:T} \mid y_{1:T})$ over the whole series.}
+\label{fig:room_015_ar1_hmm_beta_daily_states}
+\end{figure}

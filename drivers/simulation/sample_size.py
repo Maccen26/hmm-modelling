@@ -17,8 +17,8 @@ Across the R datasets, at each N and for each parameter:
     95 % CI of E[estimate]       mean ± t_{R-1} · sd / sqrt(R)
     95 % prediction interval     mean ± t_{R-1} · sd · sqrt(1 + 1/R)   (where one experiment's estimate lands)
 
-    uv run python -m drivers.analysis.sample_size --room 9 -K 5 --p 0 0 0 0.05 0.05
-    uv run python -m drivers.analysis.sample_size --room 9 -K 5 --p 0 0 0 0.05 0.05 --R 4 --n-max 30 --n-step 10   # smoke run
+    uv run python -m drivers.simulation.sample_size --room 9 -K 5 --p 0 0 0 0.05 0.05
+    uv run python -m drivers.simulation.sample_size --room 9 -K 5 --p 0 0 0 0.05 0.05 --R 4 --n-max 30 --n-step 10   # smoke run
 """
 import jax
 jax.config.update("jax_enable_x64", True)

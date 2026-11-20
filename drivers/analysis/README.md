@@ -31,11 +31,4 @@ uv run python -m drivers.analysis.state_confusion ar1_hmm_beta_1 --room 15 -K 4 
 - `transition_plots` plots the covariate-driven transition probabilities out of one state over a normal week.
 - `state_confusion` compares the H-step predicted state with the smoothed state.
 
-## Simulation
-
-```bash
-uv run python -m drivers.analysis.sample_size --room 15 -K 4 --p 0 0 0 0.05
-uv run python -m drivers.analysis.plot_sample_size --room 15 -K 4
-```
-
-`sample_size` simulates datasets from a saved fit and estimates P(feedback | state) and the vote cut-points as the number of votes grows. Outputs go to `results/.../states_{K}/sample_size/` and `plots/.../sample_size/`.
+Simulation-based tools live in `drivers/simulation/` (see its `README.md`).
