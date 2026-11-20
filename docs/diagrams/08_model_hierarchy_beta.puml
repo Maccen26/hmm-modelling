@@ -1,0 +1,42 @@
+@startuml 08_model_hierarchy_beta
+' HMM model hierarchy for the drivers in drivers/models/.
+'
+' Each arrow points from a base model to an expanded model that nests it (the
+' base is recovered by fixing the added parameters to zero). The edge label
+' names the parameters added by the expansion. The two paths meet at
+' AR(1)-HMM(β), which is seeded from both parents: its emission from
+' AR(1)-HMM and its transition from HMM(β) (see the fit order in
+' drivers/models/README.md).
+'
+'   HMM          = static first-order transition, Gaussian emission   (hmm_1)
+'   AR(1)-HMM    = AR(1) Gaussian emission                            (ar1_hmm_1)
+'   HMM(β)       = dynamic transition, covariate effects β            (hmm_beta_1)
+'   AR(1)-HMM(β) = AR(1) emission + dynamic transition                (ar1_hmm_beta_1)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam rectangle {
+    BackgroundColor #EAF1FB
+    BorderColor #4A75B0
+    BorderThickness 1
+    FontColor #1A1A1A
+    RoundCorner 8
+}
+skinparam ArrowColor #4A75B0
+
+rectangle "HMM" as H
+rectangle "AR(1)-HMM" as AR
+rectangle "HMM(β)" as HB
+rectangle "AR(1)-HMM(β)" as ARB
+
+' --- Autoregressive emission first ---
+H   --> AR  : + φ
+AR  --> ARB : + β
+
+' --- Covariate-driven transition first ---
+H   --> HB  : + β
+HB  --> ARB : + φ
+
+@enduml

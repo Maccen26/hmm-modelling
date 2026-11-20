@@ -1,11 +1,18 @@
 \chapter{Model Results}
 % OUTLINE ONLY -- replace the comments with text.
+This chapter will present what type of model best predicts the data, and what amount of states
+best describe the data. We will then do a analysis of the behaviour of our choosen model
+%Maybe just say that we will chose AR(1)-HMM(B,1) for 3 or 4 states
 
-\section{Experimental Setup}
-% Short: which room(s), data tag (calibrated_anchor), train/val/test split,
-% the model ladder (hmm_1 -> hmm_beta_1(_shared) -> ar1_hmm_1 -> ar1_hmm_beta_1(_shared)),
-% seeding/fit order, losses (NLL vs ridge on beta), K range tried.
-% Focus: enough that a reader can reproduce; point back to Ch. 4 rather than repeat it.
+\section{Model type}
+As desribed in experimental setup, we fit 4 models with a increasing order of complexity. \
+Each increase adds a new layer to the structure of how the model models the dynamics in the room.\
+
+\input{Tables/predictive_metrics_room_015_calibrated_anchor_random_search_val_h1}
+\input{Tables/predictive_metrics_room_015_calibrated_anchor_random_search_val_h8}
+
+
+
 
 \section{Choosing the Number of States}
 % Table of LL / AIC / BIC per K for each model, next to validation RMSE / R^2.
@@ -13,6 +20,7 @@
 % use predictive performance + interpretability (do the extra states mean anything?).
 
 \section{Model Comparison}
+
 \subsection{In-sample Fit}
 % LL, AIC, BIC across the model ladder for the chosen K.
 % Focus: what each added component (AR(1) emission, covariates in transition,

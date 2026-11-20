@@ -96,7 +96,29 @@ $\Delta t$ is a fixed time period.
 In this project, we have set $\Delta t = 8$ days, such that the weekday overlaps. The reason for using 
 a 1,5\% quantile is to avoid the effect of erradic readings of the $\text{CO}_2$ ppm values, 
 which may occur if the censors are not working properly. The reason we also minus the floor is such that the lowest
-observed ppm value is 420 troughout our series. 
+observed ppm value is 420 troughout our series.
+
+\subsection{Causal anchor baseline}
+The rolling quantile in \ref{eq:calibration} uses the minimum of the whole series, and the
+baseline jumps when a well-aired weekend enters or leaves the 8 day window. We therefore also use a
+causal baseline $b_t$, which only uses readings up to time $t$, such that a calibrated value is never revised.
+The calibrated series is
+\begin{equation} \label{eq:calibration_anchor}
+\tilde{C}_{t} = C_{t} - b_{t} + 420.
+\end{equation}
+Let $\bar{C}_t$ be the trailing 2 hour mean of $C_t$, such that a single noisy reading cannot move the baseline.
+The baseline starts at $b_0 = 420$ ppm and is updated by two rules:
+\begin{itemize}
+    \item \textbf{Rule A (down fast):} If $\bar{C}_t < b_t$, the baseline is too high, as the room
+    cannot be below fresh air. We then set $b_t = \bar{C}_t$ at once.
+    \item \textbf{Rule B (up slowly):} For each day we find the minimum of $\bar{C}_t$. If the slope over the
+    3 hours going into the minimum is below 3 ppm/h, the $\text{CO}_2$ has levelled off and the minimum is
+    an \textit{anchor}. When the day is over, the baseline ramps linearly towards the anchor over 7 days,
+    moving at most 30 ppm per anchor.
+\end{itemize}
+Finally, the data is resampled into 30 minute bins, and empty bins are forward-filled instead of
+interpolated, since interpolation would use future readings.
+
 \section{Descriptive Analytics}
 Given our data now has been calibrated as in \ref{eq:calibration}, we now preform some 
 descriptive analytics on the data in Room 15 to better understand the properties of our data. \\

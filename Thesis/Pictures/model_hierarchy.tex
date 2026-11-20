@@ -1,0 +1,27 @@
+% Model hierarchy diagram (fig:model_hierarchy).
+% Each arrow points from a base model to an expanded model that nests it (the
+% base is recovered by fixing the added parameters to zero); the edge label
+% names the added parameters. Needs the TikZ libraries positioning and
+% arrows.meta and the colours umlfill and umlborder (all in Setup/Settings.tex).
+% Source diagram: docs/diagrams/08_model_hierarchy_beta.puml.
+\begin{tikzpicture}[
+    font=\fontsize{9}{11}\selectfont,
+    model/.style={draw=umlborder, fill=umlfill, line width=0.6pt, rounded corners=4pt,
+        minimum width=2.8cm, minimum height=0.8cm},
+    nests/.style={umlborder, line width=0.7pt, -{Stealth[length=7pt]}},
+    lbl/.style={text=black, inner sep=2pt},
+    node distance=1.2cm and 1.0cm,
+]
+\node[model] (hmm) {HMM(1)};
+\node[model, below left=of hmm] (ar) {AR(1)-HMM(1)};
+\node[model, below right=of hmm] (beta) {HMM($\beta, 1$)};
+\node[model, below right=of ar] (arbeta) {AR(1)-HMM($\beta, 1$)};
+
+% Autoregressive emission first
+\draw[nests] (hmm) -- node[lbl, above left] {$+\,\phi$} (ar);
+\draw[nests] (ar) -- node[lbl, below left] {$+\,\beta$} (arbeta);
+
+% Covariate-driven transition first
+\draw[nests] (hmm) -- node[lbl, above right] {$+\,\beta$} (beta);
+\draw[nests] (beta) -- node[lbl, below right] {$+\,\phi$} (arbeta);
+\end{tikzpicture}
