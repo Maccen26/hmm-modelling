@@ -1,24 +1,23 @@
 # Fdb version 4
-["biber main"] 1795166019.2852 "main.bcf" "main.bbl" "main" 1795168838.21748 0
+["biber main"] 1795166019.2852 "main.bcf" "main.bbl" "main" 1795170107.712 0
   "bibliography.bib" 1794484130.41281 5358 c32eb5d0b21a08610d1edbd0cbd03019 ""
-  "main.bcf" 1795168837.14223 109317 3f614880965439d1c114d963ba6405ba "xelatex"
+  "main.bcf" 1795170106.59267 109317 3f614880965439d1c114d963ba6405ba "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1795168837.21807 "main.xdv" "main.pdf" "main" 1795168838.21988 0
-  "main.xdv" 1795168837.14299 660828 94e51e39f2c77dbd9b55e6e379aafad5 "xelatex"
+["xdvipdfmx"] 1795170106.68266 "main.xdv" "main.pdf" "main" 1795170107.71432 0
+  "main.xdv" 1795170106.59337 682444 d2ff8a61ae70330463dac62aa6806ca0 "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1795168834.94316 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1795168838.21756 0
+["xelatex"] 1795170104.65907 "main.tex" "main.xdv" "main" 1795170107.71206 0
   "../plots/room_015/calibrated_anchor/random_search/states_3/ar1_hmm_beta_1_train_residuals.png" 1795165707.64709 76865 e40a8348482b6a88bb41152da0c2949b ""
   "../plots/room_015/calibrated_anchor/random_search/states_4/ar1_hmm_beta_1_train_residuals.png" 1795165711.81694 78935 cd1596d7aee42c68ba323a2c6e396573 ""
   "../plots/room_015/summary/room_015_calibrated_acf_pacf.png" 1795007774.64904 63203 896f51258a78f42e9caecbf01503e688 ""
   "../plots/room_015/summary/room_015_diurnal_off_days.png" 1795007774.76087 145917 7dcd5dcbb2d171c5d6af91df28baff14 ""
   "../plots/room_015/summary/room_015_off_days.png" 1795007774.9424 149138 2383636683ecb2742c8705c0358d75d4 ""
   "../plots/room_015/summary/room_015_weekly_working_hours.png" 1795007774.87709 200643 cac5ede10fa4b20e0fc67a1292c0a071 ""
-  "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -307,17 +306,17 @@
   "Tables/data/raw_waiting_times.tex" 1794405731.08952 1154 f62fd960f51812fa5c70bbc0a3683958 ""
   "Tables/data/room_015_gaps.tex" 1794405731.09301 463 8984b6f9a846c995a63eb818900b2f8b ""
   "Tables/model_comparison_room_015_calibrated_anchor_random_search_val_h6.tex" 1795159256.21936 2350 bb5425f83420b87c97a9c68131092cf7 ""
-  "Tables/params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795168747.46133 516 493f1fb1eca1410f96d762db796b1b9d ""
-  "Tables/params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795168747.52641 1215 f45543d41b3a060c113693a87fd3055d ""
-  "Tables/params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795168747.45843 681 c433ab2ed4ca86a63be694e12e53c0ee ""
-  "Tables/params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795168747.45874 1153 254e3cc85c863dd9612a8a7dbb75671a ""
+  "Tables/params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795170102.18268 908 74028c15fa8ddcf63d5b3d2a90636485 ""
+  "Tables/params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795170102.22977 3017 4b1fe881f22b08615639c7e47d621b8a ""
+  "Tables/params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795170102.18097 1017 7ce256a9d690d3793d16ce11dc775467 ""
+  "Tables/params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex" 1795170102.18141 2441 424dfbc7a87030ca6d5bf3e907a4c1f1 ""
   "Tables/test_metrics_room_015_calibrated_anchor_random_search.tex" 1795166437.48391 995 43177e4bb21d550ca31a8e024e926650 ""
-  "main.aux" 1795168837.13511 25909 5430e18fffe002029a9f0c273899f28f "xelatex"
+  "main.aux" 1795170106.58571 26677 cd559f665e9619a2a35d73fb0f16ba0c "xelatex"
   "main.bbl" 1795166020.49652 28515 3ffafb090749f9b82ef682e7b5bd7c90 "biber main"
-  "main.out" 1795168837.13993 7953 c0ab42d47e8d8e60f6b10bad71a2d28e "xelatex"
-  "main.run.xml" 1795168837.14284 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
+  "main.out" 1795170106.59042 7953 c0ab42d47e8d8e60f6b10bad71a2d28e "xelatex"
+  "main.run.xml" 1795170106.59323 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
   "main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
-  "main.toc" 1795168837.14295 3867 aa6db1488b669a172597eeb29c8bff0c "xelatex"
+  "main.toc" 1795170106.59333 3867 aa6db1488b669a172597eeb29c8bff0c "xelatex"
   (generated)
   "main.aux"
   "main.bcf"
