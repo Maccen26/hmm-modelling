@@ -8,7 +8,7 @@ AR(1)-HMM(1) against HMM(1), and AR(1)-HMM(b,1) against AR(1)-HMM(1) (beta = 0) 
 Writes `Thesis/Tables/<name>.tex`.
 
     uv run python -m drivers.analysis.model_comparison_table \
-        results/room_015/calibrated_anchor/random_search --states 3 4 5 6 --horizon 6 [--split val|test]
+        results/room_015/calibrated_anchor --states 3 4 5 6 --horizon 6 [--split val|test]
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -29,7 +29,7 @@ MODELS = {
     "hmm_1": "HMM",
     "hmm_beta_1": "HMM($\\beta$)",
     "ar1_hmm_1": "AR(1)-HMM",
-    "ar1_hmm_beta_1": "AR(1)-Covariates HMM",
+    "ar1_hmm_beta_1": "AR(1)-HMM($\\beta$)",
 }
 # full slug -> the nested models it is tested against, in the order shown in its LRT / p-value cells
 NESTED = {
@@ -126,7 +126,7 @@ def to_latex(df: pd.DataFrame, lrt: pd.DataFrame, horizon: int, split: str, name
 
 
 def default_name(results_dir: str, split: str, horizon: int) -> str:
-    """e.g. `model_comparison_room_015_calibrated_anchor_random_search_val_h6`."""
+    """e.g. `model_comparison_room_015_calibrated_anchor_val_h6`."""
     parts = os.path.normpath(results_dir).split(os.sep)
     parts = parts[parts.index("results") + 1:] if "results" in parts else parts[-3:]
     return "_".join(["model_comparison", *parts, split, f"h{horizon}"])

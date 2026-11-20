@@ -1,11 +1,11 @@
 """LaTeX table of the forecast RMSE / MAPE of every model for every number of states.
 
 Reads the per-K metrics CSVs under one results folder (`states_{K}/val_metrics.csv`, or
-`predictive_metrics.csv` for the plain fits; `test_metrics.csv` with `--split test`) and writes one
+`test_metrics.csv` with `--split test`) and writes one
 row per K and one `RMSE / MAPE` column per model to `Thesis/Tables/<name>.tex`.
 
     uv run python -m drivers.analysis.predictive_metrics_across_states_table \
-        results/room_015/calibrated_anchor/random_search --horizon 1 [--split val|test] [--name ...]
+        results/room_015/calibrated_anchor --horizon 1 [--split val|test] [--name ...]
 """
 import argparse
 import os
@@ -13,10 +13,10 @@ import re
 
 import pandas as pd
 
-from drivers.models.run import FIT_ORDER
+from drivers.models.random_search import CHAIN
 from drivers.utils import save_thesis_table
 
-SPLIT_FILES = {"val": ("val_metrics.csv", "predictive_metrics.csv"), "test": ("test_metrics.csv",)}
+SPLIT_FILES = {"val": "val_metrics.csv", "test": "test_metrics.csv"}
 SPLIT_NAMES = {"val": "validation", "test": "test"}
 
 
@@ -31,8 +31,8 @@ def load_metrics(results_dir: str, split: str) -> pd.DataFrame:
     """All metrics rows of the split, with a `K` column."""
     frames = []
     for k, path in states_dirs(results_dir).items():
-        csv = next((os.path.join(path, f) for f in SPLIT_FILES[split] if os.path.exists(os.path.join(path, f))), None)
-        if csv is not None:
+        csv = os.path.join(path, SPLIT_FILES[split])
+        if os.path.exists(csv):
             frames.append(pd.read_csv(csv).assign(K=k))
     if not frames:
         raise SystemExit(f"No {split} metrics found under {results_dir}")
@@ -40,8 +40,8 @@ def load_metrics(results_dir: str, split: str) -> pd.DataFrame:
 
 
 def model_order(df: pd.DataFrame) -> list[str]:
-    """Model labels in fit order; slugs outside FIT_ORDER go last."""
-    rank = {slug: i for i, slug in enumerate(FIT_ORDER)}
+    """Model labels in fit order; slugs outside CHAIN go last."""
+    rank = {slug: i for i, (slug, *_) in enumerate(CHAIN)}
     slugs = sorted(df["slug"].unique(), key=lambda s: (rank.get(s, len(rank)), s))
     labels = df.drop_duplicates("slug").set_index("slug")["model"]
     return [labels[s] for s in slugs]
@@ -58,7 +58,7 @@ def metrics_table(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
 
 
 def default_name(results_dir: str, split: str, horizon: int) -> str:
-    """e.g. `predictive_metrics_room_015_calibrated_anchor_random_search_val_h1`."""
+    """e.g. `predictive_metrics_room_015_calibrated_anchor_val_h1`."""
     parts = os.path.normpath(results_dir).split(os.sep)
     parts = parts[parts.index("results") + 1:] if "results" in parts else parts[-3:]
     return "_".join(["predictive_metrics", *parts, split, f"h{horizon}"])

@@ -13,7 +13,7 @@ that load on them are flagged.
 
 Writes `{model}_standard_errors.csv` next to the fit.
 
-    uv run python -m drivers.analysis.standard_errors results/room_015/calibrated_anchor/random_search -K 4
+    uv run python -m drivers.analysis.standard_errors results/room_015/calibrated_anchor -K 4
 """
 import jax
 jax.config.update("jax_enable_x64", True)

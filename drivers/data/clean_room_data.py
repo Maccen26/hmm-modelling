@@ -1,8 +1,6 @@
-"""Clean a DTU room's raw CO2 series into train/val/test CSVs under `data/<room>/<tag>/`.
+"""Shared helpers for cleaning a DTU room's raw CO2 series: load, de-duplicate, split and save.
 
-Port of the cleaning in `summary_statistics.ipynb`: drop duplicate / NaN readings, remove the
-sensor's drifting zero with a trailing rolling low quantile on the raw readings, then resample to
-30 min means and linearly interpolate the gaps. Only CO2 is handled -- no covariates.
+The calibration itself lives in `clean_room_data_anchor`, which writes the `calibrated_anchor` tag.
 """
 
 import os
@@ -10,13 +8,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from drivers.data.clean_dtu_data import room_slug, save_csv, split_three_way
 from drivers.utils import load_base_data_path
 
 OUTSIDE_CO2 = 420.0
-WINDOW = "8D"
-QUANTILE = 0.015
 BIN = "30min"
+
+
+def room_slug(room_name: str) -> str:
+    """"Room 009" -> "room_009": the `data_name` the arrays are saved under."""
+    return room_name.strip().lower().replace(" ", "_")
 
 
 # --- Load and clean -----------------------------------------------------
@@ -42,31 +42,63 @@ def load_co2(room_name: str) -> pd.Series:
     return clean_df(df).set_index("datetime")["co2"]
 
 
-# --- Calibrate and bin --------------------------------------------------
+# --- Occupant feedback --------------------------------------------------
 
-def rolling_floor(co2: pd.Series) -> pd.Series:
-    """Trailing `WINDOW` low quantile: what the sensor reads with the room empty."""
-    return co2.rolling(WINDOW).quantile(QUANTILE)
-
-
-def calibrate(co2: pd.Series, floor: pd.Series) -> tuple[pd.Series, float]:
-    """Subtract the floor and shift so the lowest reading sits at `OUTSIDE_CO2`."""
-    excess = co2 - floor
-    offset = OUTSIDE_CO2 - excess.min()
-    return excess + offset, offset
+def feedback_path(room_name: str) -> Path:
+    return Path(load_base_data_path()) / "raw" / "dtu" / "feedback" / f"{room_name}.csv"
 
 
-def bin_and_fill(series: pd.Series) -> pd.Series:
-    """Resample to `BIN` means and linearly interpolate the empty bins."""
-    return series.resample(BIN).mean().interpolate(method="linear")
+def add_feedback(seg_df: pd.DataFrame, room_name: str, bin: str = BIN) -> pd.DataFrame:
+    """Add a binary `feedback` column: 1 if any feedback was submitted within that bin, else 0.
+
+    Feedback timestamps are floored onto the same left-labelled grid `resample` produces, so a
+    response at 13:13 lands in the 13:00 bin. Rooms without a feedback file get all zeros.
+    """
+    seg_df = seg_df.copy()
+    seg_df["feedback"] = 0
+
+    path = feedback_path(room_name)
+    if not path.exists():
+        print(f"  {room_name}: no feedback file, feedback column is all zeros")
+        return seg_df
+
+    fb_bins = pd.to_datetime(pd.read_csv(path)["datetime"]).dt.floor(bin).unique()
+    seg_df.loc[seg_df.index.isin(fb_bins), "feedback"] = 1
+    print(f"  feedback: {int(seg_df['feedback'].sum())} of {len(fb_bins)} feedback bins fall in the segment")
+    return seg_df
 
 
 # --- Split and save -----------------------------------------------------
+
+def split_three_way(n: int, val_size: float, test_size: float) -> tuple[int, int]:
+    """Chronological boundaries (train_idx, val_idx): train -> val -> test."""
+    if not (0 < val_size + test_size < 1):
+        raise ValueError(
+            f"val_size + test_size must lie in (0, 1), got {val_size} + {test_size} "
+            f"= {val_size + test_size}"
+        )
+    if val_size < 0 or test_size < 0:
+        raise ValueError(f"val_size and test_size must be non-negative, got {val_size}, {test_size}")
+
+    train_idx = int(n * (1 - val_size - test_size))
+    val_idx = int(n * (1 - test_size))
+    return train_idx, val_idx
+
 
 def split_frames(df: pd.DataFrame, val_size: float, test_size: float) -> dict[str, pd.DataFrame]:
     """Chronological train -> val -> test split."""
     train_idx, val_idx = split_three_way(len(df), val_size=val_size, test_size=test_size)
     return {"train": df.iloc[:train_idx], "val": df.iloc[train_idx:val_idx], "test": df.iloc[val_idx:]}
+
+
+def save_csv(df: pd.DataFrame, data_name: str, tag: str, arr_name: str, arr_type: str) -> None:
+    if len(df) == 0:
+        print(f"Warning: {arr_name}_{arr_type} is empty. Not saving.")
+        return
+
+    save_path = os.path.join(load_base_data_path(), f"{data_name}/{tag}/{arr_name}_{arr_type}.csv")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    df.to_csv(save_path, index=False)
 
 
 def save_split(frames: dict[str, pd.DataFrame], data_name: str, tag: str, arr_name: str) -> None:
@@ -92,50 +124,5 @@ def build_metadata(room_name: str, tag: str, y: dict[str, pd.DataFrame], offset:
         "n_bins": sum(len(part) for part in y.values()),
         **{f"n_{key}": len(part) for key, part in y.items()},
         "outside_ppm": OUTSIDE_CO2,
-        "window": WINDOW,
-        "quantile": QUANTILE,
         "offset": offset,
     }
-
-
-# --- Driver -------------------------------------------------------------
-
-def clean_room_data(
-    room_name: str, tag: str = "calibrated", val_size: float = 0.15, test_size: float = 0.20,
-) -> None:
-    """Clean one room and write y/floor train/val/test CSVs plus metadata to `{DATA_PATH}/<room>/<tag>/`."""
-    co2 = load_co2(room_name)
-    floor = rolling_floor(co2)
-    co2_cal, offset = calibrate(co2, floor)
-
-    y = bin_and_fill(co2_cal).rename("co2").reset_index()
-    floor_binned = bin_and_fill(floor).rename("floor").reset_index()
-
-    data_name = room_slug(room_name)
-    y_split = split_frames(y, val_size, test_size)
-    save_split(y_split, data_name, tag, "y")
-    save_split(split_frames(floor_binned, val_size, test_size), data_name, tag, "floor")
-    save_metadata(build_metadata(room_name, tag, y_split, offset), data_name, tag)
-    print(f"{room_name}: {len(y)} bins, split {[len(p) for p in y_split.values()]}")
-
-
-if __name__ == "__main__":
-
-    ROOM_LIST = [
-        "Room 001",
-        "Room 003",
-        "Room 004",
-        "Room 005",
-        "Room 007",
-        "Room 008",
-        "Room 009",
-        "Room 012",
-        "Room 013",
-        "Room 014",
-        "Room 015",
-        "Room 016",
-        "Room 019",
-    ]
-
-    for room_name in ROOM_LIST:
-        clean_room_data(room_name)

@@ -1,14 +1,14 @@
 """Random-restart search over the model chain HMM(1) -> HMM(b,1) -> AR(1)-HMM(1) -> AR(1)-HMM(b,1).
 
 Every model gets N_INITS random starts plus one start seeded from the models already chosen earlier
-in the chain (the same seeding as the per-model drivers; hmm_1's seed is the quantile start). Each
+in the chain (hmm_1's seed is the quantile start; see `seeded_params`). Each
 candidate is fitted, rejected if it has a collapsed state, and scored on the validation split. The
 admissible candidate with the lowest mean validation RMSE over HORIZONS is kept and seeds the next
 model. phi is not capped.
 
-    uv run python -m drivers.models.random_search --room 15 --states 4 --tag calibrated_anchor
+    uv run python -m drivers.models.random_search --room 15 --states 4 [--tag calibrated_anchor] [--inits 10]
 
-Writes to results/{room}/{tag}/random_search/states_{K}/: {slug}.pkl for each chosen model,
+Writes to results/{room}/{tag}/states_{K}/: {slug}.pkl for each chosen model,
 candidates.csv (every start: loss, validation metrics, parameters, rejection reason), and
 val_metrics.csv / test_metrics.csv for the chosen models.
 """
@@ -22,8 +22,7 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
-from drivers.models.evaluate import _columns, metrics_table, rolling_predictions
-from drivers.models.evaluate_test import history
+from drivers.models.evaluate import _columns, history, metrics_table, rolling_predictions
 from drivers.models.utils import (COVARIATE_COLS, HORIZONS, OBS_COLS, RESULTS_DIR, Config, Data, Loss,
                                   add_run_args, ar1_emission_from, fit_and_report, floored_transition_matrix,
                                   load_data, negative_likelihood, room_name, seed_emission, seed_transition)
@@ -69,7 +68,7 @@ def random_params(cfg: Config, data: Data, dynamic: bool, autoregressive: bool, 
 
 
 def seeded_params(slug: str, cfg: Config, data: Data, chosen: dict[str, Params]) -> Params:
-    """The per-model drivers' start, built from the models chosen earlier in this search."""
+    """The seeded start, built from the models chosen earlier in this search."""
     if slug == "hmm_1":
         return Params(emission=seed_emission(cfg, data.ys), transition=seed_transition(cfg.states))
     if slug == "hmm_beta_1":
@@ -118,7 +117,7 @@ def score(table: pd.DataFrame) -> float:
 
 
 def run_dir(cfg: Config) -> str:
-    return os.path.join(RESULTS_DIR, cfg.room, cfg.tag, "random_search", f"states_{cfg.states}")
+    return cfg.run_dir(RESULTS_DIR)
 
 
 # --- Search -------------------------------------------------------------------------

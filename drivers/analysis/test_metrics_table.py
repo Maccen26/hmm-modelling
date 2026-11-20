@@ -3,7 +3,7 @@
 Reads `states_{K}/test_metrics.csv` under one results folder and writes one row per (model, K) and one
 `RMSE / MAPE` column per horizon to `Thesis/Tables/<name>.tex`. Rows are given as `slug:K`.
 
-    uv run python -m drivers.analysis.test_metrics_table results/room_015/calibrated_anchor/random_search \
+    uv run python -m drivers.analysis.test_metrics_table results/room_015/calibrated_anchor \
         --rows hmm_1:4 hmm_beta_1:4 ar1_hmm_1:4 ar1_hmm_beta_1:3 ar1_hmm_beta_1:4
 """
 import argparse

@@ -1,4 +1,4 @@
-"""Out-of-sample evaluation of a fitted model on the validation split."""
+"""Out-of-sample forecasts, metrics and diagnostic plots of a fitted model."""
 import os
 
 import jax.numpy as jnp
@@ -10,12 +10,10 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf
 
-from drivers.models.utils import HORIZONS, PLOT_HORIZONS, PLOTS_DIR, RESULTS_DIR, Config, Data
+from drivers.models.utils import HORIZONS, Config, Data
 from drivers.utils import mape
 from src.api.v5 import Params
 from src.api.v5.analysis import Diagnostics, Predictor
-
-METRICS_KEY = ["slug", "horizon", "obs_col"]
 
 
 def _covariates(params: Params, data: Data) -> jnp.ndarray | None:
@@ -34,6 +32,13 @@ def rolling_predictions(params: Params, train: Data, val: Data, horizons=HORIZON
     return {k: _columns(np.asarray(Predictor.rolling(params, train.ys, val.ys, xs=xs, xs_test=xs_val,
                                                      horizon=k, initial_dist=train.init_dist).y_pred))
             for k in horizons}
+
+
+def history(train: Data, val: Data) -> Data:
+    """Train followed by validation: everything the model has seen before the test split starts."""
+    xs = None if train.xs is None or val.xs is None else jnp.concatenate([train.xs, val.xs])
+    return Data(ys=jnp.concatenate([train.ys, val.ys]), xs=xs, init_dist=train.init_dist,
+                datetime=train.datetime.append(val.datetime))
 
 
 def pseudo_residuals(name: str, params: Params, train: Data, val: Data) -> tuple[np.ndarray, np.ndarray]:
@@ -55,19 +60,6 @@ def metrics_table(name: str, slug: str, cfg: Config, y_val: np.ndarray, preds: d
                          "R2": 1 - ss_res / ss_tot, "RMSE": float(np.sqrt(np.mean((y - p) ** 2))),
                          "MAPE": mape(y, p), "n_val": len(y)})
     return pd.DataFrame(rows)
-
-
-def save_metrics(table: pd.DataFrame, cfg: Config, filename: str = "predictive_metrics.csv") -> str:
-    """Upsert into one CSV shared by all models of this room/tag/states."""
-    path = os.path.join(cfg.run_dir(RESULTS_DIR), filename)
-    if os.path.exists(path):
-        old = pd.read_csv(path)
-        keys = table[METRICS_KEY].astype(str).agg("|".join, axis=1)
-        old = old[~old[METRICS_KEY].astype(str).agg("|".join, axis=1).isin(keys)]
-        table = pd.concat([old, table], ignore_index=True)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    table.sort_values(METRICS_KEY).to_csv(path, index=False)
-    return path
 
 
 def plot_diagnostics(name: str, y: np.ndarray, preds: dict[int, np.ndarray], res: np.ndarray, path: str,
@@ -137,29 +129,3 @@ def plot_first_week(name: str, col: str, dt: pd.DatetimeIndex, y: np.ndarray, pr
 def run_label(name: str, cfg: Config) -> str:
     """Plot-title prefix naming the model, room, number of states and loss."""
     return f"{name} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}"
-
-
-def evaluate(name: str, slug: str, params: Params, cfg: Config, train: Data, val: Data,
-             horizons=HORIZONS) -> pd.DataFrame:
-    """Rolling k-step forecasts on the validation set: save R2/RMSE/MAPE to CSV and the diagnostic plots."""
-    y_val = _columns(np.asarray(val.ys))
-    preds = rolling_predictions(params, train, val, horizons)
-    res_train, res = pseudo_residuals(name, params, train, val)
-
-    table = metrics_table(name, slug, cfg, y_val, preds)
-    print(table.to_string(index=False))
-    print(f"Saved metrics to {save_metrics(table, cfg)}")
-
-    plot_dir = cfg.run_dir(PLOTS_DIR)
-    label = run_label(name, cfg)
-    shown = {k: p for k, p in preds.items() if k in PLOT_HORIZONS}
-    for d, col in enumerate(cfg.obs_cols):
-        file = f"{slug}.png" if not cfg.multivariate else f"{slug}_{col}.png"
-        plot_diagnostics(f"{label} [{col}]", y_val[:, d], {k: p[:, d] for k, p in shown.items()},
-                         res[:, d], os.path.join(plot_dir, file))
-        plot_residual_diagnostics(f"{label} [{col}]", res_train[:, d], "training",
-                                  os.path.join(plot_dir, file.replace(".png", "_train_residuals.png")))
-        plot_first_week(label, col, val.datetime, y_val[:, d], {k: p[:, d] for k, p in shown.items()},
-                        table, os.path.join(plot_dir, file.replace(".png", "_first_week.png")))
-    print(f"Saved plots to {plot_dir}")
-    return table

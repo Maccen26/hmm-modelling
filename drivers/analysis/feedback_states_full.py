@@ -2,9 +2,9 @@
 
 Forward filtering over the whole series, then BackwardSampler draws state paths; for each path the feedback
 events are counted per state. The calibrated tags carry no feedback column, so feedback is re-binned from the
-raw feedback file onto the series' timestamps (drivers.data.clean_dtu_data.add_feedback).
+raw feedback file onto the series' timestamps (drivers.data.clean_room_data.add_feedback).
 One plot for the train split and one for the whole series (the train plot slices the whole-series paths)
-in plots/{room}/{tag}/random_search/states_{K}/, table in results/{room}/{tag}/random_search/states_{K}/.
+in plots/{room}/{tag}/states_{K}/, table in results/{room}/{tag}/states_{K}/.
 
     uv run python -m drivers.analysis.feedback_states_full ar1_hmm_beta_1 --room 15 -K 3 --tag calibrated_anchor
 """
@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from drivers.analysis.feedback_states import plot, state_counts
-from drivers.data.clean_dtu_data import add_feedback
+from drivers.data.clean_room_data import add_feedback
 from drivers.models.evaluate import _covariates
 from drivers.models.random_search import emission_summary, run_dir
 from drivers.models.utils import PLOTS_DIR, Config, load_data, room_name
@@ -82,8 +82,7 @@ if __name__ == "__main__":
         print(table.drop(columns="split").round(3).to_string())
         tables.append(table)
 
-        path = os.path.join(PLOTS_DIR, cfg.room, cfg.tag, "random_search", f"states_{cfg.states}",
-                            f"{args.model}_feedback_states_{split}.png")
+        path = os.path.join(cfg.run_dir(PLOTS_DIR), f"{args.model}_feedback_states_{split}.png")
         plot(f"{args.model} — {cfg.room}, K={cfg.states}, loss={cfg.loss.slug}\n"
              f"States of the {n} feedback events, {where}", per_path, time_share, n, path)
         print(f"Saved {path}")

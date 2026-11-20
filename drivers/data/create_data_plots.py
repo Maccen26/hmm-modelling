@@ -1,10 +1,11 @@
 """Data plots of one DTU room, ported from `summary_statistics.ipynb`, saved to `plots/<room>/summary/`.
 
-Figures: missing bins and their linear interpolation, the trailing floor vs low quantile and the
-calibration they give, log CO2, ACF / PACF, diurnal and weekly profiles (all days, working vs
+Figures: missing bins and their linear interpolation, the raw readings against the causal anchor
+baseline, and, on the anchor-calibrated series (`calibrated_anchor` tag, written by
+`clean_room_data_anchor`): log CO2, ACF / PACF, diurnal and weekly profiles (all days, working vs
 off days, working hours), the series with off days marked, and the train / val / test split.
 
-    uv run python -m drivers.data.create_data_plots --room 15
+    uv run python -m drivers.data.create_data_plots --room 15 [--tag calibrated_anchor]
 """
 
 import argparse
@@ -15,13 +16,10 @@ import numpy as np
 import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from drivers.data.clean_dtu_data import room_slug
-from drivers.data.clean_room_data import (
-    OUTSIDE_CO2, QUANTILE, WINDOW, bin_and_fill, calibrate, clean_df, load_co2,
-)
+from drivers.data.clean_room_data import clean_df, load_co2, room_slug
 from drivers.data.create_summary_tables import STEP, gap_table, load_raw, raw_dir
-from drivers.models.utils import PLOTS_DIR
-from drivers.utils import load_y_df
+from drivers.models.utils import PLOTS_DIR, TAG
+from drivers.utils import load_base_data_path, load_y_df
 
 ACF_LAGS = 48 * 7  # seven days of 30 min bins
 PACF_LAGS = 5
@@ -31,6 +29,16 @@ SPLITS = [("train", "Train", "tab:blue"), ("val", "Validation", "tab:orange"), (
 
 
 # --- Load ---------------------------------------------------------------
+
+def load_split_series(data_name: str, tag: str, arr_name: str) -> pd.Series:
+    """The saved train, val and test `{arr_name}` CSVs joined into one series indexed by datetime."""
+    parts = []
+    for split, _, _ in SPLITS:
+        df = pd.read_csv(os.path.join(load_base_data_path(), data_name, tag, f"{arr_name}_{split}.csv"),
+                         parse_dates=["datetime"])
+        parts.append(df.set_index("datetime").iloc[:, 0])
+    return pd.concat(parts)
+
 
 def load_holidays(year: int) -> pd.DatetimeIndex:
     df = pd.read_excel(raw_dir() / f"holidays_{year}.xlsx", skiprows=1)
@@ -83,23 +91,12 @@ def plot_interpolation(binned, room_name):
     return fig
 
 
-def plot_floor_vs_quantile(floor, low_q, room_name):
+def plot_anchor_baseline(co2, floor, room_name):
+    """Raw readings with the causal anchor baseline that `clean_room_data_anchor` subtracts."""
     fig, ax = plt.subplots(figsize=(12, 4))
-    ax.plot(floor, label=f"Rolling {WINDOW} floor (min)", lw=1)
-    ax.plot(low_q, label=f"Rolling {WINDOW} {QUANTILE:.1%} quantile", lw=1)
-    ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]")
-    ax.legend()
-    return fig
-
-
-def plot_calibrated_floors(co2, floor, low_q, room_name):
-    """Trailing minimum of the series calibrated with each floor."""
-    co2_floor = co2 - floor + OUTSIDE_CO2
-    co2_quantile, _ = calibrate(co2, low_q)
-    fig, ax = plt.subplots(figsize=(12, 4))
-    ax.plot(co2_floor.rolling(WINDOW).min(), label=f"Rolling {WINDOW} co2 floor (min)", lw=1)
-    ax.plot(co2_quantile.rolling(WINDOW).min(), label=f"Rolling {WINDOW} co2 quantile (min)", lw=1)
-    ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]")
+    ax.plot(co2, lw=0.6, alpha=0.7, label="Raw CO$_2$")
+    ax.plot(floor, lw=1.5, color="tab:red", label="Anchor baseline")
+    ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]", xlim=(floor.index[0], floor.index[-1]))
     ax.legend()
     return fig
 
@@ -241,29 +238,26 @@ def save(fig, save_dir: str, name: str) -> str:
     return path
 
 
-def create_data_plots(room_name: str, tag: str = "calibrated") -> list[str]:
+def create_data_plots(room_name: str, tag: str = TAG) -> list[str]:
     raw_clean = clean_df(load_raw(room_name))
     binned = raw_clean.set_index("datetime")["co2"].resample(STEP).mean()
     gaps, _ = gap_table(raw_clean, top=None)
 
-    co2 = load_co2(room_name)
-    rolling = co2.rolling(WINDOW)
-    floor, low_q = rolling.min(), rolling.quantile(QUANTILE)
-    co2_bin = bin_and_fill(calibrate(co2, low_q)[0])
+    data_name = room_slug(room_name)
+    co2_bin = load_split_series(data_name, tag, "y")
+    floor = load_split_series(data_name, tag, "floor")
 
     holidays = all_holidays()
     off_day = off_day_mask(co2_bin.index, holidays)
     print(f"  off days: {co2_bin.index.normalize()[off_day].nunique()} of {co2_bin.index.normalize().nunique()} days")
     normal = normal_weeks(co2_bin, holidays)
 
-    data_name = room_slug(room_name)
     save_dir = os.path.join(PLOTS_DIR, data_name, "summary")
     os.makedirs(save_dir, exist_ok=True)
     figures = {
         "raw_gaps": plot_gaps(binned, gaps, room_name),
         "raw_interpolation": plot_interpolation(binned, room_name),
-        "floor_vs_quantile": plot_floor_vs_quantile(floor, low_q, room_name),
-        "calibrated_floor_vs_quantile": plot_calibrated_floors(co2, floor, low_q, room_name),
+        "anchor_baseline": plot_anchor_baseline(load_co2(room_name), floor, room_name),
         "calibrated_log": plot_log(co2_bin, room_name),
         "calibrated_acf_pacf": plot_acf_pacf(co2_bin, room_name),
         "diurnal": plot_diurnal(co2_bin),
@@ -279,7 +273,7 @@ def create_data_plots(room_name: str, tag: str = "calibrated") -> list[str]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--room", type=int, default=15, help="room number, e.g. 15 -> 'Room 015'")
-    parser.add_argument("--tag", default="calibrated", help="data tag of the saved train/val/test split")
+    parser.add_argument("--tag", default=TAG, help=f"data tag of the saved train/val/test split (default {TAG})")
     args = parser.parse_args()
 
     for path in create_data_plots(f"Room {args.room:03d}", tag=args.tag):

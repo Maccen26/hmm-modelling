@@ -1,7 +1,7 @@
 """Print the natural and working (unconstrained, optimised) parameters of a saved fit.
 
     uv run python -m drivers.analysis.show_params ar1_hmm_beta_1 --room 9 -K 6
-    uv run python -m drivers.analysis.show_params hmm_1 --room 9 -K 4 --tag 30min
+    uv run python -m drivers.analysis.show_params hmm_1 --room 15 -K 4 --tag calibrated_anchor
 """
 import jax
 jax.config.update("jax_enable_x64", True)

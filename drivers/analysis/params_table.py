@@ -12,7 +12,7 @@ Standard errors are read from `{model}_standard_errors.csv` next to the fit (wri
 `drivers.analysis.standard_errors`) and shown as 95% Wald intervals estimate +- 1.96 SE, clipped to the
 parameter's range (sigma > 0, -1 < phi < 1, 0 <= gamma <= 1); without that file they are left out.
 
-    uv run python -m drivers.analysis.params_table results/room_015/calibrated_anchor/random_search -K 4
+    uv run python -m drivers.analysis.params_table results/room_015/calibrated_anchor -K 4
 """
 import jax
 jax.config.update("jax_enable_x64", True)
@@ -119,7 +119,7 @@ def transition_latex(blocks: dict[str, tuple[np.ndarray, np.ndarray, str]], capt
 
 
 def default_name(results_dir: str, model: str, states: int) -> str:
-    """e.g. `room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4`."""
+    """e.g. `room_015_calibrated_anchor_ar1_hmm_beta_1_K4`."""
     parts = os.path.normpath(results_dir).split(os.sep)
     parts = parts[parts.index("results") + 1:] if "results" in parts else parts[-3:]
     return "_".join([*parts, model, f"K{states}"])

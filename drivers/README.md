@@ -4,11 +4,10 @@ Runnable entry points on top of `src/api/v5`. Run everything from the repo root 
 
 | Folder | What it does | Writes to |
 |---|---|---|
-| `data/` | Cleans raw sensor exports into train/val/test CSVs (`clean_303b_data`, `clean_dtu_data`) and downloads outdoor humidity (`fetch_humidity`) | `{DATA_PATH}/room_XXX/30min/` |
-| `models/` | One driver per model variant, plus `run` to fit them all in seed order and `evaluate` for validation metrics and plots. See `models/README.md` | `results/`, `plots/` |
-| `analysis/` | Post-hoc tools for saved fits: `replot`, `decode_states`, `show_params`, `state_confusion`, `feedback_states`, `transition_plots` | `plots/` |
-| `legacy/` | The old b1/v4 workflow. Kept for reference; don't extend it | |
+| `data/` | Cleans a room's raw CO2 with the causal anchor baseline (`clean_room_data_anchor`), and makes the Data-chapter plots and tables (`create_data_plots`, `create_summary_tables`). See `data/README.md` | `{DATA_PATH}/room_XXX/calibrated_anchor/`, `plots/room_XXX/summary/`, `Thesis/Tables/data/` |
+| `models/` | `random_search` fits the four-model chain (seeded start + random starts, best admissible start kept). See `models/README.md` | `results/`, `plots/` |
+| `analysis/` | Thesis tables, diagnostic plots, state analysis and the sample-size simulation for saved fits. See `analysis/README.md` | `Thesis/Tables/`, `plots/`, `results/` |
 
-`utils.py` holds the shared IO and covariate helpers (`load_y_df`, `build_covariates`, `save_model`/`load_model`, metrics).
+`utils.py` holds the shared IO, covariate and LaTeX-table helpers (`load_y_df`, `build_covariates`, `save_model`/`load_model`, `save_thesis_table`).
 
-Typical order: `data` → `models.run` → `analysis.*`. `results/` and `plots/` live at the repo root.
+Typical order: `data.clean_room_data_anchor` → `models.random_search` → `analysis.*`. `results/` and `plots/` live at the repo root, laid out as `{room}/{tag}/states_{K}/`; the tag defaults to `calibrated_anchor` (`TAG` in `models/utils.py`).

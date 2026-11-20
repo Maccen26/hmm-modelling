@@ -1,6 +1,5 @@
-"""Shared helpers for the per-model fitting drivers in drivers/models/."""
+"""Shared config, data loading, likelihood and seeding helpers for the drivers."""
 import argparse
-import importlib
 import os
 import re
 from dataclasses import dataclass, field, replace
@@ -11,7 +10,7 @@ import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 
-from drivers.utils import build_covariates, load_model, load_y_df, save_model
+from drivers.utils import build_covariates, load_y_df
 from src.api.v5 import (
     AutoregressiveGaussEmission,
     ForwardAlgorithm,
@@ -29,7 +28,7 @@ RESULTS_DIR = os.path.join(ROOT, "results")
 PLOTS_DIR = os.path.join(ROOT, "plots")
 HORIZONS = (1, 2, 4, 6, 8)  # rolling-forecast horizons (steps ahead) for the validation set
 PLOT_HORIZONS = (6, 8)  # subset of HORIZONS drawn in the residual and first-week plots
-TAG = "30min"               # default data tag: the binning folder of the room CSVs, and a level of the results/plots tree
+TAG = "calibrated_anchor"   # default data tag: the folder of the room CSVs, and a level of the results/plots tree
 
 OBS_COLS = ("co2",)         # ≥2 columns -> multivariate emission
 COVARIATE_COLS = ("off_day", "working_hours")  # β models only; beats the tod/week harmonics out of sample (covariates_fit.ipynb)
@@ -101,17 +100,12 @@ def room_name(room: int) -> str:
 
 
 def add_run_args(parser: argparse.ArgumentParser, default_states: int | None = None) -> argparse.ArgumentParser:
-    """--room, --states and --tag, shared by the single-driver and run-all CLIs."""
+    """--room, --states and --tag, shared by the driver CLIs."""
     parser.add_argument("--room", "-r", type=int, required=True, help="room number, e.g. 9 for room_009")
     parser.add_argument("--states", "-K", type=int, default=default_states, required=default_states is None,
                         help="number of hidden states" + (f" (default {default_states})" if default_states else ""))
     parser.add_argument("--tag", default=TAG, help=f"data tag, i.e. the binning folder of the room data (default {TAG})")
     return parser
-
-
-def parse_args(default_states: int) -> argparse.Namespace:
-    """Room, number of states and data tag from the command line (`--room 9 --states K [--tag 30min]`)."""
-    return add_run_args(argparse.ArgumentParser(), default_states).parse_args()
 
 
 # --- Data ---------------------------------------------------------------------------
@@ -211,7 +205,7 @@ def ar1_emission_from(emission, cfg: Config, phi0: float = 0.05):
     return AutoregressiveGaussEmission.from_params(mu=mu, sigma=sigma, phi=phi)
 
 
-# --- Fitting / saving ---------------------------------------------------------------
+# --- Fitting ------------------------------------------------------------------------
 
 def fit_and_report(name: str, params: Params, data: tuple, cfg: Config) -> SolverResult:
     print(f"--- Fitting {name} ({cfg.room}, obs={list(cfg.obs_cols)}, K={cfg.states}, loss={cfg.loss.slug})")
@@ -226,41 +220,6 @@ def fit_and_report(name: str, params: Params, data: tuple, cfg: Config) -> Solve
     return result
 
 
-def result_path(cfg: Config, slug: str) -> str:
-    return os.path.join(cfg.run_dir(RESULTS_DIR), f"{slug}.pkl")
-
-
-def driver_loss(slug: str) -> Loss:
-    """The loss the driver `drivers.models.{slug}` fits with."""
-    return importlib.import_module(f"drivers.models.{slug}").LOSS
-
-
 def fit_path(room: str, states: int, slug: str, tag: str = TAG) -> str:
     """Path of a saved fit."""
     return os.path.join(RESULTS_DIR, room, tag, f"states_{states}", f"{slug}.pkl")
-
-
-def save_result(result: SolverResult, cfg: Config, slug: str, data: Data) -> str:
-    """Pickle the fit together with the config and the data it was fitted on."""
-    path = result_path(cfg, slug)
-    save_model({"result": result, "config": cfg, "covariate_cols": list(cfg.covariate_cols), "data": data}, path)
-    print(f"Saved {slug} to {path}")
-    return path
-
-
-def load_fit(cfg: Config, slug: str, covariates: bool = False) -> Params:
-    """Params of a previously fitted seed model for the same room/tag/states."""
-    path = result_path(cfg, slug)
-    if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"Seed model '{slug}' has not been fitted for {cfg.room}, tag={cfg.tag}, K={cfg.states} (expected {path}). "
-            f"Run `uv run python -m drivers.models.{slug} --room {int(cfg.room.split('_')[-1])} "
-            f"--states {cfg.states}"
-            + (f" --tag {cfg.tag}" if cfg.tag != TAG else "") + "` first.")
-    saved = load_model(path)
-    fitted = saved["config"]
-    if fitted.obs_cols != cfg.obs_cols or (covariates and fitted.covariate_cols != cfg.covariate_cols):
-        raise ValueError(f"Seed model '{slug}' was fitted with obs={fitted.obs_cols}, "
-                         f"covariates={fitted.covariate_cols}; this run uses obs={cfg.obs_cols}, "
-                         f"covariates={cfg.covariate_cols}. Refit '{slug}' first.")
-    return saved["result"].params

@@ -1,9 +1,9 @@
-"""Clean a DTU room's raw CO2 series like `clean_room_data`, but with a causal fresh-air baseline.
+"""Clean a DTU room's raw CO2 series with a causal fresh-air baseline, written to the `calibrated_anchor` tag.
 
-`clean_room_data` subtracts a trailing 8-day low quantile. That floor jumps whenever a well-aired
-weekend enters or leaves the window, and those jumps end up in the CO2 series as level steps; its
-offset also uses the minimum of the whole series. Here the baseline at time t only uses readings up
-to t, and a calibrated value is never revised, so the series can be produced and trained on online:
+A trailing 8-day low quantile floor jumps whenever a well-aired weekend enters or leaves the window,
+and those jumps end up in the CO2 series as level steps. Here the baseline at time t only uses
+readings up to t, and a calibrated value is never revised, so the series can be produced and trained
+on online:
 
 - Rule A (down fast): if the trailing SMOOTH mean drops below the baseline, the baseline is too high
   (the room can't be below fresh air), so it drops to that mean at once and any ramp is cancelled.
@@ -23,9 +23,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-from drivers.data.clean_dtu_data import room_slug
-from drivers.data.clean_room_data import (BIN, OUTSIDE_CO2, build_metadata, load_co2, save_metadata, save_split,
-                                          split_frames)
+from drivers.data.clean_room_data import (BIN, OUTSIDE_CO2, build_metadata, load_co2, room_slug, save_metadata,
+                                          save_split, split_frames)
 from drivers.utils import load_base_data_path
 
 TAG = "calibrated_anchor"
@@ -112,7 +111,7 @@ def clean_room_data_anchor(room_name: str, tag: str = TAG, val_size: float = 0.1
     save_split(split_frames(floor_binned, val_size, test_size), data_name, tag, "floor")
     save_anchors(days, data_name, tag)
     metadata = build_metadata(room_name, tag, y_split, OUTSIDE_CO2)
-    metadata.update(window=None, quantile=None, method="anchor_causal", smooth=SMOOTH, lookback=LOOKBACK,
+    metadata.update(method="anchor_causal", smooth=SMOOTH, lookback=LOOKBACK,
                     max_slope=MAX_SLOPE, max_step=MAX_STEP, ramp=RAMP, n_anchors=int(days["valid"].sum()),
                     rule_a_share=rule_a_share)
     save_metadata(metadata, data_name, tag)

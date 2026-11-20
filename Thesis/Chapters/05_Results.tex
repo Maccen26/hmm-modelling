@@ -7,7 +7,7 @@ best describe the data. We will then do a analysis of the behaviour of our choos
 \section{Model Selection \& Comparison}
 As desribed in experimental setup, we fit 4 models with a increasing order of complexity. \
 Each increase adds a new layer to the structure of how the model models the dynamics in the room.
-\input{Tables/model_comparison_room_015_calibrated_anchor_random_search_val_h6.tex}
+\input{Tables/model_comparison_room_015_calibrated_anchor_val_h6.tex}
 This table present the overall dynamics between the model complexities across all states. \\
 We see that across all states, that the test statics always favors the more complex models for states 3 and 4. 
 For state 6, thereis no statistics significant evidence, that HMM($\beta$) is better than the HMM model. We see that for state 5,6, 
@@ -43,20 +43,20 @@ QQ-plot in Fig.~\ref{fig:room_015_ar1_hmm_beta_residuals_k4} shows that the 4 st
 
 To make a final comparison of the models, we will look a the test predictive metrics to check that the 
 models do indeed can be comapred. \\
-\input{Tables/test_metrics_room_015_calibrated_anchor_random_search.tex}
-In Figure ~\ref{tab:test_metrics_room_015_calibrated_anchor_random_search}, we see that the models still have the same beavhour. \\
+\input{Tables/test_metrics_room_015_calibrated_anchor.tex}
+In Figure ~\ref{tab:test_metrics_room_015_calibrated_anchor}, we see that the models still have the same beavhour. \\
 Adding Autoregressive structure improves predictive metrics a lot on short forecasts, but adding covariates improves forecqst on longer forecasts. \\
 The AR(1)-HMM($\beta$) is still the best for the 4 states, and it's slightlier worse that then K=3 states. We can therefore see in the predictive metrics, 
 that the models follow the same structure. 
 
 \section{Working \& natural parameters}
 \subsection{Working parameters}
-\input{Tables/params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
-\input{Tables/params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
+\input{Tables/params_working_emission_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
+\input{Tables/params_working_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
 \subsection{Natural Parameters}
-\input{Tables/params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
-\input{Tables/params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
-\subsection{Interpretation of natural parameters}
+\input{Tables/params_emission_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
+\input{Tables/params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
+%TO DO: Write up 
 
 \section{State Characterization}
 In this section we will look at the states and their parameters and give our interprotebility of the states. Here after, we will 

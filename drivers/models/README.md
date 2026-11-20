@@ -1,76 +1,40 @@
 # Model drivers
 
-
-Each file fits one model on one room, saves it, and evaluates it on the validation split.
+`random_search` fits the model chain HMM(1) → HMM(β,1) → AR(1)-HMM(1) → AR(1)-HMM(β,1) on one room for one number of states.
 Run from the repo root with module syntax:
 
 ```bash
-uv run python -m drivers.models.<driver> --room 9 [--states K]   # one model on room_009
-uv run python -m drivers.models.run --room 9 --states K          # every model, in fit order
-uv run python -m drivers.models.run --room 9 --states K --tag 30min       # same, on another data tag
-uv run python -m drivers.models.run --room 9 --states K --models hmm_1 ar1_hmm_1
+uv run python -m drivers.models.random_search --room 15 --states 4                 # 10 random starts per model
+uv run python -m drivers.models.random_search --room 15 --states 4 --inits 20      # more random starts
+uv run python -m drivers.models.random_search --room 15 --states 4 --tag calibrated_anchor
 ```
 
-`--room` / `-r` is the room number (`9` → `room_009`). `--states` / `-K` sets the number of hidden states; without it a driver uses its own default.
-`--tag` is the data tag, i.e. the binning folder the room CSVs are read from (`{DATA_PATH}/{room}/{tag}/`); it defaults to `TAG = "30min"` in `utils.py`.
+`--room` / `-r` is the room number (`15` → `room_015`), `--states` / `-K` the number of hidden states, and `--tag` the data folder the room CSVs are read from (`{DATA_PATH}/{room}/{tag}/`, default `calibrated_anchor`).
 Observation columns and covariates are shared defaults in `utils.py` (`OBS_COLS`, `COVARIATE_COLS`).
+
+## Search
+
+Every model gets one seeded start plus `--inits` random starts:
+
+- **Seeded:** `hmm_1` starts from quantiles of the data. Each later model starts from the models already chosen earlier in the chain: `hmm_beta_1` and `ar1_hmm_1` from `hmm_1`, and `ar1_hmm_beta_1` from the `ar1_hmm_1` emission plus the `hmm_beta_1` transition.
+- **Random:** μ at random data quantiles, σ a random fraction of the data std, φ ∈ (0, 0.95), a diagonal-heavy random Γ and, for the β models, β ~ N(0, 0.5²).
+
+Each start is fitted with L-BFGS. A start is rejected if it shows state collapse: σ < 1 ppm, σ > 10⁴ ppm, φ ≥ 0.999, two states that duplicate each other, or non-finite parameters or forecasts.
+The admissible start with the lowest mean validation RMSE over `HORIZONS` is kept and seeds the next model.
 
 ## Losses
 
-The objective is the NLL plus an optional ridge penalty `beta_lam · Σβ²` on the transition covariate effects, `Loss(beta_lam)`.
-Each driver's `LOSS` fixes it: `hmm_beta_1`, `ar1_hmm_beta_1` and `ar1_hmm_beta_1_shared` use λ_β = 1e-2 (their betas diverge under plain NLL), and every other driver uses plain NLL.
-Since the loss is fixed per driver, the model slug identifies it and the loss is not part of the output path; its slug (`nll`, `ridge_beta_lam0.01`) appears in the plot titles.
-
-## Fit order
-
-Drivers don't refit their seed models; they load them from `results/` for the same room/tag/states.
-If a seed is missing, the driver raises an error naming the command to run. `run` fits in this order:
-
-| Driver | Base loss | Seeded from |
-|---|---|---|
-| `hmm_1` | `nll` | quantiles of the data |
-| `hmm_beta_1` | `ridge_beta_lam0.01` | `hmm_1` |
-| `hmm_beta_1_shared` | `nll` | `hmm_1` |
-| `ar1_hmm_1` | `nll` | `hmm_1` |
-| `ar1_hmm_beta_1` | `ridge_beta_lam0.01` | `ar1_hmm_1` (emission) + `hmm_beta_1` (transition) |
-| `ar1_hmm_beta_1_shared` | `ridge_beta_lam0.01` | `ar1_hmm_1` (emission) + `hmm_beta_1_shared` (transition) |
+The objective is the NLL plus an optional ridge penalty `beta_lam · Σβ²` on the transition covariate effects (`Loss(beta_lam)`).
+The β models use λ_β = 1e-2 (their betas diverge under plain NLL). `hmm_1` and `ar1_hmm_1` use plain NLL. The losses are fixed in `CHAIN` in `random_search.py`.
 
 ## Outputs
 
 Both folders sit at the repo root, not inside `drivers/`.
 
-- `results/{room}/{tag}/states_{K}/{model}.pkl`: the fitted model, its config, and the training data
-- `results/{room}/{tag}/states_{K}/predictive_metrics.csv`: validation R², RMSE, and MAPE per forecast horizon, shared by all models of that room/tag/K
-- `plots/{room}/{tag}/states_{K}/{model}.png` and `{model}_first_week.png`: residual diagnostics and forecast plots; titles show room, K and loss
+- `results/{room}/{tag}/states_{K}/{slug}.pkl`: the chosen fit, its config, the training data and which start won (`init`)
+- `results/{room}/{tag}/states_{K}/candidates.csv`: every start, with its loss, validation metrics, parameters and rejection reason
+- `results/{room}/{tag}/states_{K}/val_metrics.csv` / `test_metrics.csv`: R², RMSE and MAPE per horizon for the chosen models. Test forecasts filter through train and validation first, so they start from the state the model would be in online.
 
-## Test-set evaluation
+Diagnostic plots of the fits are made by `drivers.analysis.replot` (see `../analysis/README.md`).
 
-`evaluate_test` scores saved fits on the test split the same way `evaluate` scores the validation split.
-The parameters stay fixed; the filter runs through train and validation first, so the test forecasts start from the state the model would be in online.
-
-```bash
-uv run python -m drivers.models.evaluate_test ar1_hmm_beta_1 --room 15 --states 3 4 5 --tag calibrated_anchor
-```
-
-It writes `results/{room}/{tag}/states_{K}/test_metrics.csv` (R², RMSE and MAPE per horizon, shared by all models of that room/tag/K) and `plots/{room}/{tag}/states_{K}/{model}_test.png` and `{model}_test_first_week.png`.
-
-## Tools for saved fits
-
-The post-hoc analysis tools live in `drivers/analysis/` and read the fits above:
-
-```bash
-uv run python -m drivers.analysis.replot --room 9 [--tag 30min] [--states 6] [--models hmm_1]
-uv run python -m drivers.analysis.decode_states ar1_hmm_beta_1 --room 9 -K 6
-uv run python -m drivers.analysis.show_params ar1_hmm_beta_1 --room 9 -K 6
-uv run python -m drivers.analysis.state_confusion ar1_hmm_beta_1 --room 9 -K 6 --horizon 4 [--split val|test]
-uv run python -m drivers.analysis.feedback_states ar1_hmm_beta_1 --room 9 -K 6 [--split train|val|test] [--paths 10000]
-uv run python -m drivers.analysis.transition_plots ar1_hmm_beta_1 --room 9 -K 4 --state 2 [--week 2023-11-27]
-uv run python -m drivers.analysis.sample_size --room 9 -K 5 [--p 0.05] [--R 100] [--n-max 150] [--n-step 5] [--tol 1e-3] [--init-noise 0.1]
-```
-
-`state_confusion` plots the confusion matrix of the H-step predicted state (argmax of the rolling forecast's state distribution) against the smoothed state (argmax of `ForwardBackwardAlgorithm`).
-`feedback_states` samples state paths with `BackwardSampler` and plots which states the feedback events fall in, with the exact forward-backward share as a check.
-`transition_plots` plots the covariate-driven transition probabilities out of one state.
-`sample_size` simulates R datasets from the fit, refits each on its data up to the N-th complaint on the grid N = n_step, 2·n_step, …, N_MAX (warm-started from the previous grid point), and plots the 95 % CI and prediction interval of p̂ = N / Σ P(occupied | y₁:ₜ) against N; datasets, refitted models, `p_hat.csv` and `summary.csv` go to `results/.../sample_size/`, saved after every N.
-
-`decode_states`, `show_params`, `state_confusion`, `feedback_states` and `transition_plots` read from the `30min` tag unless `--tag` is given.
+`evaluate.py` holds the rolling forecasts, metrics and diagnostic plot helpers. `utils.py` holds the config, data loading, likelihood and seeding helpers.

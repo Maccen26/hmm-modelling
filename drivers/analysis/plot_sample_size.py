@@ -16,7 +16,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, TAG, driver_loss, room_name
+from drivers.models.random_search import CHAIN
+from drivers.models.utils import PLOTS_DIR, RESULTS_DIR, TAG, room_name
 
 
 def plot_p_hat(summary: pd.DataFrame, p: float, title: str, path: str):
@@ -76,7 +77,7 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    room, loss = room_name(args.room), driver_loss(args.model).slug
+    room, loss = room_name(args.room), {slug: loss for slug, _, loss, *_ in CHAIN}[args.model].slug
     name = f"{args.model}_p{args.p:g}_R{args.R}_seed{args.seed}" + (f"_noise{args.init_noise:g}" if args.init_noise else "")
     run = os.path.join(room, args.tag, f"states_{args.states}", "sample_size", name)
 
