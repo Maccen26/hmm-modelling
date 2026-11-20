@@ -1,0 +1,15 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lccc}
+\hline
+State & $\mu_0$ / $\log(\mu_k - \mu_{k-1})$ & $\log \sigma$ & $\tilde{\phi}$ \\
+\hline
+1 & 480.29 & 3.0146 & 3.8200 \\
+2 & 4.7764 & 5.6117 & 2.3439 \\
+3 & -6.4988 & 3.3383 & 3.3243 \\
+4 & 8.2990 & 5.0133 & 3.5255 \\
+\hline
+\end{tabular}
+\caption{Room 015: estimated working emission parameters of the AR(1)-HMM($\beta$,1) with $K=4$ states. The state means are $\mu_1 = \mu_0$ and $\mu_k = \mu_{k-1} + \exp(\log(\mu_k - \mu_{k-1}))$, $\sigma = \exp(\log \sigma)$ and $\phi = 2\,\mathrm{sigmoid}(\tilde{\phi}) - 1$.}
+\label{tab:params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}
+\end{table}

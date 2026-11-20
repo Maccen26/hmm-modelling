@@ -1,0 +1,19 @@
+\begin{table}[ht]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lcccc|cccc|cccc}
+\hline
+ & \multicolumn{4}{c}{Base logits} & \multicolumn{4}{c}{$\beta$: Off day} & \multicolumn{4}{c}{$\beta$: Working hours} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+From $\backslash$ To & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 \\
+\hline
+1 & -- & -18.18 & -3.37 & -8.86 & -- & -0.00 & -3.89 & +3.44 & -- & -0.00 & -0.30 & -1.84 \\
+2 & -0.91 & -- & -1.29 & -1.84 & -3.08 & -- & +1.24 & -2.55 & -4.89 & -- & +0.13 & +0.83 \\
+3 & -5.19 & -6.92 & -- & -5.85 & +3.57 & -0.44 & -- & +3.22 & -0.89 & -0.25 & -- & +5.83 \\
+4 & -2.08 & -1.88 & -1.97 & -- & -2.57 & +1.65 & -2.00 & -- & -2.59 & -0.05 & -4.13 & -- \\
+\hline
+\end{tabular}
+\end{adjustbox}
+\caption{Room 015: estimated base logits $\log(\gamma_{ij}/\gamma_{ii})$ and the covariate effects $\beta$ added to them of the AR(1)-HMM($\beta$,1) with $K=4$ states. Rows are the current state $i$, columns the next state $j$; the diagonal is the reference category.}
+\label{tab:params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}
+\end{table}

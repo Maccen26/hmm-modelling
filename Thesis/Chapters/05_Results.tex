@@ -4,56 +4,67 @@ This chapter will present what type of model best predicts the data, and what am
 best describe the data. We will then do a analysis of the behaviour of our choosen model
 %Maybe just say that we will chose AR(1)-HMM(B,1) for 3 or 4 states
 
-\section{Model type}
+\section{Model Selection \& Comparison}
 As desribed in experimental setup, we fit 4 models with a increasing order of complexity. \
-Each increase adds a new layer to the structure of how the model models the dynamics in the room.\
+Each increase adds a new layer to the structure of how the model models the dynamics in the room.
+\input{Tables/model_comparison_room_015_calibrated_anchor_random_search_val_h6.tex}
+This table present the overall dynamics between the model complexities across all states. \\
+We see that across all states, that the test statics always favors the more complex models for states 3 and 4. 
+For state 6, thereis no statistics significant evidence, that HMM($\beta$) is better than the HMM model. We see that for state 5,6, 
+the AIC and BIC does not always imporve as well when we increse the model complexity, which is a indication that there is too many states
+in the models. If we look at the predictive metrics for the model AR(1)-HMM($\beta$), the predictive metrics is always better in the RMSE
+and MAPE metrics (except state 5 for MAPE). For this model, we see that all the most almost preforms the same in predictive metrics. \\
+But because we also weight interpretabiltiy of the parameters in our model, we will not chose state 5 and 6, as the BIC increases from the 4 states, 
+predictive metrics is just as good and there are some evidence agianst the model complexity choosen. For 3 and 4 states, the 
+predictive metrics are slightly betteer in the 3 states, but the AIC and BIC is better in the 4 state model. As there is amost a difference in 
+$\Delta \text{BIC} \approx 100$, there is evidence that this model explains the training data better. \\
+\bigskip
+Acorss all models, we will therefore go with state 4 AR(1)-HMM($\beta$) as this models 
+preforms almost the same on predictive metrics in the validation set
 
-\input{Tables/predictive_metrics_room_015_calibrated_anchor_random_search_val_h1}
-\input{Tables/predictive_metrics_room_015_calibrated_anchor_random_search_val_h8}
+\input{Plots/results/room_015_ar1_hmm_beta_residuals.tex}
+Figure~\ref{fig:room_015_ar1_hmm_beta_residuals} shows the QQ plot and the ACF of the one-step forecast
+pseudo-residuals on the training set for $K=3$ (\ref{fig:room_015_ar1_hmm_beta_residuals_k3}) and
+$K=4$ (\ref{fig:room_015_ar1_hmm_beta_residuals_k4}). The ACF is shown for 48 lags, i.e.\ one day at
+30-minute resolution, so any unmodelled daily periodicity would show up as a spike near lag 48. \\
+For $K=3$ the QQ plot follows the line well in the centre, but the lower tail lies below it from
+roughly $-2.5$, so the model underestimates large negative forecast errors (sudden drops in CO$_2$).
+For $K=4$ the points follow the line closely across the whole range, with only a single outlier in each tail. \\
+In both ACFs the most noticeable feature is a negative autocorrelation at lag 1, about $-0.12$ for $K=3$ and
+$-0.19$ for $K=4$. For $K=3$, lags 2--5 also lie slightly above the band, while for $K=4$ nearly all lags
+beyond lag 1 are inside or at the edge of the band. With a pointwise 95\% band over 48 lags, 2--3 lags
+outside the band are expected by chance, so apart from lag 1 the residuals are close to uncorrelated,
+and there is no remaining daily pattern at lag 48 in either model.\\
+\\
+Because both models preforms about the same on predictive metrics and both models captures the temporal structure 
+in the training data, we will weight the statistics test of BIC, that shows a sweetspot of 4 states. This is backed up by the
+QQ-plot in Fig.~\ref{fig:room_015_ar1_hmm_beta_residuals_k4} shows that the 4 states capture sudden drops for the model. 
+\bigskip
 
+To make a final comparison of the models, we will look a the test predictive metrics to check that the 
+models do indeed can be comapred. \\
+\input{Tables/test_metrics_room_015_calibrated_anchor_random_search.tex}
+In Figure ~\ref{tab:test_metrics_room_015_calibrated_anchor_random_search}, we see that the models still have the same beavhour. \\
+Adding Autoregressive structure improves predictive metrics a lot on short forecasts, but adding covariates improves forecqst on longer forecasts. \\
+The AR(1)-HMM($\beta$) is still the best for the 4 states, and it's slightlier worse that then K=3 states. We can therefore see in the predictive metrics, 
+that the models follow the same structure. 
 
+\section{Working \& natural parameters}
+\subsection{Working parameters}
+\input{Tables/params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
+\input{Tables/params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
+\subsection{Natural Parameters}
+\input{Tables/params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
+\input{Tables/params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4.tex}
+\subsection{Interpretation of natural parameters}
 
+\section{State Characterization}
+In this section we will look at the states and their parameters and give our interprotebility of the states. Here after, we will 
+show some state dynamics by monte carlo simulation of the observed emission seqience. 
+\subsection{}
 
-\section{Choosing the Number of States}
-% Table of LL / AIC / BIC per K for each model, next to validation RMSE / R^2.
-% Focus: argue for one K. Information criteria tend to keep rising with K, so
-% use predictive performance + interpretability (do the extra states mean anything?).
+\subsection{State dynamics}
 
-\section{Model Comparison}
-
-\subsection{In-sample Fit}
-% LL, AIC, BIC across the model ladder for the chosen K.
-% Focus: what each added component (AR(1) emission, covariates in transition,
-% shared vs state-specific beta) buys, and whether it is worth its parameters.
-
-\subsection{Out-of-sample Forecasting}
-% RMSE, R^2, MAPE per forecast horizon on validation and test (test_metrics.csv).
-% Focus: this is the main ranking criterion. Show metric vs horizon plot,
-% compare against a simple baseline (e.g. persistence), note where models diverge.
-
-\section{The Selected Model}
-\subsection{Estimated Parameters}
-% Table of state means, sigmas, phi (AR coefficient) and the transition matrix / betas.
-% Focus: physical interpretation -- link phi to ventilation/decay rate (OU, Ch. 3),
-% mu to occupancy levels; comment on parameter uncertainty if available.
-
-\subsection{Decoded States}
-% Decoded/smoothed state sequence over a representative week (decode_states).
-% Focus: do states line up with occupied / empty / ventilation periods and with
-% the working-hours / off-day covariates? Use transition_plots for the covariate effect.
-
-\subsection{Forecast Behaviour}
-% First-week forecast plots and the state confusion matrix (predicted vs smoothed state).
-% Focus: how well the model anticipates regime changes, not just level tracking.
-
-\section{Model Diagnostics}
-% Pseudo-residuals: QQ-plot, histogram, ACF, residuals over time.
-% Focus: are residuals approx. N(0,1) and uncorrelated? Name remaining misfit
-% (e.g. heavy tails, unmodelled seasonality) -- this feeds the Discussion.
-
-\section{Robustness}
-% Optional: results on a second room (room_009) and/or the other data tags.
-% Focus: does the model ranking and chosen K hold up, or is it room-specific?
 
 \section{Summary}
 % A few bullet-point conclusions: chosen model and K, its predictive gain,

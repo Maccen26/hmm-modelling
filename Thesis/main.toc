@@ -32,21 +32,18 @@
 \contentsline {section}{\numberline {4.1}Coding envoriment}{15}{section.0.4.1}%
 \contentsline {section}{\numberline {4.2}Class Design}{16}{section.0.4.2}%
 \contentsline {chapter}{\numberline {5}Model Results}{18}{chapter.0.5}%
-\contentsline {section}{\numberline {5.1}Model type}{18}{section.0.5.1}%
-\contentsline {section}{\numberline {5.2}Choosing the Number of States}{18}{section.0.5.2}%
-\contentsline {section}{\numberline {5.3}Model Comparison}{18}{section.0.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}In-sample Fit}{18}{subsection.0.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Out-of-sample Forecasting}{18}{subsection.0.5.3.2}%
-\contentsline {section}{\numberline {5.4}The Selected Model}{18}{section.0.5.4}%
-\contentsline {subsection}{\numberline {5.4.1}Estimated Parameters}{18}{subsection.0.5.4.1}%
-\contentsline {subsection}{\numberline {5.4.2}Decoded States}{18}{subsection.0.5.4.2}%
-\contentsline {subsection}{\numberline {5.4.3}Forecast Behaviour}{18}{subsection.0.5.4.3}%
-\contentsline {section}{\numberline {5.5}Model Diagnostics}{18}{section.0.5.5}%
-\contentsline {section}{\numberline {5.6}Robustness}{18}{section.0.5.6}%
-\contentsline {section}{\numberline {5.7}Summary}{18}{section.0.5.7}%
-\contentsline {chapter}{\numberline {6}Simulation Study}{19}{chapter.0.6}%
-\contentsline {chapter}{\numberline {7}Discussion}{20}{chapter.0.7}%
-\contentsline {chapter}{\numberline {8}Conclusion}{21}{chapter.0.8}%
-\contentsline {chapter}{\numberline {9}Future Work}{22}{chapter.0.9}%
-\contentsline {chapter}{Bibliography}{23}{chapter*.20}%
-\contentsline {chapter}{\numberline {A}Proof of the AR(1) representation}{25}{appendix.A}%
+\contentsline {section}{\numberline {5.1}Model Selection \& Comparison}{18}{section.0.5.1}%
+\contentsline {section}{\numberline {5.2}Working \& natural parameters}{20}{section.0.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Working parameters}{20}{subsection.0.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Natural Parameters}{20}{subsection.0.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Interpretation of natural parameters}{20}{subsection.0.5.2.3}%
+\contentsline {section}{\numberline {5.3}State Characterization}{20}{section.0.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}}{21}{subsection.0.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}State dynamics}{21}{subsection.0.5.3.2}%
+\contentsline {section}{\numberline {5.4}Summary}{21}{section.0.5.4}%
+\contentsline {chapter}{\numberline {6}Simulation Study}{22}{chapter.0.6}%
+\contentsline {chapter}{\numberline {7}Discussion}{23}{chapter.0.7}%
+\contentsline {chapter}{\numberline {8}Conclusion}{24}{chapter.0.8}%
+\contentsline {chapter}{\numberline {9}Future Work}{25}{chapter.0.9}%
+\contentsline {chapter}{Bibliography}{27}{chapter*.25}%
+\contentsline {chapter}{\numberline {A}Proof of the AR(1) representation}{29}{appendix.A}%

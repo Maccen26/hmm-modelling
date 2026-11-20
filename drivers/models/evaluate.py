@@ -100,7 +100,8 @@ def _plot_qq_acf(res: np.ndarray, ax_qq, ax_acf):
     res = res[~np.isnan(res)]
     sm.qqplot(res, line="45", ax=ax_qq)
     ax_qq.set_title("QQ plot of forecast pseudo-residuals")
-    plot_acf(res, ax=ax_acf, lags=48)
+    plot_acf(res, ax=ax_acf, lags=48, zero=False, markersize=3)
+    ax_acf.set_ylim(-0.3, 0.3)
     ax_acf.set_title("ACF of forecast pseudo-residuals")
 
 

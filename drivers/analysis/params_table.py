@@ -1,0 +1,134 @@
+"""LaTeX tables of the estimated working and natural parameters of one saved fit.
+
+Writes four tables to `Thesis/Tables/`:
+  - `params_working_emission_<name>`: mu0 / log mean differences, log sigma and phi tilde per state.
+  - `params_working_transition_<name>`: the base logits log(gamma_ij / gamma_ii) next to the covariate
+    effects beta on them; the diagonal is the reference and has neither.
+  - `params_emission_<name>`: state mean, standard deviation and AR coefficient per state.
+  - `params_transition_<name>`: the base transition matrix (all covariates 0).
+
+    uv run python -m drivers.analysis.params_table results/room_015/calibrated_anchor/random_search -K 4
+"""
+import jax
+jax.config.update("jax_enable_x64", True)
+
+import argparse
+import os
+
+import numpy as np
+import pandas as pd
+
+from drivers.analysis.show_params import natural
+from drivers.utils import THESIS_TABLES_DIR, load_model, save_thesis_table
+
+
+def emission_table(nat: dict[str, np.ndarray]) -> pd.DataFrame:
+    table = pd.DataFrame({"State": np.arange(1, len(nat["mu"]) + 1),
+                          "$\\mu$ (ppm)": [f"{v:.2f}" for v in nat["mu"]],
+                          "$\\sigma$ (ppm)": [f"{v:.2f}" for v in nat["sigma"]]})
+    if "phi" in nat:
+        table["$\\phi$"] = [f"{v:.4f}" for v in nat["phi"][0]]
+    return table
+
+
+def working_emission_table(em) -> pd.DataFrame:
+    """State 1 holds mu0, state k > 1 the log difference log(mu_k - mu_{k-1})."""
+    mu = [f"{float(em.mu0):.2f}"] + [f"{v:.4f}" for v in np.asarray(em.log_mu_diff)]
+    return pd.DataFrame({"State": np.arange(1, len(mu) + 1),
+                         "$\\mu_0$ / $\\log(\\mu_k - \\mu_{k-1})$": mu,
+                         "$\\log \\sigma$": [f"{v:.4f}" for v in np.asarray(em.log_sigma)],
+                         "$\\tilde{\\phi}$": [f"{v:.4f}" for v in np.asarray(em.phi_tilde)[0]]})
+
+
+def full_beta(beta: np.ndarray) -> np.ndarray:
+    """(K, K-1) off-diagonal block -> (K, K) with NaN on the reference diagonal."""
+    k = beta.shape[0]
+    out = np.full((k, k), np.nan)
+    out[~np.eye(k, dtype=bool)] = beta.ravel()
+    return out
+
+
+def transition_latex(blocks: dict[str, tuple[np.ndarray, str]], caption: str, label: str) -> str:
+    """One `From x To` block of columns per entry of `{title: (matrix, format)}`; NaN cells print as --."""
+    k = next(iter(blocks.values()))[0].shape[0]
+    states = " & ".join(f"{j}" for j in range(1, k + 1))
+    header = " & ".join(f"\\multicolumn{{{k}}}{{c}}{{{title}}}" for title in blocks)
+    rules = " ".join(f"\\cmidrule(lr){{{2 + n * k}-{1 + (n + 1) * k}}}" for n in range(len(blocks)))
+    rows = []
+    for i in range(k):
+        cells = [("--" if np.isnan(m[i, j]) else fmt.format(m[i, j])) for m, fmt in blocks.values() for j in range(k)]
+        rows.append(f"{i + 1} & " + " & ".join(cells) + " \\\\")
+    col_spec = "l" + "|".join(["c" * k] * len(blocks))
+    return "\n".join([
+        "\\begin{table}[ht]", "\\centering", "\\begin{adjustbox}{max width=\\textwidth}",
+        f"\\begin{{tabular}}{{{col_spec}}}", "\\hline",
+        f" & {header} \\\\", rules,
+        "From $\\backslash$ To & " + " & ".join([states] * len(blocks)) + " \\\\", "\\hline",
+        *rows, "\\hline", "\\end{tabular}", "\\end{adjustbox}",
+        f"\\caption{{{caption}}}", f"\\label{{{label}}}", "\\end{table}", ""])
+
+
+def default_name(results_dir: str, model: str, states: int) -> str:
+    """e.g. `room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4`."""
+    parts = os.path.normpath(results_dir).split(os.sep)
+    parts = parts[parts.index("results") + 1:] if "results" in parts else parts[-3:]
+    return "_".join([*parts, model, f"K{states}"])
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("results_dir", help="folder holding the states_{K}/ subfolders")
+    parser.add_argument("--states", "-K", type=int, required=True)
+    parser.add_argument("--model", default="ar1_hmm_beta_1", help="slug of the saved fit")
+    parser.add_argument("--label", default="AR(1)-HMM($\\beta$,1)", help="model name used in the captions")
+    args = parser.parse_args()
+
+    saved = load_model(os.path.join(args.results_dir, f"states_{args.states}", f"{args.model}.pkl"))
+    nat = natural(saved["result"].params, saved["data"].ys)
+    name = default_name(args.results_dir, args.model, args.states)
+    room = saved["config"].room.replace("_", " ").capitalize()
+
+    of = f"of the {args.label} with $K={args.states}$ states"
+    rows_cols = "Rows are the current state $i$, columns the next state $j$"
+    params = saved["result"].params
+
+    def write_transition(kind: str, blocks: dict, caption: str):
+        path = str(THESIS_TABLES_DIR / f"params_{kind}_{name}.tex")
+        with open(path, "w") as f:
+            f.write(transition_latex(blocks, caption=caption, label=f"tab:params_{kind}_{name}"))
+        print("wrote", path)
+
+    em_working = working_emission_table(params.emission)
+    print(em_working.to_string(index=False))
+    print("wrote", save_thesis_table(
+        em_working, name=f"params_working_emission_{name}", label=f"tab:params_working_emission_{name}",
+        caption=f"{room}: estimated working emission parameters {of}. The state means are $\\mu_1 = \\mu_0$ and "
+                f"$\\mu_k = \\mu_{{k-1}} + \\exp(\\log(\\mu_k - \\mu_{{k-1}}))$, "
+                f"$\\sigma = \\exp(\\log \\sigma)$ and $\\phi = 2\\,\\mathrm{{sigmoid}}(\\tilde{{\\phi}}) - 1$."))
+
+    covariates = [c.replace("_", " ").capitalize() for c in saved.get("covariate_cols", ())]
+    blocks = {"Base logits": (full_beta(np.asarray(params.transition.transition_logits)), "{:+.2f}")}
+    if "beta" in nat:
+        blocks |= {f"$\\beta$: {c}": (full_beta(b), "{:+.2f}") for c, b in zip(covariates, nat["beta"])}
+    write_transition(
+        "working_transition", blocks,
+        f"{room}: estimated base logits $\\log(\\gamma_{{ij}}/\\gamma_{{ii}})$ and the covariate effects "
+        f"$\\beta$ added to them {of}. {rows_cols}; the diagonal is the reference category.")
+
+    em = emission_table(nat)
+    print(em.to_string(index=False))
+    print("wrote", save_thesis_table(
+        em, name=f"params_emission_{name}", label=f"tab:params_emission_{name}",
+        caption=f"{room}: estimated state means $\\mu$, standard deviations $\\sigma$ and AR(1) coefficients "
+                f"$\\phi$ {of}."))
+
+    gamma = nat.get("Gamma (base, x = 0)", nat.get("Gamma"))
+    blocks = {"$\\Gamma$ ($x_t = 0$)" if "beta" in nat else "$\\Gamma$": (gamma, "{:.4f}")}
+    if "beta" in nat:
+        # One block per covariate switched on alone, the others held at 0.
+        for c, x in zip(covariates, np.eye(len(covariates))):
+            blocks[f"$\\Gamma$: {c}"] = (np.asarray(params.transition.transition_matrix(x)), "{:.4f}")
+    write_transition(
+        "transition", blocks,
+        f"{room}: estimated transition matrix $\\Gamma$ {of}, at the base ($x_t = 0$) and with each covariate "
+        f"set to 1 while the others are 0. {rows_cols}.")

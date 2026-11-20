@@ -172,83 +172,103 @@
 \@writefile{toc}{\contentsline {chapter}{\numberline {5}Model Results}{18}{chapter.0.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Model type}{18}{section.0.5.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces Validation RMSE (ppm) / MAPE (\%) of the 1-step-ahead forecasts for each model and number of states.}}{18}{table.caption.18}\protected@file@percent }
-\newlabel{tab:predictive_metrics_room_015_calibrated_anchor_random_search_val_h1}{{5.1}{18}{Validation RMSE (ppm) / MAPE (\%) of the 1-step-ahead forecasts for each model and number of states}{table.caption.18}{}}
-\newlabel{tab:predictive_metrics_room_015_calibrated_anchor_random_search_val_h1@cref}{{[table][1][0,5]5.1}{[1][18][]18}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Validation RMSE (ppm) / MAPE (\%) of the 8-steps-ahead forecasts for each model and number of states.}}{18}{table.caption.19}\protected@file@percent }
-\newlabel{tab:predictive_metrics_room_015_calibrated_anchor_random_search_val_h8}{{5.2}{18}{Validation RMSE (ppm) / MAPE (\%) of the 8-steps-ahead forecasts for each model and number of states}{table.caption.19}{}}
-\newlabel{tab:predictive_metrics_room_015_calibrated_anchor_random_search_val_h8@cref}{{[table][2][0,5]5.2}{[1][18][]18}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}Choosing the Number of States}{18}{section.0.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Model Comparison}{18}{section.0.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.1}In-sample Fit}{18}{subsection.0.5.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.2}Out-of-sample Forecasting}{18}{subsection.0.5.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.4}The Selected Model}{18}{section.0.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.1}Estimated Parameters}{18}{subsection.0.5.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.2}Decoded States}{18}{subsection.0.5.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.3}Forecast Behaviour}{18}{subsection.0.5.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.5}Model Diagnostics}{18}{section.0.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.6}Robustness}{18}{section.0.5.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.7}Summary}{18}{section.0.5.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Simulation Study}{19}{chapter.0.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Model Selection \& Comparison}{18}{section.0.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces Model comparison for $K = 3, \dots  , 6$ states. $\ell $ is the log-likelihood on the training set ($n = 3137$; for the covariate models without the ridge penalty), AIC $= 2p - 2\ell $ and BIC $= p\ln n - 2\ell $. RMSE (ppm) and MAPE are for the 6-steps-ahead forecasts on the validation set. LRT gives $2(\ell _{\mathrm  {full}} - \ell _{\mathrm  {reduced}})$ with its $\chi ^2$ $p$-value: HMM($\beta $) and AR(1)-HMM against the HMM ($2K(K-1)$ and $K$ degrees of freedom), and the AR(1)-Covariates HMM against the AR(1)-HMM / HMM($\beta $) ($2K(K-1)$ / $K$ degrees of freedom).}}{18}{table.caption.18}\protected@file@percent }
+\newlabel{tab:model_comparison_room_015_calibrated_anchor_random_search_val_h6}{{5.1}{18}{Model comparison for $K = 3, \dots , 6$ states. $\ell $ is the log-likelihood on the training set ($n = 3137$; for the covariate models without the ridge penalty), AIC $= 2p - 2\ell $ and BIC $= p\ln n - 2\ell $. RMSE (ppm) and MAPE are for the 6-steps-ahead forecasts on the validation set. LRT gives $2(\ell _{\mathrm {full}} - \ell _{\mathrm {reduced}})$ with its $\chi ^2$ $p$-value: HMM($\beta $) and AR(1)-HMM against the HMM ($2K(K-1)$ and $K$ degrees of freedom), and the AR(1)-Covariates HMM against the AR(1)-HMM / HMM($\beta $) ($2K(K-1)$ / $K$ degrees of freedom)}{table.caption.18}{}}
+\newlabel{tab:model_comparison_room_015_calibrated_anchor_random_search_val_h6@cref}{{[table][1][0,5]5.1}{[1][18][]18}{}{}{}}
+\newlabel{fig:room_015_ar1_hmm_beta_residuals_k3}{{5.1a}{19}{$K=3$}{figure.caption.19}{}}
+\newlabel{fig:room_015_ar1_hmm_beta_residuals_k3@cref}{{[subfigure][1][0,5,1]5.1a}{[1][18][]19}{}{}{}}
+\newlabel{sub@fig:room_015_ar1_hmm_beta_residuals_k3}{{a}{19}{$K=3$}{figure.caption.19}{}}
+\newlabel{sub@fig:room_015_ar1_hmm_beta_residuals_k3@cref}{{[subfigure][1][0,5,1]5.1a}{[1][18][]19}{}{}{}}
+\newlabel{fig:room_015_ar1_hmm_beta_residuals_k4}{{5.1b}{19}{$K=4$}{figure.caption.19}{}}
+\newlabel{fig:room_015_ar1_hmm_beta_residuals_k4@cref}{{[subfigure][2][0,5,1]5.1b}{[1][18][]19}{}{}{}}
+\newlabel{sub@fig:room_015_ar1_hmm_beta_residuals_k4}{{b}{19}{$K=4$}{figure.caption.19}{}}
+\newlabel{sub@fig:room_015_ar1_hmm_beta_residuals_k4@cref}{{[subfigure][2][0,5,1]5.1b}{[1][18][]19}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Room 015: QQ plot (left) and autocorrelation (right) of the one-step forecast pseudo-residuals on the training set for the AR(1)-HMM($\beta $) with $K=3$ (top) and $K=4$ (bottom) states.}}{19}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:room_015_ar1_hmm_beta_residuals}{{5.1}{19}{Room 015: QQ plot (left) and autocorrelation (right) of the one-step forecast pseudo-residuals on the training set for the AR(1)-HMM($\beta $) with $K=3$ (top) and $K=4$ (bottom) states}{figure.caption.19}{}}
+\newlabel{fig:room_015_ar1_hmm_beta_residuals@cref}{{[figure][1][0,5]5.1}{[1][18][]19}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Test RMSE (ppm) / MAPE (\%) of the $h$-steps-ahead forecasts (30-minute steps) for the nested models with $K=4$ states and the AR(1)-HMM($\beta $,1) with $K=3$ and $K=4$.}}{20}{table.caption.20}\protected@file@percent }
+\newlabel{tab:test_metrics_room_015_calibrated_anchor_random_search}{{5.2}{20}{Test RMSE (ppm) / MAPE (\%) of the $h$-steps-ahead forecasts (30-minute steps) for the nested models with $K=4$ states and the AR(1)-HMM($\beta $,1) with $K=3$ and $K=4$}{table.caption.20}{}}
+\newlabel{tab:test_metrics_room_015_calibrated_anchor_random_search@cref}{{[table][2][0,5]5.2}{[1][20][]20}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Working \& natural parameters}{20}{section.0.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.1}Working parameters}{20}{subsection.0.5.2.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Room 015: estimated working emission parameters of the AR(1)-HMM($\beta $,1) with $K=4$ states. The state means are $\mu _1 = \mu _0$ and $\mu _k = \mu _{k-1} + \exp (\log (\mu _k - \mu _{k-1}))$, $\sigma = \exp (\log \sigma )$ and $\phi = 2\,\mathrm  {sigmoid}(\tilde  {\phi }) - 1$.}}{20}{table.caption.21}\protected@file@percent }
+\newlabel{tab:params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}{{5.3}{20}{Room 015: estimated working emission parameters of the AR(1)-HMM($\beta $,1) with $K=4$ states. The state means are $\mu _1 = \mu _0$ and $\mu _k = \mu _{k-1} + \exp (\log (\mu _k - \mu _{k-1}))$, $\sigma = \exp (\log \sigma )$ and $\phi = 2\,\mathrm {sigmoid}(\tilde {\phi }) - 1$}{table.caption.21}{}}
+\newlabel{tab:params_working_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4@cref}{{[table][3][0,5]5.3}{[1][20][]20}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.4}{\ignorespaces Room 015: estimated base logits $\log (\gamma _{ij}/\gamma _{ii})$ and the covariate effects $\beta $ added to them of the AR(1)-HMM($\beta $,1) with $K=4$ states. Rows are the current state $i$, columns the next state $j$; the diagonal is the reference category.}}{20}{table.caption.22}\protected@file@percent }
+\newlabel{tab:params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}{{5.4}{20}{Room 015: estimated base logits $\log (\gamma _{ij}/\gamma _{ii})$ and the covariate effects $\beta $ added to them of the AR(1)-HMM($\beta $,1) with $K=4$ states. Rows are the current state $i$, columns the next state $j$; the diagonal is the reference category}{table.caption.22}{}}
+\newlabel{tab:params_working_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4@cref}{{[table][4][0,5]5.4}{[1][20][]20}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.2}Natural Parameters}{20}{subsection.0.5.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.3}Interpretation of natural parameters}{20}{subsection.0.5.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}State Characterization}{20}{section.0.5.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.5}{\ignorespaces Room 015: estimated state means $\mu $, standard deviations $\sigma $ and AR(1) coefficients $\phi $ of the AR(1)-HMM($\beta $,1) with $K=4$ states.}}{21}{table.caption.23}\protected@file@percent }
+\newlabel{tab:params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}{{5.5}{21}{Room 015: estimated state means $\mu $, standard deviations $\sigma $ and AR(1) coefficients $\phi $ of the AR(1)-HMM($\beta $,1) with $K=4$ states}{table.caption.23}{}}
+\newlabel{tab:params_emission_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4@cref}{{[table][5][0,5]5.5}{[1][20][]21}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.6}{\ignorespaces Room 015: estimated transition matrix $\Gamma $ of the AR(1)-HMM($\beta $,1) with $K=4$ states, at the base ($x_t = 0$) and with each covariate set to 1 while the others are 0. Rows are the current state $i$, columns the next state $j$.}}{21}{table.caption.24}\protected@file@percent }
+\newlabel{tab:params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4}{{5.6}{21}{Room 015: estimated transition matrix $\Gamma $ of the AR(1)-HMM($\beta $,1) with $K=4$ states, at the base ($x_t = 0$) and with each covariate set to 1 while the others are 0. Rows are the current state $i$, columns the next state $j$}{table.caption.24}{}}
+\newlabel{tab:params_transition_room_015_calibrated_anchor_random_search_ar1_hmm_beta_1_K4@cref}{{[table][6][0,5]5.6}{[1][20][]21}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.1}}{21}{subsection.0.5.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.2}State dynamics}{21}{subsection.0.5.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Summary}{21}{section.0.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Simulation Study}{22}{chapter.0.6}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Discussion}{20}{chapter.0.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Discussion}{23}{chapter.0.7}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {8}Conclusion}{21}{chapter.0.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Conclusion}{24}{chapter.0.8}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {9}Future Work}{22}{chapter.0.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {9}Future Work}{25}{chapter.0.9}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{Bibliography}{23}{chapter*.20}\protected@file@percent }
-\abx@aux@page{22}{23}
-\abx@aux@page{23}{23}
-\abx@aux@page{24}{23}
-\abx@aux@page{25}{23}
-\abx@aux@page{26}{23}
-\abx@aux@page{27}{23}
-\abx@aux@page{28}{23}
-\abx@aux@page{29}{23}
-\abx@aux@page{30}{23}
-\abx@aux@page{31}{23}
-\abx@aux@page{32}{23}
-\abx@aux@page{33}{23}
-\abx@aux@page{34}{23}
-\abx@aux@page{35}{23}
-\abx@aux@page{36}{23}
-\abx@aux@page{37}{23}
+\@writefile{toc}{\contentsline {chapter}{Bibliography}{27}{chapter*.25}\protected@file@percent }
+\abx@aux@page{22}{27}
+\abx@aux@page{23}{27}
+\abx@aux@page{24}{27}
+\abx@aux@page{25}{27}
+\abx@aux@page{26}{27}
+\abx@aux@page{27}{27}
+\abx@aux@page{28}{27}
+\abx@aux@page{29}{27}
+\abx@aux@page{30}{27}
+\abx@aux@page{31}{27}
+\abx@aux@page{32}{27}
+\abx@aux@page{33}{27}
+\abx@aux@page{34}{27}
+\abx@aux@page{35}{27}
+\abx@aux@page{36}{27}
+\abx@aux@page{37}{27}
 \abx@aux@cite{0}{iacus2008}
 \abx@aux@segm{0}{0}{iacus2008}
 \abx@aux@cite{0}{iacus2008}
 \abx@aux@segm{0}{0}{iacus2008}
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}Proof of the AR(1) representation}{25}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Proof of the AR(1) representation}{29}{appendix.A}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:ar1-proof}{{A}{25}{Proof of the AR(1) representation}{appendix.A}{}}
-\newlabel{app:ar1-proof@cref}{{[chapter][1][0]A}{[1][25][]25}{}{}{}}
-\abx@aux@page{38}{25}
-\newlabel{eq:ou-solution}{{A.1}{25}{Proof of the AR(1) representation}{equation.A.1}{}}
-\newlabel{eq:ou-solution@cref}{{[subequation][0][0,1,1]A.1}{[1][25][]25}{}{}{}}
-\newlabel{eq:ou-param1}{{A.1a}{25}{Proof of the AR(1) representation}{equation.A.1a}{}}
-\newlabel{eq:ou-param1@cref}{{[subequation][1][0,1,1]A.1a}{[1][25][]25}{}{}{}}
-\newlabel{eq:ou-param2}{{A.1b}{25}{Proof of the AR(1) representation}{equation.A.1b}{}}
-\newlabel{eq:ou-param2@cref}{{[subequation][2][0,1,1]A.1b}{[1][25][]25}{}{}{}}
-\newlabel{eq:ar1-proof}{{A.2}{25}{Proof of the AR(1) representation}{equation.A.2}{}}
-\newlabel{eq:ar1-proof@cref}{{[subequation][0][0,1,2]A.2}{[1][25][]25}{}{}{}}
-\newlabel{eq:ar1-full}{{A.2a}{25}{Proof of the AR(1) representation}{equation.A.2a}{}}
-\newlabel{eq:ar1-full@cref}{{[subequation][1][0,1,2]A.2a}{[1][25][]25}{}{}{}}
-\newlabel{eq:ar1-split}{{A.2b}{25}{Proof of the AR(1) representation}{equation.A.2b}{}}
-\newlabel{eq:ar1-split@cref}{{[subequation][2][0,1,2]A.2b}{[1][25][]25}{}{}{}}
-\newlabel{eq:ar1-expanded}{{A.2c}{25}{Proof of the AR(1) representation}{equation.A.2c}{}}
-\newlabel{eq:ar1-expanded@cref}{{[subequation][3][0,1,2]A.2c}{[1][25][]25}{}{}{}}
-\newlabel{eq:ar1-recursion}{{A.2d}{25}{Proof of the AR(1) representation}{equation.A.2d}{}}
-\newlabel{eq:ar1-recursion@cref}{{[subequation][4][0,1,2]A.2d}{[1][25][]25}{}{}{}}
+\newlabel{app:ar1-proof}{{A}{29}{Proof of the AR(1) representation}{appendix.A}{}}
+\newlabel{app:ar1-proof@cref}{{[chapter][1][0]A}{[1][29][]29}{}{}{}}
+\abx@aux@page{38}{29}
+\newlabel{eq:ou-solution}{{A.1}{29}{Proof of the AR(1) representation}{equation.A.1}{}}
+\newlabel{eq:ou-solution@cref}{{[subequation][0][0,1,1]A.1}{[1][29][]29}{}{}{}}
+\newlabel{eq:ou-param1}{{A.1a}{29}{Proof of the AR(1) representation}{equation.A.1a}{}}
+\newlabel{eq:ou-param1@cref}{{[subequation][1][0,1,1]A.1a}{[1][29][]29}{}{}{}}
+\newlabel{eq:ou-param2}{{A.1b}{29}{Proof of the AR(1) representation}{equation.A.1b}{}}
+\newlabel{eq:ou-param2@cref}{{[subequation][2][0,1,1]A.1b}{[1][29][]29}{}{}{}}
+\newlabel{eq:ar1-proof}{{A.2}{29}{Proof of the AR(1) representation}{equation.A.2}{}}
+\newlabel{eq:ar1-proof@cref}{{[subequation][0][0,1,2]A.2}{[1][29][]29}{}{}{}}
+\newlabel{eq:ar1-full}{{A.2a}{29}{Proof of the AR(1) representation}{equation.A.2a}{}}
+\newlabel{eq:ar1-full@cref}{{[subequation][1][0,1,2]A.2a}{[1][29][]29}{}{}{}}
+\newlabel{eq:ar1-split}{{A.2b}{29}{Proof of the AR(1) representation}{equation.A.2b}{}}
+\newlabel{eq:ar1-split@cref}{{[subequation][2][0,1,2]A.2b}{[1][29][]29}{}{}{}}
+\newlabel{eq:ar1-expanded}{{A.2c}{29}{Proof of the AR(1) representation}{equation.A.2c}{}}
+\newlabel{eq:ar1-expanded@cref}{{[subequation][3][0,1,2]A.2c}{[1][29][]29}{}{}{}}
+\newlabel{eq:ar1-recursion}{{A.2d}{29}{Proof of the AR(1) representation}{equation.A.2d}{}}
+\newlabel{eq:ar1-recursion@cref}{{[subequation][4][0,1,2]A.2d}{[1][29][]29}{}{}{}}
 \abx@aux@cite{0}{iacus2008}
 \abx@aux@segm{0}{0}{iacus2008}
-\abx@aux@page{39}{26}
-\abx@aux@page{40}{27}
+\abx@aux@page{39}{30}
+\abx@aux@page{40}{31}
 \abx@aux@read@bbl@mdfivesum{3FFAFB090749F9B82EF682E7B5BD7C90}
 \abx@aux@defaultrefcontext{0}{climify}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{icos2023ghg}{none/global//global/global/global}
@@ -266,4 +286,4 @@
 \abx@aux@defaultrefcontext{0}{deepmind2020jax}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{harris2020numpy}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{uv}{none/global//global/global/global}
-\gdef \@abspage@last{36}
+\gdef \@abspage@last{40}
