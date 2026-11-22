@@ -7,12 +7,12 @@ Hereafter, the general theory of hidden Markov models (HMMs) will be presented a
 with the inference algorithms used in this project.
 
 
-\section{Modelling $\text{CO}_2$ dynamics}
+\section{Physical model of \texorpdfstring{$\text{CO}_2$}{CO2} dynamics}
 This subsection presents the underlying physical model of the $\text{CO}_2$ dynamics of a room
 and shows that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
 can be modelled as a function of the occupancy state of the room. 
 
-\subsection{The underlying physical model \& assumptions} %Different name for this subsection
+\subsection{Mass-balance model and assumptions}
 Due to $\text{CO}_2$ not decaying by itself,
 the perfectly mixed mass balance model of a room \parencite{batterman2017, wang1999}
 is given as a first-order ordinary differential equation (ODE) as
@@ -76,7 +76,7 @@ where $\beta_{S(t)}$ is the production rate of the occupants in the room.
 One of the main limitations of the model is that it does not assume noise in the system, which is inevitable as we use sensors. \\
 Therefore, the next step to make the model more realistic is to add noise to the system in the form of a stochastic differential equation (SDE), which will be presented in the next subsection.
 
-\subsection{The ODE as a diffusion Process (Ornstein-Uhlenbeck)}
+\subsection{Stochastic extension: the Ornstein--Uhlenbeck process}
 As previously described, the model in \cref{eq:ODE} describes the dynamics of the $\text{CO}_2$ in a room,
 but it does not take into account the noise in the system. \\
 By adding noise to the system in the form of a linear diffusion term with constant diffusion coefficient $\sigma$,
@@ -100,7 +100,7 @@ in-depth knowledge of SDEs and stochastic calculus, which is not the focus of th
 \\
 Next, we show that, sampled at a fixed time step, the SDE in \cref{eq:sde} is a discrete-time AR(1) process.
 
-\subsection{Properties of the Ornstein-Uhlenbeck process}
+\subsection{Discretisation to an AR(1) process}
 Since \cref{eq:sde} is an Ornstein-Uhlenbeck process, its solution is known in closed form
 \parencite[Sec.~1.13.1]{iacus2008}. Sampling it with a constant time step $\Delta t$ and holding
 $P$ constant over the step gives the recursion
@@ -128,13 +128,12 @@ which is the stationary distribution of the process. \\
 
 
 %% --------- HMMM ----------
-\section{Hidden Markov Model (HMM) theory} 
+\section{Hidden Markov models}
 This section will present the underlying models and the theory behind them
 that model the diffusion process. Here too, inference algorithms and
 analysis methods will be presented.
 
-\subsection{HMM Models}
-\subsubsection{General Theory}
+\subsection{Model structure}
 %% Write some generel theory on HMM
 Hidden Markov models are Markov chains where the underlying states are hidden and only a
 random variable that is dependent on the underlying state is observed. \\
@@ -158,7 +157,7 @@ The initial state distribution is given by
     P(S_1) = \pi_{S_1},
 \end{equation}
 where $\pi_{S_1}$ is the probability of starting in hidden state $S_1$.
-\subsubsection{HMM(1)-Model}
+\subsection{Homogeneous HMM: HMM(1)}
 The ordinary HMM is the simplest model implemented in this project and the one most
 commonly used in the literature. The transition probabilities are constant and do not
 depend on time, the observations or any covariates, and neither does the emission density.
@@ -217,7 +216,7 @@ reparameterisation
 where $\zeta \in \mathbb{R}^{n}$. The unconstrained parameters $\eta \in \mathbb{R}^{n}$,
 $\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are thus the quantities
 that are optimised during the fitting process.
-\subsubsection{HMM($\beta, 1$)-model} 
+\subsection{Covariate-dependent transitions: \texorpdfstring{HMM($\beta, 1$)}{HMM(beta, 1)}}
 In this model, we let the transition probabilities depend on covariates which can include
 time-of-day, weekday, type of day, etc. The motivation for this is the assumption
 that the occupancy state of the room is dependent
@@ -235,7 +234,7 @@ The transition matrix is then obtained as in \cref{eq:gamma-reparam}, and we now
 the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i)$.
 
 
-\subsubsection{AR(1)-HMM(1)}
+\subsection{Autoregressive emissions: AR(1)-HMM(1)}
 The autoregressive HMM (AR(1)-HMM(1)) extends the ordinary HMM by letting the emission
 distribution depend on the previous observation. Conditional on being in state $i$ at time
 $t$, the observation is modelled as
@@ -259,12 +258,13 @@ optimiser, with the inverse mapping
 \begin{equation}
     \psi_i = \operatorname{logit}\!\left( \frac{\phi_i + 1}{2} \right).
 \end{equation}
-\subsubsection{AR(1)-HMM($\beta, 1$)} 
+\subsection{Combined model: \texorpdfstring{AR(1)-HMM($\beta, 1$)}{AR(1)-HMM(beta, 1)}}
 This model is the combination of the AR(1)-HMM(1) and the HMM($\beta, 1$)-model, 
 where the transition probabilities depend on covariates as in 
 and the emission distribution is autoregressive.
 
-\subsection{Likelihood}
+\section{Inference}
+\subsection{Likelihood evaluation by the forward algorithm}
 Several methods can be used to estimate the parameters of an HMM, where
 one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
 In this project, we will however use the method of maximum likelihood estimation (MLE) 
@@ -314,7 +314,7 @@ which gives the marginal likelihood of observing $y_t$ given the previous observ
 %\subsection{Forward Backward Filtering} 
 %% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 
-\subsection{Backward Sampling} 
+\subsection{Backward sampling of state paths}
 When sampling a path from a hidden Markov model, we can use the method
 defined in \textcite[Sec.~7.2.1]{zucchini2016}, and we will call it backward sampling. \\
 We want to sample a path of the hidden states $S_{1:T}$ given the observations
@@ -361,8 +361,8 @@ distributions from the forward pass and the transition matrices. Note that it
 still depends on the initial distribution $\pi$ through the forward recursion,
 although this influence decays for large $t$.
 
-\subsection{Model Diagnostics}
-\subsubsection{Goodness-of-fit}
+\section{Model checking and comparison}
+\subsection{Pseudo-residuals}
 For assessing the goodness-of-fit, we will use the pseudo-residuals
 defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined as
 \begin{equation}
@@ -376,7 +376,7 @@ Therefore, we can use the pseudo-residuals to assess
 the goodness-of-fit of the model by checking 
 if they are normally distributed and uncorrelated. 
 
-\subsubsection{Test Statistics for Comparison}
+\subsection{Information criteria and likelihood ratio test}
 For comparing the goodness-of-fit of different models,
 we will use the Akaike information criterion (AIC), 
 the Bayesian information criterion (BIC) and the Likelihood ratio test (LRT).

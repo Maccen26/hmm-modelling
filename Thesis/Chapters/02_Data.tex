@@ -78,30 +78,38 @@ are not always accurate. Two empty rooms that have the same $\text{CO}_2$ levels
 readings based on how much the sensors have drifted over time.
 This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of the occupants in the building, and a
 higher baseline of the $\text{CO}_2$ data may lead to a false positive of the presence of the occupants in the building.
-To correct for this, we have used a method called the
-\textit{Automatic Baseline Correction} (ABC) Algorithm [\textcolor{red}{MISSING REFERENCE}].
-In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
+%% --- Old calibration technique (ABC algorithm), kept for reference ---
+% To correct for this, we have used a method called the
+% \textit{Automatic Baseline Correction} (ABC) Algorithm [\textcolor{red}{MISSING REFERENCE}].
+% In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
+% are equal to the outside $\text{CO}_2$ ppm values. We set the outside $\text{CO}_2$ to 420 ppm \parencite{icos2023ghg}.
+%% --- End of old calibration technique ---
+We have assumed that the lowest $\text{CO}_2$ ppm values over a period
 are equal to the outside $\text{CO}_2$ ppm values. We set the outside $\text{CO}_2$ to 420 ppm \parencite{icos2023ghg}.
 \bigskip
 
-%Lets write up the function for the ABC algorithm and how it works.
 Let $C_{t}$ be the $\text{CO}_2$ ppm value at time $t$, and $\tilde{C}_{t}$ be the corrected $\text{CO}_2$ ppm value at time $t$.
 
-We then define the modified ABC algorithm as
-\begin{equation} \label{eq:calibration}
-\tilde{C}_{t} = C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) + 420 - \min_{t}\left( C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) \right),
-\end{equation}
-where $Q_{0.015}\left(C_{t-\Delta t:t}\right)$ is the 1.5\% quantile of the $\text{CO}_2$ ppm values over the time period $[t-\Delta t, t]$ and
-$\Delta t$ is a fixed time period.
-In this project, we have set $\Delta t = 8$ days, such that the weekdays overlap. The reason for using
-a 1.5\% quantile is to avoid the effect of erratic readings of the $\text{CO}_2$ ppm values,
-which may occur if the sensors are not working properly. The reason we also subtract the floor is such that the lowest
-observed ppm value is 420 throughout our series.
-
-\subsection{Causal anchor baseline}
-The rolling quantile in \cref{eq:calibration} uses the minimum of the whole series, and the
-baseline jumps when a well-aired weekend enters or leaves the 8 day window. We therefore also use a
-causal baseline $b_t$, which only uses readings up to time $t$, such that a calibrated value is never revised.
+%% --- Old calibration technique (ABC algorithm), kept for reference ---
+% %Lets write up the function for the ABC algorithm and how it works.
+% We then define the modified ABC algorithm as
+% \begin{equation} \label{eq:calibration}
+% \tilde{C}_{t} = C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) + 420 - \min_{t}\left( C_{t} - Q_{0.02}\left(C_{t-\Delta t:t}\right) \right),
+% \end{equation}
+% where $Q_{0.015}\left(C_{t-\Delta t:t}\right)$ is the 1.5\% quantile of the $\text{CO}_2$ ppm values over the time period $[t-\Delta t, t]$ and
+% $\Delta t$ is a fixed time period.
+% In this project, we have set $\Delta t = 8$ days, such that the weekdays overlap. The reason for using
+% a 1.5\% quantile is to avoid the effect of erratic readings of the $\text{CO}_2$ ppm values,
+% which may occur if the sensors are not working properly. The reason we also subtract the floor is such that the lowest
+% observed ppm value is 420 throughout our series.
+%
+% \subsection{Causal anchor baseline}
+% The rolling quantile in \cref{eq:calibration} uses the minimum of the whole series, and the
+% baseline jumps when a well-aired weekend enters or leaves the 8 day window. We therefore also use a
+% causal baseline $b_t$, which only uses readings up to time $t$, such that a calibrated value is never revised.
+%% --- End of old calibration technique ---
+To correct for this, we use a causal anchor baseline $b_t$, which only uses readings up to time $t$,
+such that a calibrated value is never revised.
 The calibrated series is
 \begin{equation} \label{eq:calibration_anchor}
 \tilde{C}_{t} = C_{t} - b_{t} + 420.
@@ -120,7 +128,7 @@ Finally, the data is resampled into 30 minute bins, and empty bins are forward-f
 interpolated, since interpolation would use future readings.
 
 \section{Descriptive Analytics}
-Given that our data now has been calibrated as in \cref{eq:calibration}, we now perform some
+Given that our data now has been calibrated as in \cref{eq:calibration_anchor}, we now perform some
 descriptive analytics on the data in Room 15 to better understand the properties of our data. \\
 The first thing we are interested in is whether our data contains autocorrelation.
 
@@ -152,7 +160,7 @@ also the weekday. There does not seem to be a weekly pattern, such as no people 
 
 \section{Summary}
 In this chapter, the collection method of the data was described, and the calibration technique was presented in
-\cref{eq:calibration}. We have shown strong autocorrelation in the data with a cyclic pattern that peaks every 24 hours. \\
+\cref{eq:calibration_anchor}. We have shown strong autocorrelation in the data with a cyclic pattern that peaks every 24 hours. \\
 We have seen that the partial autocorrelation is strong for 3 lags and can be interpreted as 1 lag with a less positive value, as in the plot. \\
 In the data analytics, we have seen strong indications of a difference in the behaviour of the office between off days and workdays,
 and that people are present from 8-17 in Room 15.

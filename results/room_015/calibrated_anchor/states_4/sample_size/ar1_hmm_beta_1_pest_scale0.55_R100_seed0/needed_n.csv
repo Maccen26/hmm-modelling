@@ -1,0 +1,10 @@
+test,label,n_80,weeks_80,power_room
+X2,p depends on state,10,3.630952380952381,1.0
+D_0,state 0 differs from the rest,15,5.52889880952381,1.0
+D_1,state 1 differs from the rest,10,3.630952380952381,1.0
+D_2,state 2 differs from the rest,145,55.79208333333333,0.24
+D_3,state 3 differs from the rest,20,7.536934523809523,0.99
+z_1,opt1 width > 0,20,7.536934523809523,0.97
+z_2,opt2 (comfort band) width > 0,20,7.536934523809523,0.992
+z_3,opt3 width > 0,20,7.536934523809523,0.992
+bands_all,all bands distinguishable,25,9.487053571428572,0.962

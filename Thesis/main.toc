@@ -7,27 +7,26 @@
 \contentsline {section}{\numberline {2.1}Data Description}{2}{section.0.2.1}%
 \contentsline {section}{\numberline {2.2}Summary Statistics}{2}{section.0.2.2}%
 \contentsline {section}{\numberline {2.3}Calibration of Data}{4}{section.0.2.3}%
-\contentsline {subsection}{\numberline {2.3.1}Causal anchor baseline}{4}{subsection.0.2.3.1}%
-\contentsline {section}{\numberline {2.4}Descriptive Analytics}{5}{section.0.2.4}%
-\contentsline {section}{\numberline {2.5}Summary}{7}{section.0.2.5}%
+\contentsline {section}{\numberline {2.4}Descriptive Analytics}{4}{section.0.2.4}%
+\contentsline {section}{\numberline {2.5}Summary}{6}{section.0.2.5}%
 \contentsline {chapter}{\numberline {3}Theory}{8}{chapter.0.3}%
-\contentsline {section}{\numberline {3.1}Modelling $\text {CO}_2$ dynamics}{8}{section.0.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}The underlying physical model \& assumptions}{8}{subsection.0.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}The ODE as a diffusion Process (Ornstein-Uhlenbeck)}{9}{subsection.0.3.1.2}%
-\contentsline {subsection}{\numberline {3.1.3}Properties of the Ornstein-Uhlenbeck process}{10}{subsection.0.3.1.3}%
-\contentsline {section}{\numberline {3.2}Hidden Markov Model (HMM) theory}{10}{section.0.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}HMM Models}{10}{subsection.0.3.2.1}%
-\contentsline {subsubsection}{General Theory}{10}{subsubsection*.9}%
-\contentsline {subsubsection}{HMM(1)-Model}{11}{subsubsection*.10}%
-\contentsline {subsubsection}{HMM($\beta , 1$)-model}{11}{subsubsection*.11}%
-\contentsline {subsubsection}{AR(1)-HMM(1)}{12}{subsubsection*.12}%
-\contentsline {subsubsection}{AR(1)-HMM($\beta , 1$)}{12}{subsubsection*.13}%
-\contentsline {subsection}{\numberline {3.2.2}Likelihood}{12}{subsection.0.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Backward Sampling}{13}{subsection.0.3.2.3}%
-\contentsline {paragraph}{Corrected derivation.}{13}{paragraph*.14}%
-\contentsline {subsection}{\numberline {3.2.4}Model Diagnostics}{14}{subsection.0.3.2.4}%
-\contentsline {subsubsection}{Goodness-of-fit}{14}{subsubsection*.15}%
-\contentsline {subsubsection}{Test Statistics for Comparison}{14}{subsubsection*.16}%
+\contentsline {section}{\numberline {3.1}Physical model of $\text {CO}_2$ dynamics}{8}{section.0.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Mass-balance model and assumptions}{8}{subsection.0.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Stochastic extension: the Ornstein--Uhlenbeck process}{9}{subsection.0.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Discretisation to an AR(1) process}{10}{subsection.0.3.1.3}%
+\contentsline {section}{\numberline {3.2}Hidden Markov models}{10}{section.0.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Model structure}{10}{subsection.0.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Homogeneous HMM: HMM(1)}{11}{subsection.0.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Covariate-dependent transitions: HMM($\beta , 1$)}{11}{subsection.0.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Autoregressive emissions: AR(1)-HMM(1)}{12}{subsection.0.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Combined model: AR(1)-HMM($\beta , 1$)}{12}{subsection.0.3.2.5}%
+\contentsline {section}{\numberline {3.3}Inference}{12}{section.0.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Likelihood evaluation by the forward algorithm}{12}{subsection.0.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Backward sampling of state paths}{13}{subsection.0.3.3.2}%
+\contentsline {paragraph}{Corrected derivation.}{13}{paragraph*.9}%
+\contentsline {section}{\numberline {3.4}Model checking and comparison}{14}{section.0.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Pseudo-residuals}{14}{subsection.0.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Information criteria and likelihood ratio test}{14}{subsection.0.3.4.2}%
 \contentsline {chapter}{\numberline {4}Methodology}{16}{chapter.0.4}%
 \contentsline {section}{\numberline {4.1}Coding environment}{16}{section.0.4.1}%
 \contentsline {section}{\numberline {4.2}Class Design}{17}{section.0.4.2}%
@@ -42,9 +41,11 @@
 \contentsline {subsection}{\numberline {5.3.1}State dynamics}{24}{subsection.0.5.3.1}%
 \contentsline {subsection}{\numberline {5.3.2}Feedback by state}{25}{subsection.0.5.3.2}%
 \contentsline {section}{\numberline {5.4}Summary}{25}{section.0.5.4}%
-\contentsline {chapter}{\numberline {6}Simulation Study}{26}{chapter.0.6}%
+\contentsline {chapter}{\numberline {6}Thermal Comfort Curve Analysis}{26}{chapter.0.6}%
+\contentsline {section}{\numberline {6.1}Sample size determination}{26}{section.0.6.1}%
+\contentsline {section}{\numberline {6.2}Estimation of Thermal Comfort Curve for Room 15}{26}{section.0.6.2}%
 \contentsline {chapter}{\numberline {7}Discussion}{27}{chapter.0.7}%
 \contentsline {chapter}{\numberline {8}Conclusion}{28}{chapter.0.8}%
 \contentsline {chapter}{\numberline {9}Future Work}{29}{chapter.0.9}%
-\contentsline {chapter}{Bibliography}{31}{chapter*.28}%
+\contentsline {chapter}{Bibliography}{31}{chapter*.21}%
 \contentsline {chapter}{\numberline {A}Proof of the AR(1) representation}{33}{appendix.A}%
