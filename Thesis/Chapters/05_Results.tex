@@ -55,9 +55,18 @@ that the models follow the same structure.
 \input{Tables/params_working_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
 \subsection{Natural Parameters}
 \input{Tables/params_emission_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
-\input{Tables/params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
-%TO DO: Write up 
+We transform from working to natural parameters from the methods defined in ["MISSING REFERENCE TO THEORU"],
+and we use the method of finding the standard errors as desbibed in ["MISSING REFERENCE"]. \\
+From the table, we denotes from the Wald CI that each state has some uniqie parameters compared to the rest of the states. \\
+State 1 has a signingiant lower mean and state 4 has a significant higher mean. State 2 and 3 has the exact same 
+mean, but a significant different standard deviation and AR coeficient. This tells us that the state 3 has a much more 
+dense distribution around its mean, and that state 2 has a much more fat distribution. 
 
+\input{Tables/params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
+From the transition matrix in Table~\ref{tab:params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4}, 
+we see that some of the coefifficent does not make any difference. For the base tranision probberbilities, where
+$x_t = 0$, we see that the proberbility of tranisition from $S_1 \rightarrow S_1$, the Wald CI is only higher in the off day. 
+Working day covariates does not have signifccant difference. 
 \section{State Characterization}
 In this section we will look at the states and their parameters and give our interprotebility of the states. Here after, we will 
 show some state dynamics by monte carlo simulation of the observed emission seqience. 
