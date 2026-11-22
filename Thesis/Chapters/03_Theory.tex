@@ -1,20 +1,20 @@
 \chapter{Theory}
-In this chapter, a ODE of the physical model of the $\text{CO}_2$ dynamics will be presented and
-how the process is descibed as a stochastic differential equation (SDE), where noise has been added to the system. \\
-Given the presented SDE, it will be shown that the process can be desbribed as 
+In this chapter, an ODE of the physical model of the $\text{CO}_2$ dynamics will be presented, along with
+how the process is described as a stochastic differential equation (SDE), where noise has been added to the system. \\
+Given the presented SDE, it will be shown that the process can be described as
 a discrete-time AR(1) process, where the production rate of the occupants in the room is modelled as a function of the occupancy state of the room. \\
-Hereafter, the generel theory of the hidden markov models (HMM) will be presented along
-with the inference algorithms used in this project. 
+Hereafter, the general theory of hidden Markov models (HMMs) will be presented along
+with the inference algorithms used in this project.
 
 
 \section{Modelling $\text{CO}_2$ dynamics}
-This subsection present the underlying physical model of the $\text{CO}_2$ dynamics of a room 
-and show that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
+This subsection presents the underlying physical model of the $\text{CO}_2$ dynamics of a room
+and shows that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
 can be modelled as a function of the occupancy state of the room. 
 
 \subsection{The underlying physical model \& assumptions} %Different name for this subsection
-Due to $\text{CO}_2$ does not decay by itself, 
-the perfect mixtured mass balance model of a room (\cite{batterman2017}; \cite{wang1999})
+Due to $\text{CO}_2$ not decaying by itself,
+the perfectly mixed mass balance model of a room \parencite{batterman2017, wang1999}
 is given as a first-order ordinary differential equation (ODE) as
 \begin{equation}
     V \frac{d C_{\text{indoor}}(t)}{dt} = G(t) + Q \left( C_{\text{outdoor}}(t) - C_{\text{indoor}}(t) \right),
@@ -51,12 +51,12 @@ production rate (ppm$\cdot$h$^{-1}$) and $\alpha$ is the air change rate (h$^{-1
 i.e.\ the fraction of excess $\text{CO}_2$ ventilated out per hour.
 \bigskip
 
-The assumptions in \ref{eq:mass-balance}, and therefore in \ref{eq:ODE}, are that
+The assumptions in \cref{eq:mass-balance}, and therefore in \cref{eq:ODE}, are that
 \begin{itemize}
-    \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This ensures that the sensors are not biased by location. 
-    \item There is no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room. 
+    \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This ensures that the sensors are not biased by location.
+    \item There are no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room.
 \end{itemize}
-However, it's important to note that the model in \ref{eq:ODE} is a 
+However, it is important to note that the model in \cref{eq:ODE} is a
 simplification of the real-world $\text{CO}_2$ dynamics of a room, and that 
 there are many factors that can affect the $\text{CO}_2$ levels in a room, 
 such as the number of occupants, the activity level of the occupants, 
@@ -69,39 +69,39 @@ at time $t$, then we can model the production rate as
 \begin{equation}
     P(t) = \beta_{S(t)},
 \end{equation}
-where $\beta_{S(t)}$ is the production rate of the occupants in the room,
+where $\beta_{S(t)}$ is the production rate of the occupants in the room.
 \bigskip
 
 
-One of the main limitations of the model is that it does not assume noise in the system, which is invenatiable as we use sensors. \\
-Therefore, the next step to make the model more realistics is to add noise to the system in form of a stochastic differential equation (SDE), which will be presented in the next subsection.
+One of the main limitations of the model is that it does not assume noise in the system, which is inevitable as we use sensors. \\
+Therefore, the next step to make the model more realistic is to add noise to the system in the form of a stochastic differential equation (SDE), which will be presented in the next subsection.
 
 \subsection{The ODE as a diffusion Process (Ornstein-Uhlenbeck)}
-As previous described, the model in \ref{eq:ODE} desvibe the dynamics of the $\text{CO}_2$ in a room, 
+As previously described, the model in \cref{eq:ODE} describes the dynamics of the $\text{CO}_2$ in a room,
 but it does not take into account the noise in the system. \\
-By adding noise to the system in form of a linear diffusion tern with constant diffusion coefficient $\sigma$, 
+By adding noise to the system in the form of a linear diffusion term with constant diffusion coefficient $\sigma$,
 we can write the model as a stochastic differential equation (SDE) as
 \begin{equation}
-    d \tilde{C(t)} = (P(t) - \alpha \tilde{C(t)}) d t + \sigma d W(t),
+    \mathrm{d} \tilde{C}(t) = \left(P(t) - \alpha \tilde{C}(t)\right) \mathrm{d}t + \sigma \, \mathrm{d}W(t),
     \label{eq:sde}
 \end{equation}
 where $W(t)$ is a standard Brownian motion. \\
-\ref{eq:sde} is regornized as an Ornstein-Uhlenbeck process, 
-which is a mean-reverting process, where the process tends to oscillate 
-around some equilibrium state (chap. 1.13.1, \cite{iacus2008}) \\
+\Cref{eq:sde} is recognised as an Ornstein-Uhlenbeck process,
+which is a mean-reverting process, where the process tends to oscillate
+around some equilibrium state \parencite[Sec.~1.13.1]{iacus2008}. \\
 \bigskip
 
-It is important to stress that the noise term in \ref{eq:sde} was 
+It is important to stress that the noise term in \cref{eq:sde} was
 assumed to be a linear diffusion term with constant diffusion coefficient $\sigma$,
-as this is the simpelst noise to add to the system. However, one could also add
-a non-linear difussion term, where the diffusion coefficient is a function of the state of the system. 
-This is however out of the scope of this project, as this would require more
-in depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. \\
+as this is the simplest noise to add to the system. However, one could also add
+a non-linear diffusion term, where the diffusion coefficient is a function of the state of the system.
+This is, however, out of the scope of this project, as this would require more
+in-depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. \\
 \\
-Next we show that, sampled at a fixed time step, the SDE in \ref{eq:sde} is a discrete-time AR(1) process.
+Next, we show that, sampled at a fixed time step, the SDE in \cref{eq:sde} is a discrete-time AR(1) process.
 
 \subsection{Properties of the Ornstein-Uhlenbeck process}
-Since \ref{eq:sde} is an Ornstein-Uhlenbeck process, its solution is known in closed form
+Since \cref{eq:sde} is an Ornstein-Uhlenbeck process, its solution is known in closed form
 \parencite[Sec.~1.13.1]{iacus2008}. Sampling it with a constant time step $\Delta t$ and holding
 $P$ constant over the step gives the recursion
 \begin{equation}
@@ -116,10 +116,10 @@ where $\mu$ is the equilibrium level the process reverts to, and the noise terms
     \sim \mathcal{N}\!\left(0,\ \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)\right)
 \end{equation}
 have mean zero, constant variance and are uncorrelated over time.
-\ref{eq:ar1} is therefore an AR(1) process with autoregressive coefficient
+\Cref{eq:ar1} is therefore an AR(1) process with autoregressive coefficient
 $\phi = e^{-\alpha \Delta t}$. The full derivation is given in Appendix~\ref{app:ar1-proof}.\\
 \bigskip
-As $\alpha > 0$, from (chapter 1.13.1 \cite{iacus2008}) it is known, that the process is ergodic the distribution of $\tilde{C}_t$ is 
+As $\alpha > 0$, it is known from \textcite[Sec.~1.13.1]{iacus2008} that the process is ergodic, and the distribution of $\tilde{C}_t$ is
 \begin{equation}
     \tilde{C}_t \sim \mathcal{N}\!\left(\frac{P}{\alpha},\ \frac{\sigma^2}{2\alpha}\right),
 \end{equation}
@@ -129,28 +129,28 @@ which is the stationary distribution of the process. \\
 
 %% --------- HMMM ----------
 \section{Hidden Markov Model (HMM) theory} 
-This section will present the underlying models and the theory behind it 
-that models the diffusion process. Here to, inference algorithms and 
-analysis methods will be presented. 
+This section will present the underlying models and the theory behind them
+that model the diffusion process. Here too, inference algorithms and
+analysis methods will be presented.
 
 \subsection{HMM Models}
-\subsubsection{Generel Theory}
+\subsubsection{General Theory}
 %% Write some generel theory on HMM
-Hidden markov models are markov chains where the underlying states are hidden and only a 
+Hidden Markov models are Markov chains where the underlying states are hidden and only a
 random variable that is dependent on the underlying state is observed. \\
-This can be described as a markov chain with a set of hidden states $S = \{s_1, s_2, ..., s_N\}$ 
-and a set of observations $O = \{o_1, o_2, ..., o_M\}$. 
+This can be described as a Markov chain with a set of hidden states $S = \{s_1, s_2, \dots, s_N\}$
+and a set of observations $O = \{o_1, o_2, \dots, o_M\}$.
 The transition between the hidden states is governed by a transition matrix $\Gamma$ 
 and the observations are generated by an emission matrix $B$. 
 The initial state distribution is given by $\pi$. 
-The HMM stucture can then debsrib the emissions as 
+The HMM structure can then describe the emissions as
 \begin{equation}
-    P(O_t | S_t) = B_{S_t, O_t},
+    P(O_t \mid S_t) = B_{S_t, O_t},
 \end{equation}
 where $B_{S_t, O_t}$ is the probability of observing $O_t$ given the hidden state $S_t$. 
 The transition between the hidden states is given by
 \begin{equation}
-    P(S_t | S_{t-1}) = \Gamma_{S_{t-1}, S_t},
+    P(S_t \mid S_{t-1}) = \Gamma_{S_{t-1}, S_t},
 \end{equation}
 where $\Gamma_{S_{t-1}, S_t}$ is the probability of transitioning from hidden state $S_{t-1}$ to hidden state $S_t$. 
 The initial state distribution is given by
@@ -167,7 +167,7 @@ $\Gamma \in \mathbb{R}^{n \times n}$ is the transition matrix, $\mu \in \mathbb{
 mean vector of the Gaussian emission density and $\sigma \in \mathbb{R}^{n}$ is the standard
 deviation vector of the Gaussian emission density. Because the Markov chain is finite,
 discrete and homogeneous, a unique strictly positive stationary distribution $\delta$ exists
-(chapter 1.3.2, \cite{zucchini2016}) and is given by
+\parencite[Sec.~1.3.2]{zucchini2016} and is given by
 \begin{equation}
     \delta = \mathbf{1}^{T} \left( I - \Gamma + E \right)^{-1},
     \label{eq:stationary}
@@ -219,20 +219,20 @@ $\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are thus th
 that are optimised during the fitting process.
 \subsubsection{HMM($\beta, 1$)-model} 
 In this model, we let the transition probabilities depend on covariates which can include
-time-of-day, weekday, type of day and etc. The motivation for this is the assumption, 
-that the occupancy state of the room is dependent 
+time-of-day, weekday, type of day, etc. The motivation for this is the assumption
+that the occupancy state of the room is dependent
 on the time-of-day and weekday, as the room is used for work.  \\
 
-Let $x_t \in \mathbb{R}^{p}$ be a vector of $p$ covariates at time $t$. 
-The transition logits is then defined as
+Let $x_t \in \mathbb{R}^{p}$ be a vector of $p$ covariates at time $t$.
+The transition logits are then defined as
 \begin{equation}
     \xi_{ij}(t) = \beta_{ij}^{T} x_t + \tilde{\xi}_{ij}, \qquad i \neq j,
 \end{equation}
 where $\beta_{ij} \in \mathbb{R}^{p}$ is a vector of regression 
 coefficients for the transition from state $i$ to state $j$ and 
 $\tilde{\xi}_{ij}$ is the intercept term. 
-The transition matrix is then obtained as in \ref{eq:gamma-reparam} and we now need denote
-the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j|S_{t-1} = i)$. 
+The transition matrix is then obtained as in \cref{eq:gamma-reparam}, and we now need to denote
+the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i)$.
 
 
 \subsubsection{AR(1)-HMM(1)}
@@ -265,8 +265,8 @@ where the transition probabilities depend on covariates as in
 and the emission distribution is autoregressive.
 
 \subsection{Likelihood}
-Several methods can be used to estimate the parameters of a HMM, where at 
-some of the more common methods are the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\ 
+Several methods can be used to estimate the parameters of an HMM, where
+one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
 In this project, we will however use the method of maximum likelihood estimation (MLE) 
 to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
 
@@ -315,21 +315,21 @@ which gives the marginal likelihood of observing $y_t$ given the previous observ
 %% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 
 \subsection{Backward Sampling} 
-When sampling a path from a hidden markov model, we can use the method 
-defined in (chapter. 7.2.1, \cite{zucchini2016}) and we will call it backward sampling. \\
-We want to sample a path of the hidden states $S_{1:T}$ given the observations 
-$O_{1:T}$ and the model parameters $\theta$. This method is very useful, as it 
-does not depend on the inital state distribution $\pi$, which is often unknown. \\
-Let $u_{t|t} = P(S_t | O_{1:t}, \theta)$ be the filtered state distribution. 
-We can then sample the last state $S_T$ from the filtered distribution $u_{T|T}$. 
-We can then sample the previous state $S_{T-1}$ from the condition distribution
+When sampling a path from a hidden Markov model, we can use the method
+defined in \textcite[Sec.~7.2.1]{zucchini2016}, and we will call it backward sampling. \\
+We want to sample a path of the hidden states $S_{1:T}$ given the observations
+$O_{1:T}$ and the model parameters $\theta$. This method is very useful, as it
+does not depend on the initial state distribution $\pi$, which is often unknown. \\
+Let $u_{t|t} = P(S_t \mid O_{1:t}, \theta)$ be the filtered state distribution.
+We can then sample the last state $S_T$ from the filtered distribution $u_{T|T}$.
+We can then sample the previous state $S_{T-1}$ from the conditional distribution
 
 \begin{subequations}
 \begin{align}
-    P(S_{t-1}=j | S_t = i, O_{1:t}, \theta) &= 
-    \frac{P(S_{t-1}=j, S_t=i | O_{1:t}, \theta )}{P(S_t=i | O_{1:t}, \theta)} \\
-    &=\frac{P(S_{t} = i|S_{t-1} = j, \theta) P(S_{t-1} = j | O_{1:t}, \theta)}{P(S_t=i | O_{1:t}, \theta)}\\
-    &=\frac{\Gamma^t_{ji} u_{t-1|t-1}(j)}{u_{t|t}(i)}
+    P(S_{t-1}=j \mid S_t = i, O_{1:t}, \theta) &=
+    \frac{P(S_{t-1}=j, S_t=i \mid O_{1:t}, \theta )}{P(S_t=i \mid O_{1:t}, \theta)} \\
+    &=\frac{P(S_{t} = i \mid S_{t-1} = j, \theta)\, P(S_{t-1} = j \mid O_{1:t}, \theta)}{P(S_t=i \mid O_{1:t}, \theta)}\\
+    &=\frac{\Gamma^t_{ji}\, u_{t-1|t-1}(j)}{u_{t|t}(i)}
 \end{align}
 \end{subequations}
 
@@ -363,8 +363,8 @@ although this influence decays for large $t$.
 
 \subsection{Model Diagnostics}
 \subsubsection{Goodness-of-fit}
-For asessing the goodnes of fit, we will use the pseudo-residuals 
-defined in (chapter 7.3, \cite{zucchini2016}). The pseudo-residuals are defined as
+For assessing the goodness-of-fit, we will use the pseudo-residuals
+defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined as
 \begin{equation}
     r_t = \Phi^{-1}\left(F_{t|t-1}(y_t \mid y_{1:t-1})\right),
 \end{equation}
@@ -377,7 +377,7 @@ the goodness-of-fit of the model by checking
 if they are normally distributed and uncorrelated. 
 
 \subsubsection{Test Statistics for Comparison}
-For comparing the goodnes-of-fit of different models, 
+For comparing the goodness-of-fit of different models,
 we will use the Akaike information criterion (AIC), 
 the Bayesian information criterion (BIC) and the Likelihood ratio test (LRT).
 Let $\hat{L}$ denote the maximised likelihood of a model, $k$ the number of

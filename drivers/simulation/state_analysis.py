@@ -7,8 +7,10 @@ For each state s, over the sampled paths:
     time share  share of all time steps the path spends in s
 
 Each is computed per path; the CSV gives the mean over paths and the 2.5-97.5 % range across paths. The
-thesis table (`Thesis/Tables/state_summary_<room>_<tag>_<model>_K<K>.tex`) puts the path means next to the
-fitted state mean mu, standard deviation sigma and AR coefficient phi.
+drift quantiles are instead taken over all drifts pooled into one series: every step t >= 2 of every path that
+is in s contributes its y_t - y_{t-1}. The thesis table (`Thesis/Tables/state_summary_<room>_<tag>_<model>_K<K>.tex`)
+gives the mean CO2, the mean drift (the mean over paths of each path's mean drift), the 25 % and 75 % quantiles
+of the pooled drifts and the time share.
 The daily profiles plot P(z_t = s | y_1:T) (the share of paths in s at t) averaged over the days by
 time of day, once for working days (working hours 08-17 shaded) and once for off days (weekends and
 Danish holidays, the model's off_day covariate).
@@ -26,13 +28,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from drivers.models.random_search import CHAIN, emission_summary
-from drivers.models.utils import PLOTS_DIR, TAG, fit_path, room_name
+from drivers.models.random_search import CHAIN
+from drivers.models.utils import PLOTS_DIR, TAG, room_name
 from drivers.simulation.sample_paths import paths_file
-from drivers.utils import load_model, save_thesis_table
+from drivers.utils import save_thesis_table
 
 WORK_START, WORK_END = 8, 17
 CHUNK = 5_000  # paths per chunk, so the (paths, T) boolean masks stay small
+DRIFT_QUANTILES = (0.25, 0.75)
 
 
 def per_path_stats(paths: np.ndarray, ys: np.ndarray, num_states: int) -> tuple[np.ndarray, ...]:
@@ -65,14 +68,32 @@ def summary_table(stats: dict[str, np.ndarray]) -> pd.DataFrame:
     return pd.DataFrame(cols, index=pd.Index(np.arange(1, k + 1), name="state"))
 
 
-def thesis_table(summary: pd.DataFrame, mu: np.ndarray, sigma: np.ndarray, phi: np.ndarray | None) -> pd.DataFrame:
-    """Fitted emission parameters next to the path means, for the thesis."""
-    table = pd.DataFrame({"State": summary.index.astype(str), "$\\mu$ (ppm)": mu, "$\\sigma$ (ppm)": sigma})
-    if phi is not None:
-        table["$\\phi$"] = phi
-    return table.assign(**{"Mean CO$_2$ (ppm)": summary["co2_mean"].to_numpy(),
-                           "Drift (ppm / 30 min)": [f"${d:.2f}$" for d in summary["drift_mean"]],  # math minus
-                           "Time in state (%)": 100 * summary["time_share_mean"].to_numpy()})
+def pooled_drift_quantiles(ys: np.ndarray, occupancy: np.ndarray, n_paths: int) -> pd.DataFrame:
+    """(K, Q) quantiles of all drifts y_t - y_{t-1} (t >= 2) pooled over the paths, one row per state.
+
+    The pooled series for s holds y_t - y_{t-1} once for every path in s at t, so it is the drifts weighted by
+    the path counts; the quantile is the smallest drift whose cumulative count reaches q of the total
+    (np.quantile's "inverted_cdf" on the expanded series).
+    """
+    dy = np.diff(ys)
+    order = np.argsort(dy)
+    counts = np.rint(occupancy[1:] * n_paths)[order]  # (T-1, K) paths in s at each step, in drift order
+    cum = np.cumsum(counts, axis=0)
+    rows = [dy[order][np.searchsorted(cum[:, s], np.asarray(DRIFT_QUANTILES) * cum[-1, s])]
+            for s in range(occupancy.shape[1])]
+    return pd.DataFrame(rows, columns=[f"drift_q{round(100 * q)}" for q in DRIFT_QUANTILES],
+                        index=pd.Index(np.arange(1, len(rows) + 1), name="state"))
+
+
+def thesis_table(summary: pd.DataFrame) -> pd.DataFrame:
+    """Path means and pooled drift quantiles, for the thesis; drifts as math strings to get a proper minus."""
+    drift = lambda col: [f"${d:.2f}$" for d in summary[col]]
+    return pd.DataFrame({"State": summary.index.astype(str),
+                         "Mean CO$_2$ (ppm)": summary["co2_mean"].to_numpy(),
+                         "Mean drift (ppm / 30 min)": drift("drift_mean"),
+                         **{f"Drift $Q_{{{q:g}}}$ (ppm / 30 min)": drift(f"drift_q{round(100 * q)}")
+                            for q in DRIFT_QUANTILES},
+                         "Time in state (%)": 100 * summary["time_share_mean"].to_numpy()})
 
 
 def model_label(slug: str) -> str:
@@ -118,22 +139,23 @@ if __name__ == "__main__":
     print(f"{args.model} — {room}, K={args.states}: {len(paths)} paths over {paths.shape[1]} bins from {src}")
 
     co2, drift, share, occupancy = per_path_stats(paths, ys, args.states)
-    summary = summary_table({"co2": co2, "drift": drift, "time_share": share})
+    summary = summary_table({"co2": co2, "drift": drift, "time_share": share}) \
+        .join(pooled_drift_quantiles(ys, occupancy, len(paths)))
     print(summary.round(3).to_string())
     out = os.path.join(os.path.dirname(src), f"{args.model}_state_summary.csv")
     summary.to_csv(out)
     print(f"Saved {out}")
 
-    params = load_model(fit_path(room, args.states, args.model, args.tag))["result"].params
     room_title = room.replace("_", " ").title()  # room_015 -> Room 015
     name = f"state_summary_{room}_{args.tag}_{args.model}_K{args.states}"
     n_paths = f"{len(paths):,}".replace(",", "{,}")  # 100{,}000: a bare comma in math-free text gets odd spacing
     print("Saved", save_thesis_table(
-        thesis_table(summary, *emission_summary(params)), name=name, label=f"tab:{name}", float_cols_4dp=["$\\phi$"],
-        caption=f"{room_title}: fitted state mean $\\mu$, standard deviation $\\sigma$ and AR(1) coefficient $\\phi$ "
-                f"of the {model_label(args.model)} with $K={args.states}$ states, next to the mean observed CO$_2$, "
-                f"the mean drift $y_t - y_{{t-1}}$ and the share of time spent in each state, averaged over "
-                f"{n_paths} state paths sampled from $P(z_{{1:T}} \\mid y_{{1:T}})$ over the whole series.",
+        thesis_table(summary), name=name, label=f"tab:{name}",
+        caption=f"{room_title}: mean observed CO$_2$, drift $y_t - y_{{t-1}}$ and share of time spent in each state "
+                f"of the {model_label(args.model)} with $K={args.states}$ states, from {n_paths} state paths sampled "
+                f"from $P(z_{{1:T}} \\mid y_{{1:T}})$ over the whole series. The mean CO$_2$, mean drift and time "
+                f"share are the mean over paths of each path's value. The quantiles $Q_{{0.25}}$ and $Q_{{0.75}}$ "
+                f"are taken over the drifts of all paths pooled into one series.",
         max_width=True))
 
     plot_dir = os.path.join(PLOTS_DIR, room, args.tag, f"states_{args.states}", "simulation")

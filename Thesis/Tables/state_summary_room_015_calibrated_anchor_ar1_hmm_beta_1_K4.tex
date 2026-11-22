@@ -1,17 +1,17 @@
 \begin{table}[ht]
 \centering
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccc}
 \hline
-State & $\mu$ (ppm) & $\sigma$ (ppm) & $\phi$ & Mean CO$_2$ (ppm) & Drift (ppm / 30 min) & Time in state (\%) \\
+State & Mean CO$_2$ (ppm) & Mean drift (ppm / 30 min) & Drift $Q_{0.25}$ (ppm / 30 min) & Drift $Q_{0.75}$ (ppm / 30 min) & Time in state (\%) \\
 \hline
-1 & 480.29 & 20.38 & 0.9571 & 642.86 & $-7.29$ & 51.71 \\
-2 & 598.96 & 273.62 & 0.8249 & 1566.02 & $-194.04$ & 4.81 \\
-3 & 598.96 & 28.17 & 0.9305 & 1071.47 & $-38.06$ & 29.29 \\
-4 & 4618.65 & 150.39 & 0.9428 & 1822.40 & $169.86$ & 14.20 \\
+1 & 642.86 & $-7.29$ & $-21.36$ & $8.67$ & 51.71 \\
+2 & 1566.02 & $-194.04$ & $-339.36$ & $37.50$ & 4.81 \\
+3 & 1071.47 & $-38.06$ & $-62.67$ & $-6.00$ & 29.29 \\
+4 & 1822.40 & $169.86$ & $63.33$ & $268.33$ & 14.20 \\
 \hline
 \end{tabular}
 \end{adjustbox}
-\caption{Room 015: fitted state mean $\mu$, standard deviation $\sigma$ and AR(1) coefficient $\phi$ of the AR(1)-HMM($\beta$,1) with $K=4$ states, next to the mean observed CO$_2$, the mean drift $y_t - y_{t-1}$ and the share of time spent in each state, averaged over 100{,}000 state paths sampled from $P(z_{1:T} \mid y_{1:T})$ over the whole series.}
+\caption{Room 015: mean observed CO$_2$, drift $y_t - y_{t-1}$ and share of time spent in each state of the AR(1)-HMM($\beta$,1) with $K=4$ states, from 100{,}000 state paths sampled from $P(z_{1:T} \mid y_{1:T})$ over the whole series. The mean CO$_2$, mean drift and time share are the mean over paths of each path's value. The quantiles $Q_{0.25}$ and $Q_{0.75}$ are taken over the drifts of all paths pooled into one series.}
 \label{tab:state_summary_room_015_calibrated_anchor_ar1_hmm_beta_1_K4}
 \end{table}

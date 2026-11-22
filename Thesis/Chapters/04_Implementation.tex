@@ -1,7 +1,7 @@
-\chapter{Implementation}
-This section provides an overview of what envoriment was used to implement the
-models, what libraries were used and why, how the classes were designed.
-\section{Coding envoriment}
+\chapter{Methodology}
+This section provides an overview of what environment was used to implement the
+models, what libraries were used and why, and how the classes were designed.
+\section{Coding environment}
 The implementation of the HMM models is in Python 3.11 and is split into two
 parts: a model library, which contains the HMMs themselves, and a set of
 scripts that clean the data, fit the models and evaluate them. The model
@@ -57,7 +57,7 @@ the same versions of the libraries that produced them.
 
 \section{Class Design}
 The class design of the model library is shown in \cref{fig:class_design}.
-An HMM is described by a \texttt{HMMParams} object, which is composed of a
+An HMM is described by an \texttt{HMMParams} object, which is composed of a
 transition model and an emission model. Both are given as abstract base classes,
 \texttt{BaseTransition} and \texttt{BaseEmission}, with the concrete models
 from the theory chapter implemented as subclasses. Because the HMM is
@@ -82,4 +82,9 @@ classes.
     dashed arrows a call. Abstract classes are written in italics.}
     \label{fig:class_design}
 \end{figure}
+
+
+\section{Model setup}
+
+\section{Simulation setup} 
 

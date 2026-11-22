@@ -633,6 +633,12 @@ INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_dai
 INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_daily_states_off_days.png
 INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_daily_states_off_days.png
 INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_daily_states_off_days.png
+INPUT ./Plots/results/room_015_ar1_hmm_beta_feedback_states.tex
+INPUT ./Plots/results/room_015_ar1_hmm_beta_feedback_states.tex
+INPUT Plots/results/room_015_ar1_hmm_beta_feedback_states.tex
+INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_feedback_given_state.png
+INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_feedback_given_state.png
+INPUT ../plots/room_015/calibrated_anchor/states_4/simulation/ar1_hmm_beta_1_feedback_given_state.png
 INPUT ./Chapters/06_Simulation.tex
 INPUT ./Chapters/06_Simulation.tex
 INPUT Chapters/06_Simulation.tex

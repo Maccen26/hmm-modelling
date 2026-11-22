@@ -10,7 +10,15 @@ uv run python -m drivers.simulation.state_analysis ar1_hmm_beta_1 --room 15 -K 4
 ```
 
 - `sample_paths` runs the forward filter over the whole observed series (train + val + test) and draws state paths from P(z_1:T | y_1:T) with `BackwardSampler`. It saves the paths, CO2, timestamps and off-day flag to `results/.../states_{K}/simulation/{model}_paths.npz` (about 37 MB for 100,000 paths).
-- `state_analysis` reads that file. For each state it computes the mean observed CO2, the mean drift y_t - y_{t-1} and the share of time spent in the state, per path (mean and 2.5-97.5 % range across paths) → `{model}_state_summary.csv`. The path means, next to the fitted μ, σ and φ, also go to `Thesis/Tables/state_summary_<room>_<tag>_<model>_K<K>.tex`. It also plots the mean state probability over the day, for working days (working hours shaded) and for off days → `plots/.../states_{K}/simulation/`.
+- `state_analysis` reads that file. For each state it computes the mean observed CO2, the mean drift y_t - y_{t-1} and the share of time spent in the state, per path (mean and 2.5-97.5 % range across paths) → `{model}_state_summary.csv`. The path means, with the 25 % and 75 % quantiles of the drifts of all paths pooled into one series, also go to `Thesis/Tables/state_summary_<room>_<tag>_<model>_K<K>.tex`. It also plots the mean state probability over the day, for working days (working hours shaded) and for off days → `plots/.../states_{K}/simulation/`.
+
+## Feedback by state
+
+```bash
+uv run python -m drivers.simulation.feedback_states ar1_hmm_beta_1 --room 15 -K 4
+```
+
+`feedback_states` reads the same paths file and bins the room's raw occupant feedback onto the series. For each state and path it counts the feedback events in the state and P(feedback | state), the share of the path's steps in the state that received feedback. The mean and 2.5-97.5 % range across paths go to `{model}_feedback_given_state.csv`, and a bar plot (labelled with the feedback count per state) goes to `plots/.../states_{K}/simulation/{model}_feedback_given_state.png`.
 
 ## Feedback sample size
 

@@ -1,26 +1,26 @@
 \chapter{Model Results}
 % OUTLINE ONLY -- replace the comments with text.
-This chapter will present what type of model best predicts the data, and what amount of states
-best describe the data. We will then do a analysis of the behaviour of our choosen model
+This chapter will present what type of model best predicts the data, and what number of states
+best describes the data. We will then do an analysis of the behaviour of our chosen model.
 %Maybe just say that we will chose AR(1)-HMM(B,1) for 3 or 4 states
 
 \section{Model Selection \& Comparison}
-As desribed in experimental setup, we fit 4 models with a increasing order of complexity. \
+As described in the experimental setup, we fit 4 models with an increasing order of complexity.
 Each increase adds a new layer to the structure of how the model models the dynamics in the room.
 \input{Tables/model_comparison_room_015_calibrated_anchor_val_h6.tex}
-This table present the overall dynamics between the model complexities across all states. \\
-We see that across all states, that the test statics always favors the more complex models for states 3 and 4. 
-For state 6, thereis no statistics significant evidence, that HMM($\beta$) is better than the HMM model. We see that for state 5,6, 
-the AIC and BIC does not always imporve as well when we increse the model complexity, which is a indication that there is too many states
-in the models. If we look at the predictive metrics for the model AR(1)-HMM($\beta$), the predictive metrics is always better in the RMSE
-and MAPE metrics (except state 5 for MAPE). For this model, we see that all the most almost preforms the same in predictive metrics. \\
-But because we also weight interpretabiltiy of the parameters in our model, we will not chose state 5 and 6, as the BIC increases from the 4 states, 
-predictive metrics is just as good and there are some evidence agianst the model complexity choosen. For 3 and 4 states, the 
-predictive metrics are slightly betteer in the 3 states, but the AIC and BIC is better in the 4 state model. As there is amost a difference in 
+This table presents the overall dynamics between the model complexities across all states. \\
+We see that across all states, the test statistics always favour the more complex models for states 3 and 4.
+For state 6, there is no statistically significant evidence that HMM($\beta$) is better than the HMM model. We see that for states 5 and 6,
+the AIC and BIC do not always improve as well when we increase the model complexity, which is an indication that there are too many states
+in the models. If we look at the predictive metrics for the model AR(1)-HMM($\beta$), the predictive metrics are always better in the RMSE
+and MAPE metrics (except state 5 for MAPE). For this model, we see that almost all of them perform the same in predictive metrics. \\
+But because we also weight the interpretability of the parameters in our model, we will not choose states 5 and 6, as the BIC increases from the 4 states,
+the predictive metrics are just as good and there is some evidence against the chosen model complexity. For 3 and 4 states, the
+predictive metrics are slightly better for the 3 states, but the AIC and BIC are better for the 4 state model. As there is almost a difference of
 $\Delta \text{BIC} \approx 100$, there is evidence that this model explains the training data better. \\
 \bigskip
-Acorss all models, we will therefore go with state 4 AR(1)-HMM($\beta$) as this models 
-preforms almost the same on predictive metrics in the validation set
+Across all models, we will therefore go with the 4 state AR(1)-HMM($\beta$), as this model
+performs almost the same on predictive metrics in the validation set.
 
 \input{Plots/results/room_015_ar1_hmm_beta_residuals.tex}
 Figure~\ref{fig:room_015_ar1_hmm_beta_residuals} shows the QQ plot and the ACF of the one-step forecast
@@ -28,7 +28,7 @@ pseudo-residuals on the training set for $K=3$ (\ref{fig:room_015_ar1_hmm_beta_r
 $K=4$ (\ref{fig:room_015_ar1_hmm_beta_residuals_k4}). The ACF is shown for 48 lags, i.e.\ one day at
 30-minute resolution, so any unmodelled daily periodicity would show up as a spike near lag 48. \\
 For $K=3$ the QQ plot follows the line well in the centre, but the lower tail lies below it from
-roughly $-2.5$, so the model underestimates large negative forecast errors (sudden drops in CO$_2$).
+roughly $-2.5$, so the model underestimates large negative forecast errors (sudden drops in $\text{CO}_2$).
 For $K=4$ the points follow the line closely across the whole range, with only a single outlier in each tail. \\
 In both ACFs the most noticeable feature is a negative autocorrelation at lag 1, about $-0.12$ for $K=3$ and
 $-0.19$ for $K=4$. For $K=3$, lags 2--5 also lie slightly above the band, while for $K=4$ nearly all lags
@@ -36,18 +36,18 @@ beyond lag 1 are inside or at the edge of the band. With a pointwise 95\% band o
 outside the band are expected by chance, so apart from lag 1 the residuals are close to uncorrelated,
 and there is no remaining daily pattern at lag 48 in either model.\\
 \\
-Because both models preforms about the same on predictive metrics and both models captures the temporal structure 
-in the training data, we will weight the statistics test of BIC, that shows a sweetspot of 4 states. This is backed up by the
-QQ-plot in Fig.~\ref{fig:room_015_ar1_hmm_beta_residuals_k4} shows that the 4 states capture sudden drops for the model. 
+Because both models perform about the same on predictive metrics and both models capture the temporal structure
+in the training data, we will weight the statistical test of BIC, which shows a sweet spot of 4 states. This is backed up by the
+QQ-plot in Fig.~\ref{fig:room_015_ar1_hmm_beta_residuals_k4}, which shows that the 4 states capture sudden drops for the model.
 \bigskip
 
-To make a final comparison of the models, we will look a the test predictive metrics to check that the 
-models do indeed can be comapred. \\
+To make a final comparison of the models, we will look at the test predictive metrics to check that the
+models can indeed be compared. \\
 \input{Tables/test_metrics_room_015_calibrated_anchor.tex}
-In Figure ~\ref{tab:test_metrics_room_015_calibrated_anchor}, we see that the models still have the same beavhour. \\
-Adding Autoregressive structure improves predictive metrics a lot on short forecasts, but adding covariates improves forecqst on longer forecasts. \\
-The AR(1)-HMM($\beta$) is still the best for the 4 states, and it's slightlier worse that then K=3 states. We can therefore see in the predictive metrics, 
-that the models follow the same structure. 
+In \cref{tab:test_metrics_room_015_calibrated_anchor}, we see that the models still have the same behaviour. \\
+Adding autoregressive structure improves predictive metrics a lot on short forecasts, but adding covariates improves forecasts on longer forecasts. \\
+The AR(1)-HMM($\beta$) is still the best for the 4 states, and it is slightly worse than the $K=3$ states. We can therefore see in the predictive metrics
+that the models follow the same structure.
 
 \section{Working \& natural parameters}
 \subsection{Working parameters}
@@ -55,26 +55,29 @@ that the models follow the same structure.
 \input{Tables/params_working_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
 \subsection{Natural Parameters}
 \input{Tables/params_emission_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
-We transform from working to natural parameters from the methods defined in ["MISSING REFERENCE TO THEORU"],
-and we use the method of finding the standard errors as desbibed in ["MISSING REFERENCE"]. \\
-From the table, we denotes from the Wald CI that each state has some uniqie parameters compared to the rest of the states. \\
-State 1 has a signingiant lower mean and state 4 has a significant higher mean. State 2 and 3 has the exact same 
-mean, but a significant different standard deviation and AR coeficient. This tells us that the state 3 has a much more 
-dense distribution around its mean, and that state 2 has a much more fat distribution. 
+We transform from working to natural parameters with the methods defined in [\textcolor{red}{MISSING REFERENCE TO THEORY}],
+and we use the method of finding the standard errors as described in [\textcolor{red}{MISSING REFERENCE}]. \\
+From the table, we note from the Wald CI that each state has some unique parameters compared to the rest of the states. \\
+State 1 has a significantly lower mean and state 4 has a significantly higher mean. States 2 and 3 have the exact same
+mean, but a significantly different standard deviation and AR coefficient. This tells us that state 3 has a much more
+dense distribution around its mean, and that state 2 has a much more fat distribution.
 
 \input{Tables/params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
-From the transition matrix in Table~\ref{tab:params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4}, 
-we see that some of the coefifficent does not make any difference. For the base tranision probberbilities, where
-$x_t = 0$, we see that the proberbility of tranisition from $S_1 \rightarrow S_1$, the Wald CI is only higher in the off day. 
-Working day covariates does not have signifccant difference. 
+From the transition matrix in Table~\ref{tab:params_transition_room_015_calibrated_anchor_ar1_hmm_beta_1_K4},
+we see that some of the coefficients do not make any difference. For the base transition probabilities, where
+$x_t = 0$, we see that for the probability of transition from $S_1 \rightarrow S_1$, the Wald CI is only higher on the off day.
+Working day covariates do not have a significant difference.
 \section{State Characterization}
-In this section we will look at the states and their parameters and give our interprotebility of the states. Here after, we will 
-show some state dynamics by monte carlo simulation of the observed emission seqience. 
+In this section we will look at the states and their parameters and give our interpretation of the states. Hereafter, we will
+show some state dynamics by Monte Carlo simulation of the observed emission sequence.
 
 
 \subsection{State dynamics}
 \input{Tables/state_summary_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex}
 \input{Plots/results/room_015_ar1_hmm_beta_daily_states.tex}
+
+\subsection{Feedback by state}
+\input{Plots/results/room_015_ar1_hmm_beta_feedback_states.tex}
 
 
 \section{Summary}
