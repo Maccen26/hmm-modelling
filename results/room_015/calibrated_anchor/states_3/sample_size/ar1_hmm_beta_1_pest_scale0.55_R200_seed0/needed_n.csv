@@ -1,0 +1,5 @@
+test,label,n_80,weeks_80,power_room
+z_1,opt1 width > 0,20,6.989107142857144,0.998
+z_2,opt2 (comfort band) width > 0,20,6.989107142857144,0.985
+z_3,opt3 width > 0,20,6.989107142857144,0.984
+bands_all,all bands distinguishable,25,8.632083333333334,0.967

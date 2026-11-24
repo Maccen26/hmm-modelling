@@ -1,5 +1,5 @@
 """Simulation-based sample size for occupant feedback: how many votes before P(feedback | state) and the comfort curve
-can be told apart from their nulls.
+are estimated precisely, and the comfort-vote bands can be told apart.
 
 R datasets are simulated from a saved AR(1)-HMM, each until N_MAX votes. Every step gets a temperature
 T_t ~ U(15, 25), feedback f_t ~ Bernoulli(p[z_t]) and, if feedback is given, the vote is the bin of the perceived
@@ -7,20 +7,17 @@ temperature T_t + s·Logistic(0, 1) on the cut-points 17 | 19 | 21 | 23:
 
     opt0 (< 17) | opt1 (17-19) | opt2 (19-21, fine) | opt3 (21-23) | opt4 (> 23)
 
-The true p defaults to the P(feedback | state) estimated by drivers.simulation.feedback_states. R null datasets have
-the same overall vote rate but p_s = p_bar in every state. On the grid N = n_step, 2·n_step, ..., N_MAX each dataset is
-cut at its N-th vote (t <= t_N) and
+The true p defaults to the P(feedback | state) estimated by drivers.simulation.feedback_states. On the grid
+N = n_step, 2·n_step, ..., N_MAX each dataset is cut at its N-th vote (t <= t_N) and
 
     p_hat_s = sum_t f_t γ_t(s) / W_s, W_s = sum_t γ_t(s)    γ_t(s) = P(z_t = s | y_1:t_N), smoothed with the true model
-    X²      = sum_s W_s (p_hat_s - p_hat)² / (p_hat (1 - p_hat))      p_hat the pooled rate
-    D_s     = p_hat_s - p_hat_{-s}                                     the state against the γ-weighted others
     c, s    ordered-logit MLE (statsmodels OrderedModel) on the (T_t, vote_t) pairs of the first N votes
     z_k     = w_k / se(w_k)                                            w_k = c_{k+1} - c_k, the width of band opt_k
 
 The smoothing only uses the CO2 seen up to the N-th vote, as an experiment stopped there would.
 
-Power at N is the share of the datasets that reject at the 5 % level: X² and D_s against the quantiles of the null
-datasets at that N (one- and two-sided), z_k > 1.645. The N needed is the first N from which the power stays >= 80 %.
+Power at N is the share of the datasets with z_k > 1.645 (the band is wider than 0 at the 5 % level). The N needed is
+the first N from which the power stays >= 80 %.
 
     uv run python -m drivers.simulation.sample_size --room 15 -K 4
     uv run python -m drivers.simulation.sample_size --room 15 -K 4 --R 4 --n-max 30 --n-step 10   # smoke run
@@ -68,8 +65,8 @@ BANDS = [f"z_{k}" for k in range(1, N_CATS - 1)]    # Wald z of the widths of th
 ALPHA, POWER = 0.05, 0.8
 Z_CRIT = stats.norm.ppf(1 - ALPHA)
 TABLE_N = (10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300)  # rows of the thesis estimate tables
-TEST_LABELS = {"X2": "p depends on state", "z_1": "opt1 width > 0", "z_2": "opt2 (comfort band) width > 0",
-               "z_3": "opt3 width > 0", "bands_all": "all bands distinguishable"}
+TEST_LABELS = {"z_1": "opt1 width > 0", "z_2": "opt2 (comfort band) width > 0", "z_3": "opt3 width > 0",
+               "bands_all": "all bands distinguishable"}
 
 
 # --- Helpers ------------------------------------------------------------------------
@@ -78,10 +75,6 @@ def week_covariates(N: int, cols, start: str = "2024-03-04") -> jax.Array:
     """(N, C) covariates for the β models: one ordinary Mon-Sun week (30 min steps, no holidays) stacked until N rows."""
     week = covariates(pd.date_range(start, periods=WEEK, freq="30min"), cols)
     return jnp.tile(week, (N // len(week) + 1, 1))[:N]
-
-
-def test_label(test: str) -> str:
-    return f"state {test[2:]} differs from the rest" if test.startswith("D_") else TEST_LABELS[test]
 
 
 def vote_colors():
@@ -197,14 +190,14 @@ class DatasetDrawer:
         self.dir = os.path.join(out_dir, "datasets")
         os.makedirs(self.dir, exist_ok=True)
 
-    def draw(self, p: np.ndarray, kind: str, seeds: list[int]) -> list[dict]:
-        return [self._draw_one(p, kind, k, seed, len(seeds)) for k, seed in enumerate(seeds)]
+    def draw(self, p: np.ndarray, seeds: list[int]) -> list[dict]:
+        return [self._draw_one(p, k, seed, len(seeds)) for k, seed in enumerate(seeds)]
 
-    def _draw_one(self, p: np.ndarray, kind: str, k: int, seed: int, R: int) -> dict:
+    def _draw_one(self, p: np.ndarray, k: int, seed: int, R: int) -> dict:
         t0 = time.time()
         sim = self.simulator.simulate(p, seed, self.n_max)
-        np.savez(os.path.join(self.dir, f"{kind}_{k:03d}.npz"), **sim)
-        print(f"Simulated {kind} dataset {k + 1}/{R}: {len(sim['path'])} steps ({time.time() - t0:.1f} s)")
+        np.savez(os.path.join(self.dir, f"dataset_{k:03d}.npz"), **sim)
+        print(f"Simulated dataset {k + 1}/{R}: {len(sim['path'])} steps ({time.time() - t0:.1f} s)")
         return sim
 
 
@@ -268,22 +261,6 @@ class StateRates:
     def p_hat(self) -> np.ndarray:
         return ratio(self.F, self.W)
 
-    @property
-    def pooled(self) -> np.ndarray:
-        return self.F.sum(axis=1) / self.W.sum(axis=1)
-
-    @property
-    def x2(self) -> np.ndarray:
-        """(cuts,) spread of p_hat_s around the pooled rate."""
-        spread = np.nansum(self.W * (self.p_hat - self.pooled[:, None]) ** 2, axis=1)
-        return spread / (self.pooled * (1 - self.pooled))
-
-    @property
-    def d(self) -> np.ndarray:
-        """(cuts, K) p_hat_s - p_hat_{-s}, the state against the weighted others."""
-        rest = ratio(self.F.sum(axis=1, keepdims=True) - self.F, self.W.sum(axis=1, keepdims=True) - self.W)
-        return self.p_hat - rest
-
 
 # --- Comfort curve ------------------------------------------------------------------
 
@@ -329,14 +306,11 @@ class ComfortCurve:
 # --- Estimation ---------------------------------------------------------------------
 
 class DatasetEstimates:
-    """The estimates and test statistics of one dataset at every N of the grid.
-
-    The comfort curve does not depend on p, so it is only fitted on the alternative datasets.
-    """
-    def __init__(self, sim: dict, kind: str, k: int, grid: np.ndarray, smoother: StateSmoother):
+    """The estimates and test statistics of one dataset at every N of the grid."""
+    def __init__(self, sim: dict, k: int, grid: np.ndarray, smoother: StateSmoother):
         self.vote_times = np.flatnonzero(sim["feedback"])
-        self.t_ns, self.grid, self.kind = self.vote_times[grid - 1], grid, kind
-        self.base = {"kind": kind, "dataset": k, "seed": sim["seed"]}
+        self.t_ns, self.grid = self.vote_times[grid - 1], grid
+        self.base = {"dataset": k, "seed": sim["seed"]}
         self.hmm, self.known = self._rates(sim, smoother)
         self.comfort = [self._comfort(sim, n) for n in grid]
 
@@ -347,8 +321,6 @@ class DatasetEstimates:
         return StateRates.from_cuts(smoothed, sim["feedback"]), known
 
     def _comfort(self, sim: dict, n: int) -> dict:
-        if self.kind != "alt":
-            return dict(ComfortCurve.FAILED)
         first = self.vote_times[:n]
         return ComfortCurve.fit(sim["temps"][first], sim["votes"][first])
 
@@ -361,60 +333,51 @@ class DatasetEstimates:
         return {**self.base, "n_votes": int(self.grid[i]), "t_N": int(self.t_ns[i])}
 
     def _test_row(self, i: int) -> dict:
-        d = {f"D_{s}": x for s, x in enumerate(self.hmm.d[i])}
-        return {**self._base(i), "X2": self.hmm.x2[i], **d, **{b: self.comfort[i][b] for b in BANDS}}
+        return {**self._base(i), **{b: self.comfort[i][b] for b in BANDS}}
 
     def _estimate_rows(self, i: int) -> list[dict]:
         rows = [("hmm", f"p_{s}", x) for s, x in enumerate(self.hmm.p_hat[i])]
         rows += [("known", f"p_{s}", x) for s, x in enumerate(self.known.p_hat[i])]
-        rows += [("logit", name, self.comfort[i][name]) for name in COMFORT] if self.kind == "alt" else []
+        rows += [("logit", name, self.comfort[i][name]) for name in COMFORT]
         return [{**self._base(i), "parameter": p, "estimator": e, "estimate": x} for e, p, x in rows]
 
 
 class Estimator:
-    """Estimates every dataset of a kind (alternative or null) on the grid of N."""
+    """Estimates every dataset on the grid of N."""
     def __init__(self, smoother: StateSmoother, grid: np.ndarray):
         self.smoother, self.grid = smoother, grid
 
-    def analyse(self, sims: list[dict], kind: str) -> tuple[list[dict], list[dict]]:
-        rows = [self._estimate(sim, kind, k, len(sims)).rows() for k, sim in enumerate(sims)]
+    def analyse(self, sims: list[dict]) -> tuple[list[dict], list[dict]]:
+        rows = [self._estimate(sim, k, len(sims)).rows() for k, sim in enumerate(sims)]
         return [r for est, _ in rows for r in est], [r for _, tests in rows for r in tests]
 
-    def _estimate(self, sim: dict, kind: str, k: int, R: int) -> DatasetEstimates:
+    def _estimate(self, sim: dict, k: int, R: int) -> DatasetEstimates:
         t0 = time.time()
-        estimates = DatasetEstimates(sim, kind, k, self.grid, self.smoother)
-        print(f"Estimated {kind} dataset {k + 1}/{R} ({time.time() - t0:.1f} s)")
+        estimates = DatasetEstimates(sim, k, self.grid, self.smoother)
+        print(f"Estimated dataset {k + 1}/{R} ({time.time() - t0:.1f} s)")
         return estimates
 
 
 # --- Power --------------------------------------------------------------------------
 
 class PowerAnalysis:
-    """Per (test, N): the share of the alternative datasets that reject at the 5 % level, and the mean weeks to N."""
-    def __init__(self, tests: pd.DataFrame, K: int):
-        self.alt, self.null = tests[tests["kind"] == "alt"], tests[tests["kind"] == "h0"]
-        self.d_cols = [f"D_{s}" for s in range(K)]
-        self.table = self._table(["X2"] + self.d_cols + BANDS + ["bands_all"])
+    """Per (band test, N): the share of the datasets that reject at the 5 % level, and the mean weeks to N."""
+    def __init__(self, tests: pd.DataFrame):
+        self.tests = tests
+        self.table = self._table(BANDS + ["bands_all"])
 
     def _table(self, order: list[str]) -> pd.DataFrame:
-        rows = [row for n, alt in self.alt.groupby("n_votes") for row in self._rows_at(n, alt)]
+        rows = [row for n, at_n in self.tests.groupby("n_votes") for row in self._rows_at(n, at_n)]
         rank = {t: i for i, t in enumerate(order)}
         return pd.DataFrame(rows).sort_values(["test", "n_votes"], key=lambda c: c.map(rank) if c.name == "test" else c)
 
-    def _rows_at(self, n: int, alt: pd.DataFrame) -> list[dict]:
-        null, base = self.null[self.null["n_votes"] == n], {"n_votes": n, "weeks": (alt["t_N"].mean() + 1) / WEEK}
-        d = {col: self._two_sided(alt, null, col) for col in self.d_cols}
-        powers = {"X2": (alt["X2"] > null["X2"].quantile(1 - ALPHA)).mean(), **d, **self._bands(alt)}
-        return [{**base, "test": test, "power": x} for test, x in powers.items()]
+    def _rows_at(self, n: int, at_n: pd.DataFrame) -> list[dict]:
+        base = {"n_votes": n, "weeks": (at_n["t_N"].mean() + 1) / WEEK}
+        return [{**base, "test": test, "power": x} for test, x in self._bands(at_n).items()]
 
     @staticmethod
-    def _two_sided(alt: pd.DataFrame, null: pd.DataFrame, col: str) -> float:
-        lo, hi = null[col].quantile([ALPHA / 2, 1 - ALPHA / 2])
-        return ((alt[col] < lo) | (alt[col] > hi)).mean()
-
-    @staticmethod
-    def _bands(alt: pd.DataFrame) -> dict:
-        reject = alt[BANDS].to_numpy() > Z_CRIT  # a failed fit (NaN) does not reject
+    def _bands(at_n: pd.DataFrame) -> dict:
+        reject = at_n[BANDS].to_numpy() > Z_CRIT  # a failed fit (NaN) does not reject
         return {**dict(zip(BANDS, reject.mean(axis=0))), "bands_all": reject.all(axis=1).mean()}
 
     def needed(self, n_room: int | None) -> pd.DataFrame:
@@ -426,15 +389,15 @@ class PowerAnalysis:
         ok, ns = g["power"].to_numpy() >= POWER, g["n_votes"].to_numpy()
         i = next((i for i in range(len(ok)) if ok[i:].all()), None)
         room = np.interp(n_room, ns, g["power"], left=np.nan, right=np.nan) if n_room else np.nan
-        return {"test": test, "label": test_label(test), "n_80": None if i is None else int(ns[i]),
+        return {"test": test, "label": TEST_LABELS[test], "n_80": None if i is None else int(ns[i]),
                 "weeks_80": np.nan if i is None else g["weeks"].iloc[i], "power_room": room}
 
 
 # --- Tables -------------------------------------------------------------------------
 
 class ResultTables:
-    """Per N: the comfort curve and P(feedback | state), each as mean [2.5 %, 97.5 %] over the alternative datasets,
-    with the mean weeks to reach N, and the CI / prediction-interval summary of every parameter."""
+    """Per N: the comfort curve and P(feedback | state), each as mean [2.5 %, 97.5 %] over the datasets, with the
+    mean weeks to reach N, and the SE, CI of the mean and quantile summary of every parameter."""
     def __init__(self, estimates: pd.DataFrame, p: np.ndarray, scale: float):
         self.estimates, self.p, self.scale = estimates, p, scale
         self.weeks = ((estimates.groupby("n_votes")["t_N"].mean() + 1) / WEEK).round(1)
@@ -468,21 +431,24 @@ class ResultTables:
             mean="mean", lo=lambda x: x.quantile(0.025), hi=lambda x: x.quantile(0.975)).reset_index()
 
     def summary(self) -> pd.DataFrame:
-        """Per (parameter, estimator, N): mean, sd, the CI of the mean and the prediction interval over the datasets."""
+        """Per (parameter, estimator, N): mean, sd, the SE and CI of the mean and the 2.5 / 97.5 % quantiles over the
+        datasets."""
         groups = self.estimates.groupby(["parameter", "estimator", "n_votes"], sort=False)[["estimate", "true"]]
         return groups.apply(self._summary_row).reset_index()
 
     @classmethod
     def _summary_row(cls, group: pd.DataFrame) -> pd.Series:
         x = group["estimate"].dropna().to_numpy()
-        nan = dict.fromkeys(["mean", "sd", "ci_lo", "ci_hi", "pi_lo", "pi_hi"], np.nan)
+        nan = dict.fromkeys(["mean", "sd", "se", "ci_lo", "ci_hi", "q_lo", "q_hi"], np.nan)
         return pd.Series({"R": len(x), **(cls._intervals(x) if len(x) >= 2 else nan), "true": group["true"].iloc[0]})
 
     @staticmethod
     def _intervals(x: np.ndarray) -> dict:
         mean, sd, t = x.mean(), x.std(ddof=1), stats.t.ppf(0.975, df=len(x) - 1)
-        ci, pi = t * sd / np.sqrt(len(x)), t * sd * np.sqrt(1 + 1 / len(x))
-        return {"mean": mean, "sd": sd, "ci_lo": mean - ci, "ci_hi": mean + ci, "pi_lo": mean - pi, "pi_hi": mean + pi}
+        se = sd / np.sqrt(len(x))
+        q_lo, q_hi = np.quantile(x, [0.025, 0.975])
+        return {"mean": mean, "sd": sd, "se": se, "ci_lo": mean - t * se, "ci_hi": mean + t * se, "q_lo": q_lo,
+                "q_hi": q_hi}
 
 
 class ThesisTables:
@@ -496,7 +462,7 @@ class ThesisTables:
                 self._by_n(p_table, "feedback_p", "HMM-smoothed P(feedback | state)")]
 
     def _power(self, needed: pd.DataFrame) -> str:
-        caption = (f"Votes needed before 80\\,\\% of simulated experiments reject the null at the 5\\,\\% level, "
+        caption = (f"Votes needed before 80\\,\\% of simulated experiments find the band wider than 0 at the 5\\,\\% level, "
                    f"and the weeks of monitoring that takes. {self.who}.")
         name = f"feedback_power_{self.stem}"
         return save_thesis_table(self._power_rows(needed), name, caption, f"tab:{name}")
@@ -578,7 +544,7 @@ class WeekPlot:
 # --- Study --------------------------------------------------------------------------
 
 class SampleSizeStudy:
-    """One run: simulate the alternative and null datasets, estimate them on the grid of N and save the results."""
+    """One run: simulate the datasets, estimate them on the grid of N and save the results."""
     def __init__(self, args: argparse.Namespace):
         self.args, self.room, self.K = args, room_name(args.room), args.states
         self.p, self.n_room = true_feedback(args)
@@ -608,37 +574,33 @@ class SampleSizeStudy:
 
     def run(self):
         print(f"True P(feedback | state) = {np.round(self.p, 5)}; the room has {self.n_room} feedbacks")
-        alt, null = self.simulate()
-        estimates, tests = self.estimate(alt, null)
-        self.save(estimates, tests, PowerAnalysis(tests, self.K))
+        sims = self.simulate()
+        estimates, tests = self.estimate(sims)
+        self.save(estimates, tests, PowerAnalysis(tests))
 
-    def simulate(self) -> tuple[list[dict], list[dict]]:
+    def simulate(self) -> list[dict]:
         simulator = FeedbackSimulator(self.params, self.room_data.init_dist, self.xs, self.args.scale)
         drawer, a = DatasetDrawer(simulator, self.args.n_max, self.out_dir), self.args
-        alt = drawer.draw(self.p, "alt", [a.seed + k for k in range(a.R)])
-        self.share, self.p_bar = self._null_rate(alt)
-        null = drawer.draw(np.full(self.K, self.p_bar), "h0", [a.seed + a.R + k for k in range(a.R)])
-        WeekPlot(self.room_data, self.cols, self.K).save(alt, self.title, os.path.join(self.plot_dir, "simulated_week.png"))
-        return alt, null
+        sims = drawer.draw(self.p, [a.seed + k for k in range(a.R)])
+        self.share = self._state_share(sims)
+        WeekPlot(self.room_data, self.cols, self.K).save(sims, self.title, os.path.join(self.plot_dir, "simulated_week.png"))
+        return sims
 
-    def _null_rate(self, alt: list[dict]) -> tuple[np.ndarray, float]:
-        """The alternative's state time share and the null rate p_bar = share · p."""
-        share = np.bincount(np.concatenate([s["path"] for s in alt]), minlength=self.K) / sum(len(s["path"]) for s in alt)
-        print(f"State time share {np.round(share, 3)}; null p_bar = {float(share @ self.p):.5f}")
-        return share, float(share @ self.p)
+    def _state_share(self, sims: list[dict]) -> np.ndarray:
+        """The share of time the datasets spend in each state."""
+        share = np.bincount(np.concatenate([s["path"] for s in sims]), minlength=self.K) / sum(len(s["path"]) for s in sims)
+        print(f"State time share {np.round(share, 3)}")
+        return share
 
-    def estimate(self, alt: list[dict], null: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def estimate(self, sims: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
         estimator = Estimator(StateSmoother(self.params, self.room_data.init_dist, self.xs), self.grid)
-        (est_alt, tests_alt), (est_h0, tests_h0) = estimator.analyse(alt, "alt"), estimator.analyse(null, "h0")
-        estimates, truth = pd.DataFrame(est_alt + est_h0), self._truth()
-        estimates["true"] = [truth[k][name] for k, name in zip(estimates["kind"], estimates["parameter"])]
-        return estimates, pd.DataFrame(tests_alt + tests_h0)
-
-    def _truth(self) -> dict[str, dict[str, float]]:
-        return {"alt": true_values(self.p, self.args.scale), "h0": true_values(np.full(self.K, self.p_bar), self.args.scale)}
+        rows, tests = estimator.analyse(sims)
+        estimates, truth = pd.DataFrame(rows), true_values(self.p, self.args.scale)
+        estimates["true"] = estimates["parameter"].map(truth)
+        return estimates, pd.DataFrame(tests)
 
     def save(self, estimates: pd.DataFrame, tests: pd.DataFrame, power: PowerAnalysis):
-        tables, needed = ResultTables(estimates[estimates["kind"] == "alt"], self.p, self.args.scale), power.needed(self.n_room)
+        tables, needed = ResultTables(estimates, self.p, self.args.scale), power.needed(self.n_room)
         curve, p_table = tables.comfort(), tables.p_feedback()
         self._csvs({"estimates": estimates, "tests": tests, "power": power.table, "needed_n": needed,
                     "summary": tables.summary()}, {"comfort_curve": curve, "p_feedback": p_table})
@@ -654,8 +616,7 @@ class SampleSizeStudy:
 
     def _run_json(self):
         a = self.args
-        run = {"room": self.room, "model": a.model, "states": self.K, "p": self.p.tolist(), "p_bar": self.p_bar,
-               "share": self.share.tolist(), "n_room": self.n_room, "scale": a.scale, "cutpoints": CUTPOINTS.tolist(),
+        run = {"room": self.room, "model": a.model, "states": self.K, "p": self.p.tolist(), "share": self.share.tolist(), "n_room": self.n_room, "scale": a.scale, "cutpoints": CUTPOINTS.tolist(),
                "n_max": a.n_max, "R": a.R, "title": self.title}
         with open(os.path.join(self.out_dir, "run.json"), "w") as f:
             json.dump(run, f, indent=2)
@@ -680,8 +641,8 @@ def add_run_args(parser: argparse.ArgumentParser):
                         help="true P(feedback | state), one value per state; defaults to the feedback_states estimate")
     parser.add_argument("--scale", type=float, default=0.55,
                         help="logistic scale s [°C] of the perceived-temperature noise (std = s·π/√3)")
-    parser.add_argument("--R", type=int, default=100, help="number of simulated datasets, alternative and null each")
-    parser.add_argument("--seed", type=int, default=0, help="alternative dataset k uses seed + k, null dataset k seed + R + k")
+    parser.add_argument("--R", type=int, default=200, help="number of simulated datasets")
+    parser.add_argument("--seed", type=int, default=0, help="dataset k uses seed + k")
 
 
 def run_dirs(args) -> tuple[str, str]:

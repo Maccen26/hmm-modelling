@@ -1,0 +1,16 @@
+\begin{table}[ht]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lccccc}
+\hline
+State & Mean CO$_2$ (ppm) & Mean drift (ppm / 30 min) & Drift $Q_{0.25}$ (ppm / 30 min) & Drift $Q_{0.75}$ (ppm / 30 min) & Time in state (\%) \\
+\hline
+1 & 786.57 & $-17.77$ & $-34.33$ & $5.24$ & 79.83 \\
+2 & 1747.85 & $1.03$ & $-121.40$ & $184.67$ & 12.68 \\
+3 & 1744.47 & $186.48$ & $93.00$ & $275.00$ & 7.49 \\
+\hline
+\end{tabular}
+\end{adjustbox}
+\caption{Room 015: mean observed CO$_2$, drift $y_t - y_{t-1}$ and share of time spent in each state of the AR(1)-HMM($\beta$,1) with $K=3$ states, from 100{,}000 state paths sampled from $P(z_{1:T} \mid y_{1:T})$ over the whole series. The mean CO$_2$, mean drift and time share are the mean over paths of each path's value. The quantiles $Q_{0.25}$ and $Q_{0.75}$ are taken over the drifts of all paths pooled into one series.}
+\label{tab:state_summary_room_015_calibrated_anchor_ar1_hmm_beta_1_K3}
+\end{table}

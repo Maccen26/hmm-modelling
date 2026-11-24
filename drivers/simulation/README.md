@@ -27,7 +27,7 @@ uv run python -m drivers.simulation.sample_size --room 15 -K 4        # needs fe
 uv run python -m drivers.simulation.plot_sample_size --room 15 -K 4
 ```
 
-`sample_size` answers: how many occupant votes are needed before we can say that (a) the feedback rate depends on the HMM state and (b) the thermal-comfort vote bands can be told apart? It simulates experiments from a saved AR(1) fit and runs both tests at a growing number of votes N. Results go to `results/.../states_{K}/sample_size/<run>/`, plots to `plots/.../sample_size/<run>/`, and the headline tables to `Thesis/Tables/feedback_{power,comfort,p}_<room>_<model>_K<K>.tex`.
+`sample_size` answers: how many occupant votes are needed before (a) P(feedback | state) and the comfort-curve cut-points are estimated precisely and (b) the thermal-comfort vote bands can be told apart? It simulates `--R` experiments (default 200) from a saved AR(1) fit and estimates them at a growing number of votes N. Results go to `results/.../states_{K}/sample_size/<run>/`, plots to `plots/.../sample_size/<run>/`, and the headline tables to `Thesis/Tables/feedback_{power,comfort,p}_<room>_<model>_K<K>.tex`.
 
 ### How a dataset is simulated
 
@@ -47,8 +47,6 @@ Each dataset is drawn step by step until it holds `--n-max` votes (default 300):
 
        P(vote ≤ k | T) = F((c_{k+1} − T) / s),    F(x) = 1 / (1 + e^{−x})
 
-There are two sets of `--R` datasets (default 100 each): the **alternative**, with the true p, and the **null**, with p_s = p̄ in every state. Here p̄ = Σ_s π_s p_s, with π_s the share of time the alternative datasets spend in state s. The null therefore has the same vote rate, but feedback does not depend on the state.
-
 ### What is estimated
 
 Each dataset is cut at its N-th vote for N = n_step, 2·n_step, ..., n_max (`--n-step`, default 5).
@@ -64,14 +62,12 @@ Each dataset is cut at its N-th vote for N = n_step, 2·n_step, ..., n_max (`--n
 
 | test | statistic | rejects when |
 |---|---|---|
-| p depends on state | X² = Σ_s W_s (p̂_s − p̂)² / (p̂(1 − p̂)), with p̂ the pooled rate | X² is above the 95 % quantile of the null datasets at that N |
-| state s differs from the rest | D_s = p̂_s − p̂_{−s}, with p̂_{−s} the γ-weighted rate of the other states | D_s is outside the 2.5–97.5 % range of the null datasets |
 | band opt_k has width > 0 (k = 1, 2, 3) | z_k = ŵ_k / se(ŵ_k), with w_k = c_{k+1} − c_k and se from the delta method | z_k > 1.645 |
 | all bands distinguishable | all three z_k | all three reject |
 
-The p̂_s are HMM-weighted and have no closed-form standard error, so their critical values come from the null datasets. In the band test, se(ŵ) = ŵ · se(log ŵ), so z_k = 1 / se(log ŵ_k). In practice the test asks whether each band's width is known to a relative standard error below about 0.6. A failed logit fit counts as not rejecting.
+In the band test, se(ŵ) = ŵ · se(log ŵ), so z_k = 1 / se(log ŵ_k). In practice the test asks whether each band's width is known to a relative standard error below about 0.6. A failed logit fit counts as not rejecting.
 
-**Power** at N is the share of the alternative datasets that reject. The **N needed** is the first N from which the power stays ≥ 80 %. It is converted to weeks of monitoring through the mean time to the N-th vote. The vote temperatures do not depend on the state, so the comfort tests depend only on N; p only sets how many weeks that takes.
+**Power** at N is the share of the datasets that reject. The **N needed** is the first N from which the power stays ≥ 80 %. It is converted to weeks of monitoring through the mean time to the N-th vote. The vote temperatures do not depend on the state, so the tests depend only on N; p only sets how many weeks that takes. The p̂_s are not tested; their precision is read off `p_feedback_vs_N.png`.
 
 ### Outputs
 
@@ -80,7 +76,7 @@ The p̂_s are HMM-weighted and have no closed-form standard error, so their crit
 | `needed_n.csv`, `Thesis/Tables/feedback_power_*.tex` | per test: N for 80 % power, the weeks that takes, and the power at the room's observed number of feedbacks |
 | `comfort_curve.csv`, `feedback_comfort_*.tex` | per N: cut-points, s and comfort band as mean [2.5 %, 97.5 %] over the datasets |
 | `p_feedback.csv`, `feedback_p_*.tex` | per N: p̂_s as mean [2.5 %, 97.5 %] |
-| `power.csv`, `tests.csv`, `estimates.csv`, `summary.csv`, `run.json` | power per test and N, the statistics and estimates per dataset and N, CI/PI per parameter, the run's settings |
-| `p_feedback_vs_N.png` | p̂_s against N, one panel per state: per-dataset lines, 95 % CI of the mean, 95 % prediction interval, truth |
-| `cutpoint_se_vs_N.png` | SE of each cut-point (sd of ĉ_k over the datasets) against N on log axes, with the target SE (`--se-target`, default 0.25 °C ≈ ±0.5 °C at 95 %) and the N from which each cut-point stays below it. N where under half the datasets have a usable logit fit are left out |
+| `power.csv`, `tests.csv`, `estimates.csv`, `summary.csv`, `run.json` | power per test and N, the statistics and estimates per dataset and N, mean, sd, SE and CI of the mean and 2.5 / 97.5 % quantiles per parameter, the run's settings |
+| `p_feedback_vs_N.png` | p̂_s against N, one panel per state: per-dataset lines, mean, 95 % CI of the mean (mean ± t·SE, SE = sd/√R), 2.5–97.5 % quantiles over the datasets, truth |
+| `cutpoints_vs_N.png` | the same for each cut-point ĉ_k, one panel per cut-point. N where under half the datasets have a usable logit fit get no mean or bands |
 | `simulated_week.png` | the first week of three simulated datasets above an observed room week |
