@@ -5,28 +5,32 @@
 \hline
 Model Specification & States ($K$) & Parameters ($p$) & Log-Likelihood ($\ell$) & AIC & BIC & RMSE & MAPE (\%) & LRT & $p$-value \\
 \hline
-HMM & 3 & 12 & $-20552.6$ & 41129.2 & 41201.8 & 466.2 & 34.78 & -- & -- \\
+HMM & 2 & 6 & $-21839.6$ & 43691.2 & 43727.5 & 550.2 & 45.54 & -- & -- \\
+ & 3 & 12 & $-20552.6$ & 41129.2 & 41201.8 & 466.2 & 34.78 & -- & -- \\
  & 4 & 20 & $-19916.1$ & 39872.3 & 39993.3 & 450.9 & 29.61 & -- & -- \\
  & 5 & 30 & $-19463.3$ & 38986.6 & 39168.1 & 430.7 & 27.31 & -- & -- \\
  & 6 & 42 & $-18960.9$ & 38005.9 & 38260.0 & 430.0 & 27.58 & -- & -- \\
 \hline
-HMM($\beta$) & 3 & 24 & $-20457.8$ & 40963.5 & 41108.8 & 386.6 & 26.14 & 189.6 & $<0.001$ \\
+HMM($\beta$) & 2 & 10 & $-21815.0$ & 43650.0 & 43710.6 & 528.7 & 41.62 & 49.1 & $<0.001$ \\
+ & 3 & 24 & $-20457.8$ & 40963.5 & 41108.8 & 386.6 & 26.14 & 189.6 & $<0.001$ \\
  & 4 & 44 & $-19796.4$ & 39680.8 & 39947.0 & 370.5 & 23.11 & 239.5 & $<0.001$ \\
  & 5 & 70 & $-19314.8$ & 38769.6 & 39193.2 & 346.1 & 20.34 & 296.9 & $<0.001$ \\
  & 6 & 102 & $-18937.1$ & 38078.2 & 38695.4 & 331.9 & 19.07 & 47.7 & 0.874 \\
 \hline
-AR(1)-HMM & 3 & 15 & $-16094.9$ & 32219.9 & 32310.7 & 360.9 & 20.85 & 8915.3 & $<0.001$ \\
+AR(1)-HMM & 2 & 8 & $-16195.8$ & 32407.5 & 32455.9 & 370.8 & 20.49 & 11287.6 & $<0.001$ \\
+ & 3 & 15 & $-16094.9$ & 32219.9 & 32310.7 & 360.9 & 20.85 & 8915.3 & $<0.001$ \\
  & 4 & 24 & $-16012.9$ & 32073.9 & 32219.1 & 367.9 & 19.47 & 7806.4 & $<0.001$ \\
  & 5 & 35 & $-15912.3$ & 31894.6 & 32106.4 & 359.0 & 18.86 & 7101.9 & $<0.001$ \\
  & 6 & 48 & $-15919.6$ & 31935.3 & 32225.7 & 365.9 & 23.48 & 6082.6 & $<0.001$ \\
 \hline
-AR(1)-HMM($\beta$) & 3 & 27 & $-16035.7$ & 32125.5 & 32288.9 & 315.5 & 16.15 & 118.4 / 8844.1 & $<0.001$ / $<0.001$ \\
+AR(1)-HMM($\beta$) & 2 & 12 & $-16112.8$ & 32249.7 & 32322.3 & 324.8 & 15.76 & 165.9 / 11404.4 & $<0.001$ / $<0.001$ \\
+ & 3 & 27 & $-16035.7$ & 32125.5 & 32288.9 & 315.5 & 16.15 & 118.4 / 8844.1 & $<0.001$ / $<0.001$ \\
  & 4 & 48 & $-15899.1$ & 31894.2 & 32184.6 & 317.7 & 16.60 & 227.7 / 7794.6 & $<0.001$ / $<0.001$ \\
  & 5 & 75 & $-15834.7$ & 31819.4 & 32273.3 & 312.6 & 19.01 & 155.2 / 6960.2 & $<0.001$ / $<0.001$ \\
  & 6 & 108 & $-15802.6$ & 31821.3 & 32474.8 & 316.2 & 17.02 & 234.0 / 6268.9 & $<0.001$ / $<0.001$ \\
 \hline
 \end{tabular}
 \end{adjustbox}
-\caption{Model comparison for $K = 3, \dots, 6$ states. $\ell$ is the log-likelihood on the training set ($n = 3137$; for the covariate models without the ridge penalty), AIC $= 2p - 2\ell$ and BIC $= p\ln n - 2\ell$. RMSE (ppm) and MAPE are for the 6-steps-ahead forecasts on the validation set. LRT gives $2(\ell_{\mathrm{full}} - \ell_{\mathrm{reduced}})$ with its $\chi^2$ $p$-value: HMM($\beta$) and AR(1)-HMM against the HMM ($2K(K-1)$ and $K$ degrees of freedom), and the AR(1)-Covariates HMM against the AR(1)-HMM / HMM($\beta$) ($2K(K-1)$ / $K$ degrees of freedom).}
+\caption{Model comparison for $K = 2, \dots, 6$ states. $\ell$ is the log-likelihood on the training set ($n = 3137$; for the covariate models without the ridge penalty), AIC $= 2p - 2\ell$ and BIC $= p\ln n - 2\ell$. RMSE (ppm) and MAPE are for the 6-steps-ahead forecasts on the validation set. LRT gives $2(\ell_{\mathrm{full}} - \ell_{\mathrm{reduced}})$ with its $\chi^2$ $p$-value: HMM($\beta$) and AR(1)-HMM against the HMM ($2K(K-1)$ and $K$ degrees of freedom), and the AR(1)-Covariates HMM against the AR(1)-HMM / HMM($\beta$) ($2K(K-1)$ / $K$ degrees of freedom).}
 \label{tab:model_comparison_room_015_calibrated_anchor_val_h6}
 \end{table}

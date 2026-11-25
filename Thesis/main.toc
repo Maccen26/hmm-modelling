@@ -4,9 +4,11 @@
 \contentsline {section}{Acknowledgements}{iv}{Doc-Start}%
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.0.1}%
 \contentsline {chapter}{\numberline {2}Data}{2}{chapter.0.2}%
-\contentsline {section}{\numberline {2.1}Data Description}{2}{section.0.2.1}%
-\contentsline {section}{\numberline {2.2}Summary Statistics}{2}{section.0.2.2}%
-\contentsline {section}{\numberline {2.3}Calibration of Data}{4}{section.0.2.3}%
+\contentsline {section}{\numberline {2.1}Data type \& Collection method}{2}{section.0.2.1}%
+\contentsline {section}{\numberline {2.2}Preprocessing of Data}{2}{section.0.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Data Calibration}{2}{subsection.0.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Data Cleaning}{3}{subsection.0.2.2.2}%
+\contentsline {section}{\numberline {2.3}Summary Statistics }{3}{section.0.2.3}%
 \contentsline {section}{\numberline {2.4}Descriptive Analytics}{4}{section.0.2.4}%
 \contentsline {section}{\numberline {2.5}Summary}{6}{section.0.2.5}%
 \contentsline {chapter}{\numberline {3}Theory}{8}{chapter.0.3}%

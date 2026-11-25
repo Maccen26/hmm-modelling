@@ -5,7 +5,7 @@ Tools that read the saved `random_search` fits in `results/{room}/{tag}/states_{
 ## Thesis tables and plots
 
 ```bash
-uv run python -m drivers.analysis.model_comparison_table results/room_015/calibrated_anchor --states 3 4 5 6 --horizon 6
+uv run python -m drivers.analysis.model_comparison_table results/room_015/calibrated_anchor --states 2 3 4 5 6 --horizon 6
 uv run python -m drivers.analysis.test_metrics_table results/room_015/calibrated_anchor \
     --rows hmm_1:4 hmm_beta_1:4 ar1_hmm_1:4 ar1_hmm_beta_1:3 ar1_hmm_beta_1:4
 uv run python -m drivers.analysis.standard_errors results/room_015/calibrated_anchor -K 4   # writes {model}_standard_errors.csv

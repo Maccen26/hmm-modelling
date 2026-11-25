@@ -1,76 +1,26 @@
 \chapter{Data}
-In this section we will give a short explanation of the type of data and how it was collected. \\
-Hereafter, we will present some summary statistics and choose a room to focus on. Then we will
-present some descriptive analytics that show some properties of the data.
+The foundation of this thesis is it's data. The physical models theorized and statistical models choosen
+is largly attributed to what kind of data there have been avalibale in this project. \\
+\\
+This section will present some summary statistics of the dataset used in the thesis and how it was collected. % and how it was preprossed \\
+Then a office room will be chosen to focus on, where some descriptive analytics will be presented to show properties 
+in the data and motivate physical and statistical models 
 
-\section{Data Description}
+\section{Data type \& Collection method}
 %Goal in this chapter is to communicate what data is used, how it has been collected,
 %how it has been processed,
-The data used in this project are $\text{CO}_2$ data collected from
-DTU's office building 303B (\textit{Matematiktorvet 303B, 2800 Lundtofte}),
-and the sensors and data providers are
-Climify \parencite{climify}. The sensors are $\text{CO}_2$ sensors and the data are collected in ppm units.\\
-The data is collected in the period 01-11-2023 to 09-02-2024. This period does not contain the time shift from summer to winter time
-in Denmark. \\
+The data used in this project are data from sensors that read $\text{CO}_2$ levels in ppm units. It was collected from
+DTU's (Denmarks Technical University) office building 303B (\textit{Matematiktorvet 303B, 2800 Lundtofte}).
+The sensors and data providers are
+Climify \parencite{climify}. 
+The data is collected in the period 01-11-2023 to 09-02-2024 and there is one sensor for each office
+and they are mounted above the occupied zone.\\
 \\
 The offices in building 303B belong to employees at DTU, and the students do not use these rooms. The rooms are
 either office rooms (for one to multiple persons) or meeting rooms. \\
-If a student or other party would like to acquire the data used in this specific project, they should
-contact one of the supervisors of the thesis.
-\section{Summary Statistics}
-As written in the introduction, our goal is to find and model a systematic behaviour of
-the occupants and simulate a thermal comfort curve. To do this, we will only focus on office rooms, as
-we hypothesise that they will be much more occupied and show a more regular
-and systematic change in $\text{CO}_2$ ppm levels. For the second part,
- we will also need complaints from the users as to how the temperature is in the room.
-\input{Tables/data/raw_co2_quantiles}
-\Cref{tab:raw_co2_quantiles} gives a summary of the office rooms
-which also had feedback on the temperature in the period of the data. \\
-We see that there is almost the same amount of observations for each room besides Room 54, which
-has about 1000 more samples. Room 15 has the highest amount of feedback
-with 38 valid samples, followed by Room 19, which has 35 valid feedback samples.
-We see that the minimum $\text{CO}_2$ ppm values vary a lot and all are below the outdoor minimum value of
-around 420 ppm in 2023 \parencite{icos2023ghg}. This is a clear indicator that the sensors need to be calibrated.
-We also see that all the rooms have a max value of 5651 ppm, which either indicates that all $\text{CO}_2$ ppm levels have been over this threshold
-at some point or that there has been a calibration or error in the sensors that made them go up to the maximum threshold. \\
-We also see that the mean of all the rooms sits higher than the median,
-which tells us that the data is right-skewed. If we hypothesise that the room is
-empty more than 50\% of the time (a working day is 8 hours), then this confirms the theory. \\
-\\
-We now want to know how much time there is between the observations of the sensors in our office rooms, such
-that we can choose a reasonable time step to aggregate the data so that the data is discretised.\\
-
-\input{Tables/data/raw_waiting_times}
-
-In \cref{tab:raw_waiting_times}, we now see a summary table of the
-waiting time between each $\text{CO}_2$ reading for the sensors. We notice that Room 54 has about half
-the waiting time of the other rooms, and this causes the higher amount of samples.\\
-We see that the Q1 to Q3 sit close together, so at least 50\% of the time between each observation
-for all rooms is around 10 minutes. We notice that the mean sits close to the median in general,
-which indicates that the data is only a little right-skewed, probably caused by a few extreme
-waiting times in the rooms. We see that the maximum waiting time for a room is around
-1.5 to 2 hours. We should therefore inspect the amount of extreme waiting times and when they happen. \\
-\\
-Our goal is to discretise the data, but not make it granular enough that we will have to predict too many steps into the future.
-We remember that the goal of the models is to be able to provide information about the state of a room 3 to 4 hours into the future. \\
-We therefore resample the data into 30 minute bins. This makes it such that all bins contain at least 1 observation,
-but most bins will contain around 2 to 3 observations. This gives the nice advantage that an irregular observation will be smoothed out. \\
-\\
-We also need to look at the feedback counts.
-As we saw in \cref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minute interval. \\
-\bigskip
-
-When the data was resampled and mean aggregated into bins of 30 minutes, we noticed that
-there were only 3 bins with NaN values. \\
-\input{Tables/data/room_015_gaps}
-Because it is during the night with a low $\text{CO}_2$ that almost does not change, we just linearly
-interpolate these 3 bins to have a coherent data interval.
-
-
-
-
-\section{Calibration of Data}
-
+%If a student or other party would like to acquire the data used in this specific project, they should contact one of the supervisors of the thesis.
+\section{Preprocessing of Data}
+\subsection{Data Calibration}
 
 When collecting $\text{CO}_2$ data, the sensors tend to drift over time \parencite{pulse2025co2calibration},
 and therefore, the data collected from the sensors
@@ -126,6 +76,58 @@ The baseline starts at $b_0 = 420$ ppm and is updated by two rules:
 \end{itemize}
 Finally, the data is resampled into 30 minute bins, and empty bins are forward-filled instead of
 interpolated, since interpolation would use future readings.
+
+\subsection{Data Cleaning}
+\section{Summary Statistics }
+
+As written in the introduction, our goal is to find and model a systematic behaviour of
+the occupants and simulate a thermal comfort curve. To do this, we will only focus on office rooms, as
+we hypothesise that they will be much more occupied and show a more regular
+and systematic change in $\text{CO}_2$ ppm levels. For the second part,
+ we will also need complaints from the users as to how the temperature is in the room.
+\input{Tables/data/raw_co2_quantiles}
+\Cref{tab:raw_co2_quantiles} gives a summary of the office rooms
+which also had feedback on the temperature in the period of the data. \\
+We see that there is almost the same amount of observations for each room besides Room 54, which
+has about 1000 more samples. Room 15 has the highest amount of feedback
+with 38 valid samples, followed by Room 19, which has 35 valid feedback samples.
+We see that the minimum $\text{CO}_2$ ppm values vary a lot and all are below the outdoor minimum value of
+around 420 ppm in 2023 \parencite{icos2023ghg}. This is a clear indicator that the sensors need to be calibrated.
+We also see that all the rooms have a max value of 5651 ppm, which either indicates that all $\text{CO}_2$ ppm levels have been over this threshold
+at some point or that there has been a calibration or error in the sensors that made them go up to the maximum threshold. \\
+We also see that the mean of all the rooms sits higher than the median,
+which tells us that the data is right-skewed. If we hypothesise that the room is
+empty more than 50\% of the time (a working day is 8 hours), then this confirms the theory. \\
+\\
+We now want to know how much time there is between the observations of the sensors in our office rooms, such
+that we can choose a reasonable time step to aggregate the data so that the data is discretised.\\
+
+\input{Tables/data/raw_waiting_times}
+
+In \cref{tab:raw_waiting_times}, we now see a summary table of the
+waiting time between each $\text{CO}_2$ reading for the sensors. We notice that Room 54 has about half
+the waiting time of the other rooms, and this causes the higher amount of samples.\\
+We see that the Q1 to Q3 sit close together, so at least 50\% of the time between each observation
+for all rooms is around 10 minutes. We notice that the mean sits close to the median in general,
+which indicates that the data is only a little right-skewed, probably caused by a few extreme
+waiting times in the rooms. We see that the maximum waiting time for a room is around
+1.5 to 2 hours. We should therefore inspect the amount of extreme waiting times and when they happen. \\
+\\
+Our goal is to discretise the data, but not make it granular enough that we will have to predict too many steps into the future.
+We remember that the goal of the models is to be able to provide information about the state of a room 3 to 4 hours into the future. \\
+We therefore resample the data into 30 minute bins. This makes it such that all bins contain at least 1 observation,
+but most bins will contain around 2 to 3 observations. This gives the nice advantage that an irregular observation will be smoothed out. \\
+\\
+We also need to look at the feedback counts.
+As we saw in \cref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minute interval. \\
+\bigskip
+
+When the data was resampled and mean aggregated into bins of 30 minutes, we noticed that
+there were only 3 bins with NaN values. \\
+\input{Tables/data/room_015_gaps}
+Because it is during the night with a low $\text{CO}_2$ that almost does not change, we just linearly
+interpolate these 3 bins to have a coherent data interval.
+
 
 \section{Descriptive Analytics}
 Given that our data now has been calibrated as in \cref{eq:calibration_anchor}, we now perform some
