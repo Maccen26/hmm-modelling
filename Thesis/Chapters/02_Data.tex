@@ -9,12 +9,13 @@ of the data and to motivate the physical and statistical models.
 \section{Data type \& Collection method}
 %Goal in this chapter is to communicate what data is used, how it has been collected,
 %how it has been processed,
-The data used in this project comes from sensors that measure $\text{CO}_2$ levels in ppm. It was collected from
-room 15 in building 303B at DTU (Technical University of Denmark). %(\textit{Matematiktorvet 303B, 2800 Lundtofte}).
+The data used in this project are $\text{CO}_2$ and feedback from occupants. The $\text{CO}_2$ data comes from sensors that measure $\text{CO}_2$ levels in ppm
+and the feedback data is divided into 5 groups, where the occupants could rate the temperature of a office. Both data types was collected from
+room 15 in building 303B at DTU (Technical University of Denmark).\\ %(\textit{Matematiktorvet 303B, 2800 Lundtofte}).
 Several other office rooms are
 also available in the dataset, but room 15 was chosen because it has the most temperature feedback from a single user and exhibits clear signals
-of occupancy in the $\text{CO}_2$ readings.
-The sensors and data are provided by
+of occupancy in the $\text{CO}_2$ readings.\\
+The data are provided by
 Climify \parencite{climify}, and the data was collected in the period 01-11-2023 to 09-02-2024. There is one sensor in each office,
 and the sensors are mounted above the occupied zone.\\
 \\
@@ -28,7 +29,7 @@ When collecting $\text{CO}_2$ data, the sensors tend to drift over time \parenci
 and therefore, the data collected from the sensors
 is not always accurate. Two identical empty rooms with the same concentration of $\text{CO}_2$ molecules may show different
 readings depending on how much the sensors have drifted.
-This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of occupants in the building, and a
+This is a problem, as the $\text{CO}_2$ data is used to infer the presence of occupants in the building, and a
 higher baseline in the $\text{CO}_2$ data may lead to a false detection of occupants.\\
 \\
 %% --- Old calibration technique (ABC algorithm), kept for reference ---
@@ -38,7 +39,7 @@ higher baseline in the $\text{CO}_2$ data may lead to a false detection of occup
 % are equal to the outside $\text{CO}_2$ ppm values. We set the outside $\text{CO}_2$ to 420 ppm \parencite{icos2023ghg}.
 %% --- End of old calibration technique ---
 As part of this thesis is about predicting occupancy, the calibration algorithm is constrained to be an online algorithm.\\
-A well-known algorithm for calibrating $\text{CO}_2$ data is the ABC (\textit{Automatic Baseline Correction}) algorithm. This algorithm works by
+A well-known algorithm for calibrating $\text{CO}_2$ data is the ABC (\textit{Automatic Baseline Correction}) algorithm [INSERT MISSING REFERENCE]. This algorithm works by
 finding the lowest observed $\text{CO}_2$ readings over a trailing window, typically 8 to 14 days, subtracting this floor and adding the assumed background $\text{CO}_2$ level.
 However, this algorithm rests on the assumption that the room reaches the background $\text{CO}_2$ level at some point during the trailing window \parencite{senseair_abc}. \\
 Looking at the $1.5\%$ quantiles of the raw values over trailing windows of 8 and 14 days in Figure~\ref{fig:room_015_raw_floor}, it is clear
@@ -63,8 +64,8 @@ The calibrated series is
 The baseline starts at $b_0 = 420$ ppm and is updated by two rules:
 \begin{itemize}
     \item \textbf{Rule A (down fast):} If $\bar{C}_t < b_t$, the baseline is too high, as the room
-    cannot be below fresh air. We then set $b_t = \bar{C}_t$ at once.
-    \item \textbf{Rule B (up slowly):} For each day we find the minimum of $\bar{C}_t$. If the slope over the
+    cannot be below fresh air. The baseline is then set to $b_t = \bar{C}_t$ at once.
+    \item \textbf{Rule B (up slowly):} For each day, the minimum of $\bar{C}_t$ is found. If the slope over the
     3 hours going into the minimum is below 3 ppm/h, the $\text{CO}_2$ has levelled off and the minimum is
     an \textit{anchor}. When the day is over, the baseline ramps linearly towards the anchor over 7 days,
     moving at most 30 ppm per anchor.
@@ -147,43 +148,52 @@ Most of the removed responses are in Opt 4, where 12 responses are reduced to 3.
 
 \section{Exploratory Data Analysis}
 Given that the data has now been calibrated as in \cref{eq:calibration_anchor} and
-binned as described in Section~\ref{sec:binned_calibrated_data}, we now look into some
-properties of the cleaned data in Room 15.
+binned as described in Section~\ref{sec:binned_calibrated_data}, some properties of the cleaned data in Room 15
+are now examined.
 
 \subsection{Autocorrelation}
-The first thing we are interested in is whether the data contains autocorrelation.
+The first question is whether the data contains autocorrelation.
 
 \input{Plots/data/room_015_calibrated_acf_pacf.tex}
-We clearly see in Figure~\ref{fig:room_015_calibrated_acf_pacf} that there is a 24 hour cycle, where the lag of one day is the most
+Figure~\ref{fig:room_015_calibrated_acf_pacf} clearly shows a 24 hour cycle, where the lag of one day is the most
 correlated of the daily peaks. After 7 days (336 bins), the correlation rises again, to a level above the lag of one day.
 This indicates a high correlation between observations 7 days apart, which also makes sense,
-as we can then assume that people behave the same way on any given Monday.\\
-For the partial autocorrelation, we see that after 3 bins, there is no more correlation
-with the previous observations. We also see that the partial autocorrelation at the second bin is negative. This may seem
+as people can then be assumed to behave the same way on any given Monday.\\
+The partial autocorrelation shows no more correlation with the previous observations after 3 bins.
+The partial autocorrelation at the second bin is also negative. This may seem
 counterintuitive, as it suggests that a previous observation impacts the current observation negatively, but it can also be
 understood as the previous observation simply carrying less effect into the current observation.
 
 \subsection{Working Days and Working Hours}
-If we look at the whole data series with the off days, which are holidays and weekends, marked in Figure~\ref{fig:room_015_off_days},
-we see a clear drop in the $\text{CO}_2$ series on off days, which indicates that
+Figure~\ref{fig:room_015_off_days} shows the whole data series with the off days, which are holidays and weekends, marked.
+There is a clear drop in the $\text{CO}_2$ series on off days, which indicates that
 the room is most likely empty on off days.
 \input{Plots/data/room_015_off_days.tex}
-In Figure~\ref{fig:room_015_diurnal_off_days}, we see a clear difference between the patterns of working days and off days, which further
-motivates distinguishing between off days and working days. We also see a difference in the $\text{CO}_2$ values over the hours of the day
+Figure~\ref{fig:room_015_diurnal_off_days} shows a clear difference between the patterns of working days and off days, which further
+motivates distinguishing between off days and working days. There is also a difference in the $\text{CO}_2$ values over the hours of the day
 when separating the two types of days. There is a sudden rise at around 8 and a decline from around 17. This suggests that the working hours
 of the office are 8--17, and that people are present during those hours.
 \input{Plots/data/room_015_diurnal_off_days.tex}
 
-We then check in Figure~\ref{fig:room_015_weekly_working_hours} whether this behaviour repeats across the individual working days, and
-see that the general pattern is the same across them. This motivates a covariate denoting the working hours and
+Figure~\ref{fig:room_015_weekly_working_hours} shows whether this behaviour repeats across the individual working days, and
+the general pattern is the same across them. This motivates a covariate denoting the working hours and
 also the weekday. There does not seem to be a weekly pattern, such as no people being at the office on Tuesdays.
 \input{Plots/data/room_015_weekly_working_hours.tex}
 
 \section{Summary}
-In this chapter, the collection method of the data was described, and the calibration technique was presented in
-\cref{eq:calibration_anchor}. We have shown strong autocorrelation in the data, with a cyclic pattern that peaks every 24 hours. \\
-We have also seen that the partial autocorrelation is significant for the first 3 lags, where the negative second lag can be interpreted
-as the earlier observation carrying less effect into the current observation. \\
-In the exploratory data analysis, we have seen strong indications of a difference in the behaviour in the office between off days and working days,
-and that people are present from 8--17 in Room 15.
+In this chapter, the data used in the thesis was presented. The data consists of $\text{CO}_2$ readings from room 15 in building 303B at DTU,
+collected by Climify in the period 01-11-2023 to 09-02-2024, together with temperature feedback from a single user.\\
+\\
+Because the sensors drift and the room does not reach the outside level of 420 ppm, the ABC algorithm could not be used directly.
+Instead, an online calibration with a causal anchor baseline was presented in \cref{eq:calibration_anchor}. The baseline moves down at once
+when the smoothed readings fall below it, and moves up slowly towards daily anchors where the $\text{CO}_2$ has levelled off.
+The calibrated readings were mean aggregated into 30 minute bins, where a single gap of 3 bins was forward-filled to keep the online constraint,
+and the temperature feedback was cleaned from 52 to 38 responses.\\
+\\
+The exploratory data analysis showed strong autocorrelation in the data, with a cyclic pattern that peaks every 24 hours
+and a correlation at a lag of 7 days above the lag of one day. The partial autocorrelation is significant for the first 3 lags,
+where the negative second lag can be interpreted as the earlier observation carrying less effect into the current observation. \\
+Finally, there were strong indications of a difference in the behaviour in the office between off days and working days,
+and that people are present from 8--17 in Room 15. This pattern is the same across the working days, which motivates covariates
+for the working hours and the weekday in the models.
 

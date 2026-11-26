@@ -1,4 +1,5 @@
 \chapter{Theory}
+
 In this chapter, an ODE of the physical model of the $\text{CO}_2$ dynamics will be presented, along with
 how the process is described as a stochastic differential equation (SDE), where noise has been added to the system. \\
 Given the presented SDE, it will be shown that the process can be described as
@@ -7,10 +8,10 @@ Hereafter, the general theory of hidden Markov models (HMMs) will be presented a
 with the inference algorithms used in this project.
 
 
-\section{Physical model of \texorpdfstring{$\text{CO}_2$}{CO2} dynamics}
-This subsection presents the underlying physical model of the $\text{CO}_2$ dynamics of a room
-and shows that it can be described as a discrete-time AR(1) process and how the production rate of the occupants in the room 
-can be modelled as a function of the occupancy state of the room. 
+\section{Modelling \texorpdfstring{$\text{CO}_2$}{CO2} dynamics}
+This subsection presents the underlying assumed physical model of the $\text{CO}_2$ dynamics of a room, 
+how the system can be descirbed when adding noise and then it will be shown that the process can be described as a discrete-time AR(1) process. 
+A function for the the production rate of the occupants in the room will be presented
 
 \subsection{Mass-balance model and assumptions}
 Due to $\text{CO}_2$ not decaying by itself,
@@ -25,7 +26,11 @@ indoor and outdoor $\text{CO}_2$ concentrations (mg$\cdot$m$^{-3}$), $G(t)$ is t
 production rate (mg$\cdot$h$^{-1}$) and $Q$ is the outdoor air flow rate (m$^3\cdot$h$^{-1}$).
 \bigskip
 
-Dividing by $V$ gives
+Our sensors report in ppm units, so the perfectly mized mass balance model in \ref{eq:mass-balance} will be rewritten
+to ppm units. 
+
+
+Dividing by \ref{eq:mass-balance} $V$ gives
 \begin{equation}
     \frac{d C_{\text{indoor}}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \left( C_{\text{indoor}}(t) - C_{\text{outdoor}}(t) \right).
 \end{equation}
@@ -35,9 +40,12 @@ $d\tilde{C}/dt = dC_{\text{indoor}}/dt$, so
 \begin{equation}
     \frac{d \tilde{C}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \tilde{C}(t).
 \end{equation}
-The sensors report ppm, related by $C\,[\text{ppm}] = C\,[\text{mg}\cdot\text{m}^{-3}] \cdot V_m / M_{\text{CO}_2}$,
-with $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and $V_m \approx 24.45$ L$\cdot$mol$^{-1}$
-(25$^\circ$C, 1 atm). Multiplying by the constant $V_m / M_{\text{CO}_2}$ gives the model in ppm,
+
+As ppm denotes parts per million, CO2 ppm can be related with the $\text{CO}_2$ concentration by 
+$$
+\text{CO}_2\,[\text{ppm}] = \text{CO}_2 \frac{\text{mg}}{\text{m}^3} \cdot \frac{V_m}{M_{\text{CO}_2}},$$
+with the Molar mass of $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and molar volume of ideal gas $V_m \approx 24.45$ L$\cdot$mol$^{-1}$
+(25$^\circ$C, 1 atm). \\Multiplying by the constant $V_m / M_{\text{CO}_2}$ gives the model in ppm,
 \begin{equation}
     \frac{d \tilde{C}(t)}{dt} = P(t) - \alpha \tilde{C}(t),
     \qquad
@@ -53,39 +61,55 @@ i.e.\ the fraction of excess $\text{CO}_2$ ventilated out per hour.
 
 The assumptions in \cref{eq:mass-balance}, and therefore in \cref{eq:ODE}, are that
 \begin{itemize}
-    \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This ensures that the sensors are not biased by location.
+    \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This assumes that the sensors are not biased by location.
     \item There are no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room.
+    \item The sensors measures $\text{CO}_2$ perfectly and with no errors, meaning each $\text{CO}_2$ reading is the true value occured in the room.
 \end{itemize}
+
 However, it is important to note that the model in \cref{eq:ODE} is a
 simplification of the real-world $\text{CO}_2$ dynamics of a room, and that 
 there are many factors that can affect the $\text{CO}_2$ levels in a room, 
 such as the number of occupants, the activity level of the occupants, 
 the ventilation system, and the outdoor $\text{CO}_2$ levels. \\
-\bigskip
+
+\subsection{Modelling $\text{CO}_2$ Production rate}
+
 To be able to model the production rate of the occupants in the room, 
-we will assume that the production rate $P(t)$ is a stepwise function. 
+it is assumeed that the production rate $P(t)$ is only dependent on the amount of occupants in the room.
 Let $S(t) = k \in \mathbb{N}$ be the number of occupants of the room
 at time $t$, then we can model the production rate as
 \begin{equation}
     P(t) = \beta_{S(t)},
 \end{equation}
-where $\beta_{S(t)}$ is the production rate of the occupants in the room.
+where $\beta_{S(t)}$ is the production rate of the occupants in the room. 
+This assumption forces $P(t)$ to be a stepwise function. 
 \bigskip
 
 
-One of the main limitations of the model is that it does not assume noise in the system, which is inevitable as we use sensors. \\
-Therefore, the next step to make the model more realistic is to add noise to the system in the form of a stochastic differential equation (SDE), which will be presented in the next subsection.
+%One of the main limitations of the model is that it does not assume noise in the system, which is inevitable as we use sensors. \\
+%Therefore, the next step to make the model more realistic is to add noise to the system in the form of a stochastic differential equation (SDE), which will be presented in the next subsection.
 
-\subsection{Stochastic extension: Adding noise to the sensors}
-As previously described, the model in \cref{eq:ODE} describes the dynamics of the $\text{CO}_2$ in a room,
-but it does not take into account the noise in the system. \\
+\subsection{Extension of mass-balance model: Adding noise to the sensors}
+A physical model descibing the $\text{CO}_2$ dynamics of a office room has been established in \cref{eq:ODE}.
+This model has 3 core assumptions which are 1) A perfecly mixed room, 2) No CO2 sinks, 3) No errors in sensors.\\
+Assumption 1 would demand a second sensor in a room to check the difference between readings or another physical model.
+Assumption 2 would also require another proberly also require another physical model (SHOULD BE REVISED). 
+Assumption 3 of perfect readings can be removed by extending the mass-balance model with a stochastic diffusion term, which 
+models noise in the sensors. \\
+\\
 By adding noise to the system in the form of a linear diffusion term with constant diffusion coefficient $\sigma$,
-we can write the model as a stochastic differential equation (SDE) as
+the mass-balance ODE can be written as a stochastic differential equation (SDE) on the form
 \begin{equation}
     \mathrm{d} \tilde{C}(t) = \left(P(t) - \alpha \tilde{C}(t)\right) \mathrm{d}t + \sigma \, \mathrm{d}W(t),
     \label{eq:sde}
 \end{equation}
-where $W(t)$ is a standard Brownian motion. \\
+where $W(t)$ is the Wiener process (also called standard Brownian motion). Some properties of a wiener process 
+$W(t)$ is:
+\begin{itemize}
+    \item $W(t) \sim \mathcal{N}(0, t)$
+    \item For $a > b$, $W(a) - W(b) \sim \mathcal{N}(0, a-b)$ 
+    \item Increments over non-overlapping intervals are independent. 
+\end{itemize}
 \Cref{eq:sde} is recognised as an Ornstein-Uhlenbeck process,
 which is a mean-reverting process, where the process tends to oscillate
 around some equilibrium state \parencite[Sec.~1.13.1]{iacus2008}. \\
@@ -93,35 +117,36 @@ around some equilibrium state \parencite[Sec.~1.13.1]{iacus2008}. \\
 
 It is important to stress that the noise term in \cref{eq:sde} was
 assumed to be a linear diffusion term with constant diffusion coefficient $\sigma$,
-as this is the simplest noise to add to the system. However, one could also add
+as this is the simplest noise to add to the system.\\
+However, one could also add
 a non-linear diffusion term, where the diffusion coefficient is a function of the state of the system.
-This is, however, out of the scope of this project, as this would require more
-in-depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. \\
-\\
-Next, we show that, sampled at a fixed time step, the SDE in \cref{eq:sde} is a discrete-time AR(1) process.
-
+But this is out of the scope of this project, as this would require more
+in-depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. 
 \subsection{Discretisation to an AR(1) process}
-Since \cref{eq:sde} is an Ornstein-Uhlenbeck process, its solution is known in closed form
-\parencite[Sec.~1.13.1]{iacus2008}. Sampling it with a constant time step $\Delta t$ and holding
-$P$ constant over the step gives the recursion
+Since \cref{eq:sde} is an Ornstein-Uhlenbeck process, a solution is known in closed form
+\parencite[Sec.~1.13.1]{iacus2008}. Sampling it at $t_k = k\Delta t$ with a constant time step $\Delta t$,
+writing $\tilde{C}_k = \tilde{C}(t_k)$ and holding $P$ constant, one can rewrite the process to
 \begin{equation}
-    \tilde{C}_{t+\Delta t} = e^{-\alpha \Delta t}\, \tilde{C}_t
-        + \mu \left(1 - e^{-\alpha \Delta t}\right) + e_{t+\Delta t},
-    \qquad \mu = \frac{P}{\alpha},
+    \tilde{C}_{k+1} = \phi\, \tilde{C}_k
+        + \mu \left(1 - \phi \right) + e_{k+1},
+    \qquad \mu = \frac{P}{\alpha}, \, \phi = e^{-\alpha \Delta t}
     \label{eq:ar1}
 \end{equation}
-where $\mu$ is the equilibrium level the process reverts to, and the noise terms
+where $\mu$ is the equilibrium level the process reverts to. \\
+The noise term is defined as
 \begin{equation}
-    e_{t+\Delta t} = \sigma \int_t^{t+\Delta t} e^{-\alpha (t+\Delta t-u)} \, \mathrm{d}W_u
+    e_{k+1} = \sigma \int_{t_k}^{t_{k+1}} e^{-\alpha (t_{k+1}-u)} \, \mathrm{d}W_u
     \sim \mathcal{N}\!\left(0,\ \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)\right)
 \end{equation}
-have mean zero, constant variance and are uncorrelated over time.
+where $e_k$ has mean zero, constant variance and are uncorrelated over time.
 \Cref{eq:ar1} is therefore an AR(1) process with autoregressive coefficient
-$\phi = e^{-\alpha \Delta t}$. The full derivation is given in Appendix~\ref{app:ar1-proof}.\\
+$\phi = e^{-\alpha \Delta t}$. \\
+The full derivation is given in Appendix~\ref{app:ar1-proof}.\\
 \bigskip
-As $\alpha > 0$, it is known from \textcite[Sec.~1.13.1]{iacus2008} that the process is ergodic, and the distribution of $\tilde{C}_t$ is
+
+As $\alpha > 0$, it is known from \textcite[Sec.~1.13.1]{iacus2008} that the process is ergodic and the distribution of $\tilde{C}_k$ is
 \begin{equation}
-    \tilde{C}_t \sim \mathcal{N}\!\left(\frac{P}{\alpha},\ \frac{\sigma^2}{2\alpha}\right),
+    \tilde{C}_k \sim \mathcal{N}\!\left(\mu,\ \frac{\sigma^2}{2\alpha}\right),
 \end{equation}
 which is the stationary distribution of the process. \\
 
@@ -129,34 +154,63 @@ which is the stationary distribution of the process. \\
 
 %% --------- HMMM ----------
 \section{Hidden Markov models}
-This section will present the underlying models and the theory behind them
-that model the diffusion process. Here too, inference algorithms and
-analysis methods will be presented.
+This section will present the underlying statistical models, inference algorithm s and analysis methods. 
 
 \subsection{Model structure}
 %% Write some generel theory on HMM
-Hidden Markov models are Markov chains where the underlying states are hidden and only a
-random variable that is dependent on the underlying state is observed. \\
-This can be described as a Markov chain with a set of hidden states $S = \{s_1, s_2, \dots, s_N\}$
-and a set of observations $O = \{o_1, o_2, \dots, o_M\}$.
-The transition between the hidden states is governed by a transition matrix $\Gamma$ 
-and the observations are generated by an emission matrix $B$. 
-The initial state distribution is given by $\pi$. 
-The HMM structure can then describe the emissions as
+Hidden Markov models are models in which the states of an underlying discrete Markov chain are hidden,
+and only a random variable that depends on the underlying state is observed.
+Since the underlying states cannot be observed, each state is assumed to have an associated probability
+distribution from which the observations are generated, and no two states have the same probability distribution.
+
+Formally, this can be described as follows. Given a path (a sequence of states) and an emission sequence
+\begin{equation*}
+    \mathcal{S} = (S_1, S_2, \dots, S_T), \qquad \mathcal{Y} = (Y_1, Y_2, \dots, Y_T),
+\end{equation*}
+where $S_t \in \{1, 2, \dots, k\}$, $k \in \mathbb{N}$, the probability of an emission is
+$P(Y_t = y_t \mid S_t = j)$, and the probability of the next state is $P(S_{t+1} = j \mid S_t = i)$.\\
+\\
+As the true path $\mathcal{S}$ for our emission sequence $\mathcal{Y}$ is not known, we use the hidden Markov
+model as a statistical model that lets us estimate the probability of being in each state given the observed data.\\
+The general structure of an HMM is the following.
+Given the emission sequence $\mathcal{Y}$ and an initial state distribution
+$\pi=(P(S_0 = 1), P(S_0 = 2), \dots, P(S_0 = k))$, the state distribution at time $t$ is defined as
+\begin{equation*}
+    \mathbf{u}_t = (u_{1t}, u_{2t}, \dots, u_{kt}), \qquad u_{it} = P(S_t = i),
+\end{equation*}
+with $\mathbf{u}_0 = \pi$. The state distribution is then given recursively by
 \begin{equation}
-    P(O_t \mid S_t) = B_{S_t, O_t},
+    \mathbf{u}_t = \mathbf{u}_{t-1} \Gamma_t,
 \end{equation}
-where $B_{S_t, O_t}$ is the probability of observing $O_t$ given the hidden state $S_t$. 
-The transition between the hidden states is given by
+where the entries of the transition matrix $\Gamma_t$ are
+\begin{equation*}
+    \Gamma_t(i, j) = P(S_t = j \mid S_{t-1} = i),
+\end{equation*}
+i.e. the probability of transitioning to state $j$ at time $t$, given that the chain is in state $i$ at time $t-1$.
+
+For a homogeneous Markov chain, $\Gamma_t = \Gamma$, the likelihood of the emission sequence $\mathcal{Y}$
+can be written as a product of matrices \parencite[Sec.~2.3.2]{zucchini2016}. Let
+\begin{equation*}
+    P(y_t) = \operatorname{diag}\big(p_1(y_t), p_2(y_t), \dots, p_k(y_t)\big), \qquad p_i(y_t) = P(Y_t = y_t \mid S_t = i),
+\end{equation*}
+be the diagonal matrix of emission probabilities at time $t$, let $\delta = \mathbf{u}_1$ be the distribution of $S_1$,
+and let $\mathbf{1}$ be a row vector of ones.
+
+\begin{proposition}
+The likelihood is given by
 \begin{equation}
-    P(S_t \mid S_{t-1}) = \Gamma_{S_{t-1}, S_t},
+    L_T = \delta P(y_1) \Gamma P(y_2) \Gamma P(y_3) \cdots \Gamma P(y_T) \mathbf{1}^{T}.
+    \label{eq:likelihood}
 \end{equation}
-where $\Gamma_{S_{t-1}, S_t}$ is the probability of transitioning from hidden state $S_{t-1}$ to hidden state $S_t$. 
-The initial state distribution is given by
+If $\delta$, the distribution of $S_1$, is the stationary distribution of the Markov chain, then in addition
 \begin{equation}
-    P(S_1) = \pi_{S_1},
+    L_T = \delta \Gamma P(y_1) \Gamma P(y_2) \Gamma P(y_3) \cdots \Gamma P(y_T) \mathbf{1}^{T}.
+    \label{eq:likelihood-stationary}
 \end{equation}
-where $\pi_{S_1}$ is the probability of starting in hidden state $S_1$.
+\end{proposition}
+\bigskip
+
+The likelihood of the hidden markov model \cite{zucchini2016}
 \subsection{Homogeneous HMM: HMM(1)}
 The ordinary HMM is the simplest model implemented in this project and the one most
 commonly used in the literature. The transition probabilities are constant and do not
