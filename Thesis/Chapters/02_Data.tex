@@ -79,6 +79,13 @@ The 2 hour mean in Rule A plays the same role, and the $1.7\%$ of bins below 420
 emission distribution absorbs, rather than as evidence about the baseline.
 
 \subsection{Data Cleaning}
+
+\subsection{Binned Calibrated CO2 data} \label{sec:binned_calibrated_data}
+The calibrated readings are mean aggregated into 30 minute bins. In Room 15 this leaves only 3 empty bins, which form a single
+gap during the night of 13 November, as seen in \cref{tab:room_015_gaps}. Interpolating across the gap would use the reading after it
+and thereby break the online constraint, so the empty bins are instead forward-filled with the value of the last non-empty bin.
+As the $\text{CO}_2$ level barely changes over the gap, from 372 ppm to 369 ppm in the raw readings, the error introduced is small.
+\input{Tables/data/room_015_gaps}
 \subsection{Temperature Feedback}
 The temperature feedback in Room 15 consists of 52 responses from a single user, each choosing one of five answer options.
 The feedback is cleaned in two steps. First, 3 exact duplicates are removed. Second, a response is only kept if the same user
@@ -86,62 +93,63 @@ has not given a kept response in the same category within the preceding 30 minut
 within a short time express the same complaint. This leaves 38 responses, as seen in \cref{tab:room_015_feedback_counts}.
 Most of the removed responses are in Opt 4, where 12 responses are reduced to 3.
 \input{Tables/data/room_015_feedback_counts}
-\subsection{Binned Calibrated CO2 data}
-
-\section{Summary Statistics }
-
-As written in the introduction, our goal is to find and model a systematic behaviour of
-the occupants and simulate a thermal comfort curve. To do this, we will only focus on office rooms, as
-we hypothesise that they will be much more occupied and show a more regular
-and systematic change in $\text{CO}_2$ ppm levels. For the second part,
- we will also need complaints from the users as to how the temperature is in the room.
-\input{Tables/data/raw_co2_quantiles}
-\Cref{tab:raw_co2_quantiles} gives a summary of the office rooms
-which also had feedback on the temperature in the period of the data. \\
-We see that there is almost the same amount of observations for each room besides Room 54, which
-has about 1000 more samples. Room 15 has the highest amount of feedback
-with 38 valid samples, followed by Room 19, which has 35 valid feedback samples.
-We see that the minimum $\text{CO}_2$ ppm values vary a lot and all are below the outdoor minimum value of
-around 420 ppm in 2023 \parencite{icos2023ghg}. This is a clear indicator that the sensors need to be calibrated.
-We also see that all the rooms have a max value of 5651 ppm, which either indicates that all $\text{CO}_2$ ppm levels have been over this threshold
-at some point or that there has been a calibration or error in the sensors that made them go up to the maximum threshold. \\
-We also see that the mean of all the rooms sits higher than the median,
-which tells us that the data is right-skewed. If we hypothesise that the room is
-empty more than 50\% of the time (a working day is 8 hours), then this confirms the theory. \\
-\\
-We now want to know how much time there is between the observations of the sensors in our office rooms, such
-that we can choose a reasonable time step to aggregate the data so that the data is discretised.\\
-
-\input{Tables/data/raw_waiting_times}
-
-In \cref{tab:raw_waiting_times}, we now see a summary table of the
-waiting time between each $\text{CO}_2$ reading for the sensors. We notice that Room 54 has about half
-the waiting time of the other rooms, and this causes the higher amount of samples.\\
-We see that the Q1 to Q3 sit close together, so at least 50\% of the time between each observation
-for all rooms is around 10 minutes. We notice that the mean sits close to the median in general,
-which indicates that the data is only a little right-skewed, probably caused by a few extreme
-waiting times in the rooms. We see that the maximum waiting time for a room is around
-1.5 to 2 hours. We should therefore inspect the amount of extreme waiting times and when they happen. \\
-\\
-Our goal is to discretise the data, but not make it granular enough that we will have to predict too many steps into the future.
-We remember that the goal of the models is to be able to provide information about the state of a room 3 to 4 hours into the future. \\
-We therefore resample the data into 30 minute bins. This makes it such that all bins contain at least 1 observation,
-but most bins will contain around 2 to 3 observations. This gives the nice advantage that an irregular observation will be smoothed out. \\
-\\
-We also need to look at the feedback counts.
-As we saw in \cref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minute interval. \\
-\bigskip
-
-When the data was resampled and mean aggregated into bins of 30 minutes, we noticed that
-there were only 3 bins with NaN values. \\
-\input{Tables/data/room_015_gaps}
-Because it is during the night with a low $\text{CO}_2$ that almost does not change, we just linearly
-interpolate these 3 bins to have a coherent data interval.
 
 
-\section{Descriptive Analytics}
-Given that our data now has been calibrated as in \cref{eq:calibration_anchor}, we now perform some
-descriptive analytics on the data in Room 15 to better understand the properties of our data. \\
+% \section{Summary Statistics }
+% 
+% As written in the introduction, our goal is to find and model a systematic behaviour of
+% the occupants and simulate a thermal comfort curve. To do this, we will only focus on office rooms, as
+% we hypothesise that they will be much more occupied and show a more regular
+% and systematic change in $\text{CO}_2$ ppm levels. For the second part,
+%  we will also need complaints from the users as to how the temperature is in the room.
+% \input{Tables/data/raw_co2_quantiles}
+% \Cref{tab:raw_co2_quantiles} gives a summary of the office rooms
+% which also had feedback on the temperature in the period of the data. \\
+% We see that there is almost the same amount of observations for each room besides Room 54, which
+% has about 1000 more samples. Room 15 has the highest amount of feedback
+% with 38 valid samples, followed by Room 19, which has 35 valid feedback samples.
+% We see that the minimum $\text{CO}_2$ ppm values vary a lot and all are below the outdoor minimum value of
+% around 420 ppm in 2023 \parencite{icos2023ghg}. This is a clear indicator that the sensors need to be calibrated.
+% We also see that all the rooms have a max value of 5651 ppm, which either indicates that all $\text{CO}_2$ ppm levels have been over this threshold
+% at some point or that there has been a calibration or error in the sensors that made them go up to the maximum threshold. \\
+% We also see that the mean of all the rooms sits higher than the median,
+% which tells us that the data is right-skewed. If we hypothesise that the room is
+% empty more than 50\% of the time (a working day is 8 hours), then this confirms the theory. \\
+% \\
+% We now want to know how much time there is between the observations of the sensors in our office rooms, such
+% that we can choose a reasonable time step to aggregate the data so that the data is discretised.\\
+% 
+% \input{Tables/data/raw_waiting_times}
+% 
+% In \cref{tab:raw_waiting_times}, we now see a summary table of the
+% waiting time between each $\text{CO}_2$ reading for the sensors. We notice that Room 54 has about half
+% the waiting time of the other rooms, and this causes the higher amount of samples.\\
+% We see that the Q1 to Q3 sit close together, so at least 50\% of the time between each observation
+% for all rooms is around 10 minutes. We notice that the mean sits close to the median in general,
+% which indicates that the data is only a little right-skewed, probably caused by a few extreme
+% waiting times in the rooms. We see that the maximum waiting time for a room is around
+% 1.5 to 2 hours. We should therefore inspect the amount of extreme waiting times and when they happen. \\
+% \\
+% Our goal is to discretise the data, but not make it granular enough that we will have to predict too many steps into the future.
+% We remember that the goal of the models is to be able to provide information about the state of a room 3 to 4 hours into the future. \\
+% We therefore resample the data into 30 minute bins. This makes it such that all bins contain at least 1 observation,
+% but most bins will contain around 2 to 3 observations. This gives the nice advantage that an irregular observation will be smoothed out. \\
+% \\
+% We also need to look at the feedback counts.
+% As we saw in \cref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minute interval. \\
+% \bigskip
+% 
+% When the data was resampled and mean aggregated into bins of 30 minutes, we noticed that
+% there were only 3 bins with NaN values. \\
+% \input{Tables/data/room_015_gaps}
+% Because it is during the night with a low $\text{CO}_2$ that almost does not change, we just linearly
+% interpolate these 3 bins to have a coherent data interval.
+% 
+
+\section{Exploratory Data Analysis}
+Given that our data now has been calibrated as in \cref{eq:calibration_anchor} and 
+binned as descibed in section~\ref{sec:binned_calibrated_data}, we now want to look into some
+properties of the cleaning data in Room 15. \\
 The first thing we are interested in is whether our data contains autocorrelation.
 
 \input{Plots/data/room_015_calibrated_acf_pacf.tex}
@@ -155,7 +163,7 @@ the intuition that a previous observation impacts a current observation negative
 understood as the previous observation just carrying less effect into the current observation.
 \bigskip
 
-If we look at the whole data series and mark the off days in \cref{fig:room_015_off_days},
+If we look at the whole data series and mark the off days in Figure~\ref{fig:room_015_off_days},
  which are holidays and weekends, we see a clear drop in the $\text{CO}_2$ series on off days, which clearly indicates that
  off days probably do not contain any people in the room.
 \input{Plots/data/room_015_off_days.tex}
