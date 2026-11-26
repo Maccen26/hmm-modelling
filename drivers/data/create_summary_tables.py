@@ -13,7 +13,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from drivers.data.clean_room_data import BIN, clean_df
+from drivers.data.clean_room_data import BIN, OUTSIDE_CO2, clean_df
+from drivers.data.clean_room_data_anchor import causal_baseline
 from drivers.utils import load_base_data_path, save_thesis_table
 
 DEDUP_WINDOW = pd.Timedelta("30min")
@@ -132,9 +133,8 @@ def waiting_time_table(clean: dict) -> pd.DataFrame:
     return table
 
 
-def gap_table(clean: pd.DataFrame, top: int | None = 10) -> tuple[pd.DataFrame, pd.Series]:
-    """The `top` longest runs of empty `BIN` bins, with the CO2 level on either side."""
-    binned = binned_co2(clean)
+def gap_table(binned: pd.Series, top: int | None = 10) -> tuple[pd.DataFrame, pd.Series]:
+    """The `top` longest runs of empty bins in `binned`, with the CO2 level on either side."""
     missing = binned.isna()
     gap_id = (missing != missing.shift()).cumsum()[missing]
     gaps = binned.index.to_series()[missing].groupby(gap_id).agg(Start="first", End="last")
@@ -203,15 +203,18 @@ def create_summary_tables(gap_room: str) -> None:
     emit(waiting_time_table(clean), "raw_waiting_times",
          "Summary statistics of the waiting time (seconds) between consecutive cleaned CO$_2$ readings.")
 
-    gaps, missing = gap_table(clean[gap_room])
+    co2 = clean[gap_room].set_index("datetime")["co2"]
+    floor, _, _ = causal_baseline(co2)
+    gaps, missing = gap_table((co2 - floor + OUTSIDE_CO2).resample(BIN).mean())
     print(f"\n{gap_room}: {missing.sum()} of {len(missing)} bins missing ({missing.mean():.1%})")
     gaps = gaps.assign(Start=gaps["Start"].dt.strftime("%Y-%m-%d %H:%M"),
                        End=gaps["End"].dt.strftime("%Y-%m-%d %H:%M"))
     gaps.index = range(1, len(gaps) + 1)
     emit(gaps.rename(columns={"Duration": "Duration [h]"}),
          f"{gap_room.lower().replace(' ', '_')}_gaps",
-         f"The ten longest gaps of empty {BIN} bins in {gap_room}, with the mean CO$_2$ (ppm) in the bin "
-         f"just before and just after each gap.", index_name="Rank")
+         f"Gaps of empty {int(STEP.total_seconds() // 60)} minute bins in {gap_room} (the ten longest, if there are "
+         f"more), with the mean calibrated CO$_2$ (ppm) in the bin just before and just after each gap.",
+         index_name="Rank")
 
     emit(longest_run_table(clean, feedback, valid), "longest_complete_run",
          f"Longest stretch of {BIN} bins without missing data per room, with the complaints falling inside it "

@@ -265,7 +265,7 @@ def save(fig, save_dir: str, name: str) -> str:
 def create_data_plots(room_name: str, tag: str = TAG) -> list[str]:
     raw_clean = clean_df(load_raw(room_name))
     binned = raw_clean.set_index("datetime")["co2"].resample(STEP).mean()
-    gaps, _ = gap_table(raw_clean, top=None)
+    gaps, _ = gap_table(binned, top=None)
 
     data_name = room_slug(room_name)
     co2_bin = load_split_series(data_name, tag, "y")

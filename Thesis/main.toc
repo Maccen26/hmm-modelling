@@ -7,10 +7,11 @@
 \contentsline {section}{\numberline {2.1}Data type \& Collection method}{2}{section.0.2.1}%
 \contentsline {section}{\numberline {2.2}Preprocessing of Data}{2}{section.0.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Data Calibration}{2}{subsection.0.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Data Cleaning}{4}{subsection.0.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Binned Calibrated CO2 data}{4}{subsection.0.2.2.3}%
-\contentsline {subsection}{\numberline {2.2.4}Temperature Feedback}{4}{subsection.0.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.2}Binned Calibrated $\text {CO}_2$ Data}{4}{subsection.0.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Temperature Feedback}{4}{subsection.0.2.2.3}%
 \contentsline {section}{\numberline {2.3}Exploratory Data Analysis}{4}{section.0.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Autocorrelation}{4}{subsection.0.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Working Days and Working Hours}{5}{subsection.0.2.3.2}%
 \contentsline {section}{\numberline {2.4}Summary}{6}{section.0.2.4}%
 \contentsline {chapter}{\numberline {3}Theory}{8}{chapter.0.3}%
 \contentsline {section}{\numberline {3.1}Physical model of $\text {CO}_2$ dynamics}{8}{section.0.3.1}%

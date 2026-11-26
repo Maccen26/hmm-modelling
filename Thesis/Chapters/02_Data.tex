@@ -1,35 +1,35 @@
 \chapter{Data}
-The foundation of this thesis is it's data. The physical models theorized and statistical models choosen
-is largly attributed to what kind of data there have been avalibale in this project. \\
+The foundation of this thesis is its data. The physical models theorised and the statistical models chosen
+are largely determined by the data that has been available in this project. \\
 \\
-This section will present some summary statistics of the dataset used in the thesis and how it was collected. % and how it was preprossed \\
-Then a office room will be chosen to focus on, where some descriptive analytics will be presented to show properties 
-in the data and motivate physical and statistical models 
+This chapter will present some summary statistics of the dataset used in the thesis and describe how it was collected. % and how it was preprossed \\
+Then an office room will be chosen as the focus, and some descriptive analytics will be presented to show properties
+of the data and to motivate the physical and statistical models.
 
 \section{Data type \& Collection method}
 %Goal in this chapter is to communicate what data is used, how it has been collected,
 %how it has been processed,
-The data used in this project are data from sensors that read $\text{CO}_2$ levels in ppm units. It was collected from
-DTU's (Denmarks Technical University) office building 303B room 15. %(\textit{Matematiktorvet 303B, 2800 Lundtofte}). 
+The data used in this project comes from sensors that measure $\text{CO}_2$ levels in ppm. It was collected from
+room 15 in building 303B at DTU (Technical University of Denmark). %(\textit{Matematiktorvet 303B, 2800 Lundtofte}).
 Several other office rooms are
-also avaliable in the dataset, but room 15 was choosen due to having the most temperatue feedback from a single user and exihibiting clear signals
-of occupancy in the co2 readings.
-The sensors and data providers are
-Climify \parencite{climify} and the data is collected in the period 01-11-2023 to 09-02-2024,where there is one sensor for each office
-and they are mounted above the occupied zone.\\
+also available in the dataset, but room 15 was chosen because it has the most temperature feedback from a single user and exhibits clear signals
+of occupancy in the $\text{CO}_2$ readings.
+The sensors and data are provided by
+Climify \parencite{climify}, and the data was collected in the period 01-11-2023 to 09-02-2024. There is one sensor in each office,
+and the sensors are mounted above the occupied zone.\\
 \\
-The offices in building 303B belong to employees at DTU, and the students do not use these rooms. The rooms are
-either office rooms (for one to multiple persons) or meeting rooms. \\
+The offices in building 303B belong to employees at DTU, and students do not use these rooms. The rooms are
+either offices (for one or more persons) or meeting rooms. \\
 %If a student or other party would like to acquire the data used in this specific project, they should contact one of the supervisors of the thesis.
 \section{Preprocessing of Data}
 \subsection{Data Calibration}
 
 When collecting $\text{CO}_2$ data, the sensors tend to drift over time \parencite{pulse2025co2calibration},
 and therefore, the data collected from the sensors
-are not always accurate. Two identical empty rooms that have the same amount of $\text{CO}_2$ molecyles may show different
-readings based on how much the sensors have drifted.
-This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of the occupants in the building, and a
-higher baseline of the $\text{CO}_2$ data may lead to a false positive of the presence of the occupants in the building.\\
+is not always accurate. Two identical empty rooms with the same concentration of $\text{CO}_2$ molecules may show different
+readings depending on how much the sensors have drifted.
+This is a problem, as we want to use the $\text{CO}_2$ data to infer the presence of occupants in the building, and a
+higher baseline in the $\text{CO}_2$ data may lead to a false detection of occupants.\\
 \\
 %% --- Old calibration technique (ABC algorithm), kept for reference ---
 % To correct for this, we have used a method called the
@@ -37,25 +37,25 @@ higher baseline of the $\text{CO}_2$ data may lead to a false positive of the pr
 % In the use of this algorithm, we have assumed that the lowest $\text{CO}_2$ ppm values over a period
 % are equal to the outside $\text{CO}_2$ ppm values. We set the outside $\text{CO}_2$ to 420 ppm \parencite{icos2023ghg}.
 %% --- End of old calibration technique ---
-As a part of this thesis is about predicting occupancy, the calibration algorithms must be constrained to online algorithms.\\
-A well known algorithm for calibratig $\text{CO}_2$ data is the ABC (\textit{Automatic Correcting Baseline}) algorithm. This algorithm works by 
-find the lowest observed $\text{CO}_2$ readings over some traling window, typically 8 to 14 datys, and subtracting and adding the assumed backround co2 levels. \
-However, this algoirhtms rests  on the assumptions that duirng this trailing window, the rooms reaches the baground co2 levels at some point. \cite{senseair_abc}. \\
-Looking at Figure~\ref{fig:room_015_raw_floor} of $1.5\%$ quantiles of the raw values over a trailing window of 8 days and 14 days, it is clear to see
-that the floor jumps up and down and does not have a clear drift. This is the result of the room not reaching 
-the outside $\text{CO}_2$  values of 420 ppm \parencite{icos2023ghg}. Therefore, the ABC algorithm cannot be used directly and have to be modified. 
+As part of this thesis is about predicting occupancy, the calibration algorithm is constrained to be an online algorithm.\\
+A well-known algorithm for calibrating $\text{CO}_2$ data is the ABC (\textit{Automatic Baseline Correction}) algorithm. This algorithm works by
+finding the lowest observed $\text{CO}_2$ readings over a trailing window, typically 8 to 14 days, subtracting this floor and adding the assumed background $\text{CO}_2$ level.
+However, this algorithm rests on the assumption that the room reaches the background $\text{CO}_2$ level at some point during the trailing window \parencite{senseair_abc}. \\
+Looking at the $1.5\%$ quantiles of the raw values over trailing windows of 8 and 14 days in Figure~\ref{fig:room_015_raw_floor}, it is clear
+that the floor jumps up and down and does not show a clear drift. This is a result of the room not reaching
+the outside $\text{CO}_2$ level of 420 ppm \parencite{icos2023ghg}. Therefore, the ABC algorithm cannot be used directly and has to be modified.
 \input{Plots/data/room_015_raw_floor.tex}
-Instead of realying on the assumption that the room will reach the outside CO2 levels during a traling window, it will instead be assumed
-that if the change in co2 readings is close to zero, the room has reached a empty room equalibrialiun, where 
-the room has been empty for a longer period. 
+Instead of relying on the assumption that the room will reach the outside $\text{CO}_2$ level during a trailing window, it will be assumed
+that if the change in the $\text{CO}_2$ readings is close to zero, the room has reached an empty-room equilibrium, where
+the room has been empty for a longer period.
 \bigskip
 
-Let $C_{t}$ be the $\text{CO}_2$ ppm value at time $t$, $\tilde{C}_{t}$ be the corrected $\text{CO}_2$ ppm value at time $t$ and 
-$\bar{C}_t$ be the trailing 2 hour mean of $C_t$. $\bar{C}_t$ is used to smooth the ppm values such that a single observation can not give a false 
-equlibrium reading. 
+Let $C_{t}$ be the $\text{CO}_2$ ppm value at time $t$, $\tilde{C}_{t}$ be the corrected $\text{CO}_2$ ppm value at time $t$ and
+$\bar{C}_t$ be the trailing 2 hour mean of $C_t$. $\bar{C}_t$ is used to smooth the ppm values, such that a single observation cannot give a false
+equilibrium reading.
 
 A causal anchor baseline $b_t$ will be used, which only uses readings up to time $t$,
-such that a calibrated value is never revised. 
+such that a calibrated value is never revised.
 The calibrated series is
 \begin{equation} \label{eq:calibration_anchor}
 \tilde{C}_{t} = C_{t} - b_{t} + 420.
@@ -69,22 +69,21 @@ The baseline starts at $b_0 = 420$ ppm and is updated by two rules:
     an \textit{anchor}. When the day is over, the baseline ramps linearly towards the anchor over 7 days,
     moving at most 30 ppm per anchor.
 \end{itemize}
+The resulting baseline for Room 15 is shown in Figure~\ref{fig:room_015_anchor_floor}.
 \input{Plots/data/room_015_anchor_floor.tex}
 Since Rule A acts on the smoothed $\bar{C}_t$, the smoothed calibrated series never drops below 420 ppm. The calibrated
-30 minute bins are not strictly bounded, since single readings can lie below their 2 hour mean. In Room 015, 81 of the 4827 bins ($1.7\%$)
+30 minute bins are not strictly bounded, since single readings can lie below their 2 hour mean. In Room 15, 81 of the 4827 bins ($1.7\%$)
 fall below 420 ppm, spread over 10 days. Most of them lie within 10 ppm of 420 ppm, and the lowest is 388 ppm.
 These bins are kept rather than capped at 420 ppm. The ABC algorithm uses the $1.5\%$ quantile rather than the minimum, since a single
 erratic reading would otherwise pull the baseline too low, and thereby accepts that about $1.5\%$ of the readings lie below its floor.
 The 2 hour mean in Rule A plays the same role, and the $1.7\%$ of bins below 420 ppm are treated as sensor noise that the
 emission distribution absorbs, rather than as evidence about the baseline.
 
-\subsection{Data Cleaning}
-
-\subsection{Binned Calibrated CO2 data} \label{sec:binned_calibrated_data}
+\subsection{Binned Calibrated \texorpdfstring{$\text{CO}_2$}{CO2} Data} \label{sec:binned_calibrated_data}
 The calibrated readings are mean aggregated into 30 minute bins. In Room 15 this leaves only 3 empty bins, which form a single
 gap during the night of 13 November, as seen in \cref{tab:room_015_gaps}. Interpolating across the gap would use the reading after it
 and thereby break the online constraint, so the empty bins are instead forward-filled with the value of the last non-empty bin.
-As the $\text{CO}_2$ level barely changes over the gap, from 372 ppm to 369 ppm in the raw readings, the error introduced is small.
+As the calibrated $\text{CO}_2$ level only changes from 407.7 ppm to 413.5 ppm over the gap, the error introduced is small.
 \input{Tables/data/room_015_gaps}
 \subsection{Temperature Feedback}
 The temperature feedback in Room 15 consists of 52 responses from a single user, each choosing one of five answer options.
@@ -96,7 +95,7 @@ Most of the removed responses are in Opt 4, where 12 responses are reduced to 3.
 
 
 % \section{Summary Statistics }
-% 
+%
 % As written in the introduction, our goal is to find and model a systematic behaviour of
 % the occupants and simulate a thermal comfort curve. To do this, we will only focus on office rooms, as
 % we hypothesise that they will be much more occupied and show a more regular
@@ -118,9 +117,9 @@ Most of the removed responses are in Opt 4, where 12 responses are reduced to 3.
 % \\
 % We now want to know how much time there is between the observations of the sensors in our office rooms, such
 % that we can choose a reasonable time step to aggregate the data so that the data is discretised.\\
-% 
+%
 % \input{Tables/data/raw_waiting_times}
-% 
+%
 % In \cref{tab:raw_waiting_times}, we now see a summary table of the
 % waiting time between each $\text{CO}_2$ reading for the sensors. We notice that Room 54 has about half
 % the waiting time of the other rooms, and this causes the higher amount of samples.\\
@@ -138,50 +137,53 @@ Most of the removed responses are in Opt 4, where 12 responses are reduced to 3.
 % We also need to look at the feedback counts.
 % As we saw in \cref{tab:raw_waiting_times}, there was at least 1 waiting time too high for the 30 minute interval. \\
 % \bigskip
-% 
+%
 % When the data was resampled and mean aggregated into bins of 30 minutes, we noticed that
 % there were only 3 bins with NaN values. \\
 % \input{Tables/data/room_015_gaps}
 % Because it is during the night with a low $\text{CO}_2$ that almost does not change, we just linearly
 % interpolate these 3 bins to have a coherent data interval.
-% 
+%
 
 \section{Exploratory Data Analysis}
-Given that our data now has been calibrated as in \cref{eq:calibration_anchor} and 
-binned as descibed in section~\ref{sec:binned_calibrated_data}, we now want to look into some
-properties of the cleaning data in Room 15. \\
-The first thing we are interested in is whether our data contains autocorrelation.
+Given that the data has now been calibrated as in \cref{eq:calibration_anchor} and
+binned as described in Section~\ref{sec:binned_calibrated_data}, we now look into some
+properties of the cleaned data in Room 15.
+
+\subsection{Autocorrelation}
+The first thing we are interested in is whether the data contains autocorrelation.
 
 \input{Plots/data/room_015_calibrated_acf_pacf.tex}
-We clearly see in our plot that there is a 24 hour cycle, where the day after is the second most
-correlated cycle. We actually see that after 7 days (336 bins), the correlation rises again, and above the day
-after the observations. This indicates that there is a high correlation between 7 days, which also makes sense,
-as we then can assume that people have the same behaviour on any given Monday.\\
-For the partial autocorrelation plot, we see that after 3 bins, there is no more correlation
-between the previous observations. We also see that the second bin is negative, which contradicts
-the intuition that a previous observation impacts a current observation negatively, but this can also be
-understood as the previous observation just carrying less effect into the current observation.
-\bigskip
+We clearly see in Figure~\ref{fig:room_015_calibrated_acf_pacf} that there is a 24 hour cycle, where the lag of one day is the most
+correlated of the daily peaks. After 7 days (336 bins), the correlation rises again, to a level above the lag of one day.
+This indicates a high correlation between observations 7 days apart, which also makes sense,
+as we can then assume that people behave the same way on any given Monday.\\
+For the partial autocorrelation, we see that after 3 bins, there is no more correlation
+with the previous observations. We also see that the partial autocorrelation at the second bin is negative. This may seem
+counterintuitive, as it suggests that a previous observation impacts the current observation negatively, but it can also be
+understood as the previous observation simply carrying less effect into the current observation.
 
-If we look at the whole data series and mark the off days in Figure~\ref{fig:room_015_off_days},
- which are holidays and weekends, we see a clear drop in the $\text{CO}_2$ series on off days, which clearly indicates that
- off days probably do not contain any people in the room.
+\subsection{Working Days and Working Hours}
+If we look at the whole data series with the off days, which are holidays and weekends, marked in Figure~\ref{fig:room_015_off_days},
+we see a clear drop in the $\text{CO}_2$ series on off days, which indicates that
+the room is most likely empty on off days.
 \input{Plots/data/room_015_off_days.tex}
-In \cref{fig:room_015_diurnal_off_days}, we see a clear difference in the pattern of working days and off days, which further
-motivates denoting off days and working days. We also see that there is a difference in the $\text{CO}_2$ values when separating
-the two types of days over the hours of a day. We see a sudden rise at around 8 and a decline from around 17. This motivates that the working hours
-of the offices are 8-17, and that there are people present in those hours.
+In Figure~\ref{fig:room_015_diurnal_off_days}, we see a clear difference between the patterns of working days and off days, which further
+motivates distinguishing between off days and working days. We also see a difference in the $\text{CO}_2$ values over the hours of the day
+when separating the two types of days. There is a sudden rise at around 8 and a decline from around 17. This suggests that the working hours
+of the office are 8--17, and that people are present during those hours.
 \input{Plots/data/room_015_diurnal_off_days.tex}
 
-We then check if this is a repeatable behaviour when split out across working days in \cref{fig:room_015_weekly_working_hours}, and
-that the general pattern is the same across them. This motivates a covariate denoting the working hours and
+We then check in Figure~\ref{fig:room_015_weekly_working_hours} whether this behaviour repeats across the individual working days, and
+see that the general pattern is the same across them. This motivates a covariate denoting the working hours and
 also the weekday. There does not seem to be a weekly pattern, such as no people being at the office on Tuesdays.
 \input{Plots/data/room_015_weekly_working_hours.tex}
 
 \section{Summary}
 In this chapter, the collection method of the data was described, and the calibration technique was presented in
-\cref{eq:calibration_anchor}. We have shown strong autocorrelation in the data with a cyclic pattern that peaks every 24 hours. \\
-We have seen that the partial autocorrelation is strong for 3 lags and can be interpreted as 1 lag with a less positive value, as in the plot. \\
-In the data analytics, we have seen strong indications of a difference in the behaviour of the office between off days and workdays,
-and that people are present from 8-17 in Room 15.
+\cref{eq:calibration_anchor}. We have shown strong autocorrelation in the data, with a cyclic pattern that peaks every 24 hours. \\
+We have also seen that the partial autocorrelation is significant for the first 3 lags, where the negative second lag can be interpreted
+as the earlier observation carrying less effect into the current observation. \\
+In the exploratory data analysis, we have seen strong indications of a difference in the behaviour in the office between off days and working days,
+and that people are present from 8--17 in Room 15.
 
