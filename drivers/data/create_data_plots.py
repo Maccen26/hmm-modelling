@@ -1,7 +1,7 @@
 """Data plots of one DTU room, ported from `summary_statistics.ipynb`, saved to `plots/<room>/summary/`.
 
 Figures: missing bins and their linear interpolation, the raw readings against the causal anchor
-baseline, and, on the anchor-calibrated series (`calibrated_anchor` tag, written by
+baseline, 8 and 15 day trailing floors of the raw readings, and, on the anchor-calibrated series (`calibrated_anchor` tag, written by
 `clean_room_data_anchor`): log CO2, ACF / PACF, diurnal and weekly profiles (all days, working vs
 off days, working hours), the series with off days marked, and the train / val / test split.
 
@@ -16,13 +16,15 @@ import numpy as np
 import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
-from drivers.data.clean_room_data import clean_df, load_co2, room_slug
+from drivers.data.clean_room_data import OUTSIDE_CO2, clean_df, load_co2, room_slug
 from drivers.data.create_summary_tables import STEP, gap_table, load_raw, raw_dir
 from drivers.models.utils import PLOTS_DIR, TAG
 from drivers.utils import load_base_data_path, load_y_df
 
 ACF_LAGS = 48 * 7  # seven days of 30 min bins
 PACF_LAGS = 5
+FLOOR_WINDOWS = ["8D", "15D"]
+FLOOR_QUANTILE = 0.015
 WORK_START, WORK_END = 8, 17
 DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 SPLITS = [("train", "Train", "tab:blue"), ("val", "Validation", "tab:orange"), ("test", "Test", "tab:green")]
@@ -97,6 +99,28 @@ def plot_anchor_baseline(co2, floor, room_name):
     ax.plot(co2, lw=0.6, alpha=0.7, label="Raw CO$_2$")
     ax.plot(floor, lw=1.5, color="tab:red", label="Anchor baseline")
     ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]", xlim=(floor.index[0], floor.index[-1]))
+    ax.legend()
+    return fig
+
+
+def plot_anchor_floor(floor, room_name):
+    """The causal anchor baseline on its own."""
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.plot(floor, lw=1.5, color="tab:red", label="Anchor baseline")
+    ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]", xlim=(floor.index[0], floor.index[-1]))
+    ax.legend()
+    return fig
+
+
+def plot_raw_floor(co2, room_name):
+    """Trailing low quantile floors of the raw readings (the old rolling calibration) over each FLOOR_WINDOWS."""
+    fig, ax = plt.subplots(figsize=(12, 4))
+    for window, color in zip(FLOOR_WINDOWS, ["tab:red", "tab:green"]):
+        floor = co2.rolling(window).quantile(FLOOR_QUANTILE)
+        ax.plot(floor[co2.index[0] + pd.Timedelta(window):], lw=1.5, color=color,  # first full window onwards
+                label=f"{window[:-1]} day trailing floor ({FLOOR_QUANTILE:.1%} quantile)")
+    ax.axhline(OUTSIDE_CO2, color="grey", ls="--", lw=1, label=f"Outdoor CO$_2$ ({OUTSIDE_CO2:.0f} ppm)")
+    ax.set(title=room_name, xlabel="Date", ylabel="CO$_2$ [ppm]", xlim=(co2.index[0], co2.index[-1]))
     ax.legend()
     return fig
 
@@ -258,6 +282,8 @@ def create_data_plots(room_name: str, tag: str = TAG) -> list[str]:
         "raw_gaps": plot_gaps(binned, gaps, room_name),
         "raw_interpolation": plot_interpolation(binned, room_name),
         "anchor_baseline": plot_anchor_baseline(load_co2(room_name), floor, room_name),
+        "anchor_floor": plot_anchor_floor(floor, room_name),
+        "raw_floor": plot_raw_floor(load_co2(room_name), room_name),
         "calibrated_log": plot_log(co2_bin, room_name),
         "calibrated_acf_pacf": plot_acf_pacf(co2_bin, room_name),
         "diurnal": plot_diurnal(co2_bin),

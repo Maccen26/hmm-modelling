@@ -16,7 +16,7 @@ import pandas as pd
 from drivers.data.clean_room_data import BIN, clean_df
 from drivers.utils import load_base_data_path, save_thesis_table
 
-DEDUP_WINDOW = pd.Timedelta("60min")
+DEDUP_WINDOW = pd.Timedelta("30min")
 STEP = pd.Timedelta(BIN)
 TABLES_SUBDIR = "data"  # tables go to `Thesis/Tables/data/`
 
@@ -109,6 +109,14 @@ def valid_feedback_table(feedback: dict, valid: dict) -> pd.DataFrame:
     return table.astype(int)
 
 
+def room_feedback_table(room_name: str, valid: dict) -> pd.DataFrame:
+    """One room's complaints per answer option and in total, as read from the file and after cleaning."""
+    raw = pd.read_csv(raw_dir() / "feedback" / f"{room_name}.csv")
+    counts = feedback_table({"Raw": raw, "Cleaned": valid[room_name]})
+    return counts[[c for c in counts.columns if c != "Complaints"] + ["Complaints"]].rename(
+        columns={"Complaints": "Total"})
+
+
 def co2_table(clean: dict, valid: dict) -> pd.DataFrame:
     table = pd.DataFrame({r: summarise(df["co2"]) for r, df in clean.items()}).T
     table["N"] = table["N"].astype(int)
@@ -187,6 +195,9 @@ def create_summary_tables(gap_room: str) -> None:
          f"Complaints per room after removing repeats: a complaint is kept only if the same user has not "
          f"made a kept complaint in the same category within the preceding "
          f"{int(DEDUP_WINDOW.total_seconds() // 60)} minutes.")
+    emit(room_feedback_table(gap_room, valid), f"{gap_room.lower().replace(' ', '_')}_feedback_counts",
+         f"Temperature feedback in {gap_room} per answer option and in total, as read from the raw file and "
+         f"after cleaning.", index_name="Feedback")
     emit(co2_table(clean, valid), "raw_co2_quantiles",
          "Summary statistics of the cleaned raw CO$_2$ readings (ppm) per room, with the number of valid (deduplicated) complaints.")
     emit(waiting_time_table(clean), "raw_waiting_times",
