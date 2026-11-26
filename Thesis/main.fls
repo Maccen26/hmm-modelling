@@ -242,8 +242,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amssymb.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amssymb.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amsfonts.sty
-INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amscls/amsthm.sty
-INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/amscls/amsthm.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/siunitx/siunitx.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/siunitx/siunitx.sty
 INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/translations/translations.sty
