@@ -481,3 +481,42 @@ to parameters on the boundary of the larger model's parameter space
 (e.g.\ a transition probability equal to zero). The LRT is therefore only used
 for comparing nested models with the same number of states.
 
+\subsection{Forecast evaluation metrics}
+To evaluate the predictive performance of the models, the forecasts $\hat{y}_t$ are compared
+with the observations $y_t$ over $N$ forecasted time points. The root mean square error (RMSE)
+is defined as
+\begin{equation}
+    \mathrm{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^{N} \left( y_t - \hat{y}_t \right)^2 },
+\end{equation}
+and measures the typical size of the forecast error in the unit of the data (ppm). Because the
+errors are squared, large errors are penalised harder than small ones.
+
+The mean absolute percentage error (MAPE) is defined as
+\begin{equation}
+    \mathrm{MAPE} = \frac{100}{N} \sum_{t=1}^{N} \left| \frac{y_t - \hat{y}_t}{y_t} \right|,
+\end{equation}
+and measures the average forecast error relative to the observed level in percent.
+For both metrics, a lower value indicates a better forecast.
+
+\subsection{Emission forecasting}
+Given the filtered state distribution $\mathbf{u}_{T|T}$ at the last observed time $T$ and a
+forecast horizon $H$ corresponding to $h$ time steps, the state distribution is propagated
+$h$ steps forward through the transition matrices,
+\begin{equation}
+    \mathbf{u}_{T+h|T} = \mathbf{u}_{T|T}\, \Gamma_{T+1} \Gamma_{T+2} \cdots \Gamma_{T+h}.
+\end{equation}
+The forecast is then the mean of the state-dependent emission means, weighted by the
+predicted state probabilities,
+\begin{equation}
+    \hat{y}_{T+h} = \sum_{i=1}^{k} u_{T+h|T}(i)\, \mu_i.
+\end{equation}
+For the autoregressive models, the state-dependent means depend on the previous emission,
+so instead of predicting $h$ steps ahead directly, the forecast is computed one step at a time.
+The first step is forecast from the last observed emission $y_T$, this forecast is then used to
+predict the second step, and so on up to step $h$. Each forecast is thus computed recursively
+from the previous forecast or observed emission,
+\begin{equation}
+    \mu_i(T+s) = \mu_i + \phi_i \left( \hat{y}_{T+s-1} - \mu_i \right), \qquad s = 1, \dots, h, \qquad \hat{y}_T = y_T,
+\end{equation}
+where $\mu_i(T+s)$ replaces $\mu_i$ in the weighted mean at step $s$.
+
