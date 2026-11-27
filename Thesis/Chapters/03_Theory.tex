@@ -213,7 +213,7 @@ the transition matrix and the emission matrix at each time step \parencite[Sec.~
 \end{equation}
 where $\mathbf{1}$ is a row vector of ones of length $k$.
 
-\subsection{Homogeneous HMM: HMM(1)}
+\subsection{Homogeneous HMM: HMM} \label{sec:hmm-theory}
 The ordinary HMM is the simplest model implemented in this project and the one most
 commonly used in the literature. The transition probabilities are constant and do not
 depend on time, the observations or any covariates, and neither does the emission density.\\
@@ -271,13 +271,13 @@ reparameterisation
     \label{eq:mu-reparam}
 \end{equation}
 where $\zeta \in \mathbb{R}^{n}$. The unconstrained parameters $\eta \in \mathbb{R}^{n}$,
-$\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are thus the quantities
+$\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are therefore the quantities
 that are optimised during the fitting process.
-\subsection{Covariate-dependent transitions: \texorpdfstring{HMM($\beta, 1$)}{HMM(beta, 1)}}
+\subsection{Covariate-dependent transitions: \texorpdfstring{HMM($\beta, 1$)}{HMM(beta)}} \label{sec:hmm(b)-theory}
 In this model, we let the transition probabilities depend on covariates which can include
 time-of-day, weekday, type of day, etc. The motivation for this is the assumption
 that the occupancy state of the room is dependent
-on the time-of-day and weekday, as the room is used for work.  \\
+on time (or any external covariates in generel), as the room is used for work.  \\
 
 Let $x_t \in \mathbb{R}^{p}$ be a vector of $p$ covariates at time $t$.
 The transition logits are then defined as
@@ -288,11 +288,11 @@ where $\beta_{ij} \in \mathbb{R}^{p}$ is a vector of regression
 coefficients for the transition from state $i$ to state $j$ and 
 $\tilde{\xi}_{ij}$ is the intercept term. 
 The transition matrix is then obtained as in \cref{eq:gamma-reparam}, and we now need to denote
-the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i)$.
+the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i, t)$.
 
 
-\subsection{Autoregressive emissions: AR(1)-HMM(1)}
-The autoregressive HMM (AR(1)-HMM(1)) extends the ordinary HMM by letting the emission
+\subsection{Autoregressive emissions: AR(1)-HMM}\label{sec:ar-hmm-theory}
+The Autoregressive HMM extends the ordinary HMM by letting the emission
 distribution depend on the previous observation. Conditional on being in state $i$ at time
 $t$, the observation is modelled as
 \begin{equation}
@@ -301,32 +301,34 @@ $t$, the observation is modelled as
     \label{eq:ar-emission}
 \end{equation}
 Each state therefore has its own AR(1) coefficient $\phi_i \in (-1, 1)$ in addition to a
-mean and a standard deviation. This may be enough to capture the temporal correlation of the
-$\text{CO}_2$ signal that the ordinary HMM leaves in the pseudo-residuals. The transition
-matrix $\Gamma$, the means $\mu$ and the standard deviations $\sigma$ are parameterised
-exactly as in the HMM(1)-model, and the AR coefficients are reparameterised as
+mean and a standard deviation. \\
+The transitionmatrix $\Gamma$, the means $\mu$ and the standard deviations $\sigma$ are parameterised
+exactly as in the HMM-model, and the AR coefficients are reparameterised as
 \begin{equation}
     \phi_i = 2\, s(\psi_i) - 1, \qquad s(z) = \frac{1}{1 + e^{-z}},
     \label{eq:phi-reparam}
 \end{equation}
 where $s(\cdot)$ is the logistic sigmoid, to enforce the stationarity constraint
-$|\phi_i| < 1$. The unconstrained parameter $\psi_i \in \mathbb{R}$ is the one passed to the
+$|\phi_i| \leq 1$. The unconstrained parameter $\psi_i \in \mathbb{R}$ is the one passed to the
 optimiser, with the inverse mapping
 \begin{equation}
     \psi_i = \operatorname{logit}\!\left( \frac{\phi_i + 1}{2} \right).
 \end{equation}
-\subsection{Combined model: \texorpdfstring{AR(1)-HMM($\beta, 1$)}{AR(1)-HMM(beta, 1)}}
-This model is the combination of the AR(1)-HMM(1) and the HMM($\beta, 1$)-model, 
-where the transition probabilities depend on covariates as in 
-and the emission distribution is autoregressive.
+\subsection{Combined model: \texorpdfstring{AR(1)-HMM($\beta, 1$)}{AR(1)-HMM(beta)}}
+This model is the combination of the AR(1)-HMM and the HMM($\beta$)-model, 
+where the transition probabilities depend on covariates as in section~\ref{sec:hmm(b)-theory} 
+and the emission distribution is autoregressive as in section~\ref{sec:ar-hmm-theory}.
 
 \section{Inference}
-\subsection{Likelihood evaluation by the forward algorithm}
-Several methods can be used to estimate the parameters of an HMM, where
-one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
-In this project, we will however use the method of maximum likelihood estimation (MLE) 
-to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
+This section will present the inference algorithms used in this project which are used to compute 
+the likelihood and sampling paths giving a model and the emission sequence. 
 
+\subsection{Likelihood evaluation by the forward algorithm}
+%Several methods can be used to estimate the parameters of an HMM, where one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
+%In this project, we will however use the method of maximum likelihood estimation (MLE) 
+%to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
+The method used to compute the likelihood of a Hidden Markov Model is called 
+the forward algorithm. 
 The forward algorithm implemented is called recursive filtering
 \parencite{moller2024}, as it constructs the current state distribution
 $p(X_t \mid Y_{1:t})$ recursively from the previous state distribution
@@ -371,29 +373,34 @@ which gives the marginal likelihood of observing $y_t$ given the previous observ
 %\subsection{Forward Backward Filtering} 
 %% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 
-\subsection{Backward sampling of state paths}
-When sampling a path from a hidden Markov model, we can use the method
-defined in \textcite[Sec.~7.2.1]{zucchini2016}, and we will call it backward sampling. \\
-We want to sample a path of the hidden states $S_{1:T}$ given the observations
-$O_{1:T}$ and the model parameters $\theta$. This method is very useful, as it
-does not depend on the initial state distribution $\pi$, which is often unknown. \\
-Let $u_{t|t} = P(S_t \mid O_{1:t}, \theta)$ be the filtered state distribution.
-We can then sample the last state $S_T$ from the filtered distribution $u_{T|T}$.
-We can then sample the previous state $S_{T-1}$ from the conditional distribution
+\subsection{Posteriour Sampling of State Paths}
+Because the underlying paths of our emission sequence can not be observed and if one would like to do 
+analysis on the underlying path, a method for sampling paths from the posterior distribution will be introduced. 
+The method will be refered to as Forward Filtering Backward Sampling (FFBS). The method is defined in
+\textcite[Sec.~7.1.2]{zucchini2016}. 
+\bigskip
 
-\begin{subequations}
-\begin{align}
-    P(S_{t-1}=j \mid S_t = i, O_{1:t}, \theta) &=
-    \frac{P(S_{t-1}=j, S_t=i \mid O_{1:t}, \theta )}{P(S_t=i \mid O_{1:t}, \theta)} \\
-    &=\frac{P(S_{t} = i \mid S_{t-1} = j, \theta)\, P(S_{t-1} = j \mid O_{1:t}, \theta)}{P(S_t=i \mid O_{1:t}, \theta)}\\
-    &=\frac{\Gamma^t_{ji}\, u_{t-1|t-1}(j)}{u_{t|t}(i)}
-\end{align}
-\end{subequations}
-
-%% ---------------------------------------------------------------------------
-%% CORRECTED VERSION (for comparison) -- delete the version above once merged
-%% ---------------------------------------------------------------------------
-\paragraph{Corrected derivation.}
+%\\
+%
+%When sampling a path from a hidden Markov model, we can use the method
+%defined in \textcite[Sec.~7.1.2]{zucchini2016}, and we will call it backward sampling. \\
+%We want to sample a path of the hidden states $S_{1:T}$ given the observations
+%$O_{1:T}$ and the model parameters $\theta$. This method is very useful, as it
+%does not depend on the initial state distribution $\pi$, which is often unknown. \\
+%Let $u_{t|t} = P(S_t \mid O_{1:t}, \theta)$ be the filtered state distribution.
+%We can then sample the last state $S_T$ from the filtered distribution $u_{T|T}$.
+%We can then sample the previous state $S_{T-1}$ from the conditional distribution
+%
+%\begin{subequations}
+%\begin{align}
+%    P(S_{t-1}=j \mid S_t = i, O_{1:t}, \theta) &=
+%    \frac{P(S_{t-1}=j, S_t=i \mid O_{1:t}, \theta )}{P(S_t=i \mid O_{1:t}, \theta)} \\
+%    &=\frac{P(S_{t} = i \mid S_{t-1} = j, \theta)\, P(S_{t-1} = j \mid O_{1:t}, \theta)}{P(S_t=i \mid O_{1:t}, \theta)}\\
+%    &=\frac{\Gamma^t_{ji}\, u_{t-1|t-1}(j)}{u_{t|t}(i)}
+%\end{align}
+%\end{subequations}
+%
+%\paragraph{Corrected derivation.}
 Let $\Gamma^{(t)}_{ji} = P(S_t = i \mid S_{t-1} = j, \theta)$ denote the transition
 from time $t-1$ to time $t$. We sample the last state $S_T$ from the filtered
 distribution $u_{T|T}$, and then recursively, for $t = T, T-1, \dots, 2$, sample
@@ -413,10 +420,15 @@ known, so
 \end{align}
 \end{subequations}
 where $u_{t|t-1}(i) = P(S_t = i \mid O_{1:t-1}, \theta)$ is the one-step-ahead
-predictive state distribution. The method therefore only requires the filtered
-distributions from the forward pass and the transition matrices. Note that it
-still depends on the initial distribution $\pi$ through the forward recursion,
-although this influence decays for large $t$.
+predictive state distribution. The third equality uses
+$P(S_t = i \mid S_{t-1} = j, O_{1:t-1}, \theta) = P(S_t = i \mid S_{t-1} = j, \theta)$,
+i.e.\ $S_t$ is conditionally independent of $O_{1:t-1}$ given $S_{t-1}$, since the
+transition depends only on the previous state and not on the emissions. The method
+therefore only requires the filtered distributions from the forward pass and the
+transition matrices.
+
+Note that it still depends on the initial distribution $\pi$ through the forward
+recursion, although this influence decays for large $t$.
 
 \section{Model checking and comparison}
 \subsection{Pseudo-residuals}

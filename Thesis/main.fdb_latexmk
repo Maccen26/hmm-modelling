@@ -1,17 +1,17 @@
 # Fdb version 4
-["biber main"] 1795707619.03408 "main.bcf" "main.bbl" "main" 1795763435.78557 0
+["biber main"] 1795769831.43749 "main.bcf" "main.bbl" "main" 1795770493.00721 0
   "bibliography.bib" 1795617307.31055 5544 0efdabd8448975b57cf6484aa02cb9cc ""
-  "main.bcf" 1795763434.14602 109385 b58d2846e7f843aeb6b232f40c9fc4a3 "xelatex"
+  "main.bcf" 1795770491.43066 109385 b58d2846e7f843aeb6b232f40c9fc4a3 "xelatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["xdvipdfmx"] 1795763434.21969 "main.xdv" "main.pdf" "main" 1795763435.78795 0
-  "main.xdv" 1795763434.1468 748724 dae6503a90893b3edeafca80bee87817 "xelatex"
+["xdvipdfmx"] 1795770491.50376 "main.xdv" "main.pdf" "main" 1795770493.00953 0
+  "main.xdv" 1795770491.4315 745256 a25a0c2923297d6e9e733d4aa01ebc2e "xelatex"
   (generated)
   "main.pdf"
   (rewritten before read)
-["xelatex"] 1795763432.18168 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1795763435.78563 0
+["xelatex"] 1795770489.35998 "/Users/madshaakonsson/Desktop/7-semester/hmm-modelling/Thesis/main.tex" "main.xdv" "main" 1795770493.00727 0
   "../plots/room_015/calibrated_anchor/states_3/ar1_hmm_beta_1_train_residuals.png" 1795165707 76865 e40a8348482b6a88bb41152da0c2949b ""
   "../plots/room_015/calibrated_anchor/states_3/simulation/ar1_hmm_beta_1_daily_states_off_days.png" 1795524714.768 48169 719aace6f813b3ea373b5ae8f96e9a6a ""
   "../plots/room_015/calibrated_anchor/states_3/simulation/ar1_hmm_beta_1_daily_states_working_days.png" 1795524714.72163 88048 63072028013021832dc8aefc1991e505 ""
@@ -288,7 +288,7 @@
   "Backmatter/Backpage.tex" 1676123969 397 9ad66b3ddc884e568628ea53296d4e01 ""
   "Chapters/01_Introduction.tex" 1795330236.97897 2391 ebd52870ff3b63532d8b8dd72841626a ""
   "Chapters/02_Data.tex" 1795694133.52108 15627 a25bb119d0b96aa868e35ef02b5cfe09 ""
-  "Chapters/03_Theory.tex" 1795763427.78753 25206 c3b57c5442a4d0c4803c5bb0867d48ab ""
+  "Chapters/03_Theory.tex" 1795770489.16123 25914 2702022cdaac4eb6b8aac6cf543573ee ""
   "Chapters/04_Implementation.tex" 1795332023.13486 5126 363922e01a7990614d158c04e72da012 ""
   "Chapters/05_Results.tex" 1795603400.80743 6820 9b35e85ceb7eac702daf9c56dad32378 ""
   "Chapters/06_Simulation.tex" 1795332319.94479 134 b520024a2b6b14c9324403a44175db6e ""
@@ -327,12 +327,12 @@
   "Tables/state_summary_room_015_calibrated_anchor_ar1_hmm_beta_1_K3.tex" 1795524714.60969 965 03c1e2c0c152c6ad1f3ee0e7a7a34ac0 ""
   "Tables/state_summary_room_015_calibrated_anchor_ar1_hmm_beta_1_K4.tex" 1795331759.3944 1021 a163e63f772d26ca63e7248523f1b5eb ""
   "Tables/test_metrics_room_015_calibrated_anchor.tex" 1795172783.26119 981 4a8ff5dac5c98210845eab1ec260fe30 ""
-  "main.aux" 1795763434.13856 37405 2665ca8b9049fdda22a3b812dcf3586d "xelatex"
-  "main.bbl" 1795707620.52932 29825 1848453d9caabd373fdf0ac5b0feac23 "biber main"
-  "main.out" 1795763434.14387 10643 b74dc365f4552e1d766512d8fce3c3ea "xelatex"
-  "main.run.xml" 1795763434.14665 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
+  "main.aux" 1795770491.42327 37847 7f1a9ce4f8f2e0e1eed7ce093c8b48c8 "xelatex"
+  "main.bbl" 1795769832.54856 29825 1848453d9caabd373fdf0ac5b0feac23 "biber main"
+  "main.out" 1795770491.42843 10575 3ccbc3d7f6c4dd48c951f457fa355900 "xelatex"
+  "main.run.xml" 1795770491.43124 2348 b640d1eb684dea903c080d939b8dff5f "xelatex"
   "main.tex" 1793445523.70765 1296 3fc2b228c179afd30af2eeedb4e17105 ""
-  "main.toc" 1795763434.14673 4812 2a524d4e6bc58bc341e9ed146b3f9311 "xelatex"
+  "main.toc" 1795770491.43133 4739 58b3a0bbb1e7e53f1f1294aaf95b8087 "xelatex"
   (generated)
   "main.aux"
   "main.bcf"
