@@ -486,6 +486,70 @@
       \verb https://en.wikipedia.org/wiki/Likelihood-ratio_test
       \endverb
     \endentry
+    \entry{ucla_ologit}{online}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=d5d5d2e41282c7e8d39e8c65728e5736}{%
+           family={{UCLA: Statistical Consulting Group}},
+           familyi={U\bibinitperiod}}}%
+      }
+      \strng{namehash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{fullhash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{fullhashraw}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{bibnamehash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{authorbibnamehash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{authornamehash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{authorfullhash}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \strng{authorfullhashraw}{d5d5d2e41282c7e8d39e8c65728e5736}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{url}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Ordinal Logistic Regression {|} Annotated Output}
+      \field{urlday}{27}
+      \field{urlmonth}{11}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://stats.oarc.ucla.edu/annotated-outputs/ordinal-logistic-regression/
+      \endverb
+      \verb{url}
+      \verb https://stats.oarc.ucla.edu/annotated-outputs/ordinal-logistic-regression/
+      \endverb
+    \endentry
+    \entry{statsmodels_ordered}{online}{}{}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=36c3008b6f34e1cb3e309324b2305e3b}{%
+           family={{statsmodels}},
+           familyi={s\bibinitperiod}}}%
+      }
+      \strng{namehash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{fullhash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{fullhashraw}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{bibnamehash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{authorbibnamehash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{authornamehash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{authorfullhash}{36c3008b6f34e1cb3e309324b2305e3b}
+      \strng{authorfullhashraw}{36c3008b6f34e1cb3e309324b2305e3b}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{url}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{statsmodels.miscmodels.ordinal\_model.{OrderedModel}}
+      \field{urlday}{27}
+      \field{urlmonth}{11}
+      \field{urlyear}{2026}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.statsmodels.org/devel/generated/statsmodels.miscmodels.ordinal_model.OrderedModel.html
+      \endverb
+      \verb{url}
+      \verb https://www.statsmodels.org/devel/generated/statsmodels.miscmodels.ordinal_model.OrderedModel.html
+      \endverb
+    \endentry
     \entry{jax2018}{online}{}{}
       \name{author}{11}{}{%
         {{un=0,uniquepart=base,hash=b75383e6b48c8360c7a60031424c85cf}{%
@@ -605,8 +669,8 @@
       \strng{authornamehash}{ebd1e32c3250f90b52e3a6d1386561ff}
       \strng{authorfullhash}{ebd1e32c3250f90b52e3a6d1386561ff}
       \strng{authorfullhashraw}{ebd1e32c3250f90b52e3a6d1386561ff}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{extradatescope}{labelyear}
       \field{labeldatesource}{}
       \field{labelnamesource}{author}
@@ -633,8 +697,8 @@
       \strng{authornamehash}{0831beb3084156aee5b3646a045a1151}
       \strng{authorfullhash}{0831beb3084156aee5b3646a045a1151}
       \strng{authorfullhashraw}{0831beb3084156aee5b3646a045a1151}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{extradatescope}{labelyear}
       \field{labeldatesource}{}
       \field{labelnamesource}{author}

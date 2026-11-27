@@ -31,10 +31,10 @@
 \contentsline {subsection}{\numberline {3.3.3}Generating emission sequences from an HMM}{14}{subsection.0.3.3.3}%
 \contentsline {section}{\numberline {3.4}Model checking and comparison}{15}{section.0.3.4}%
 \contentsline {subsection}{\numberline {3.4.1}In-sample}{15}{subsection.0.3.4.1}%
-\contentsline {subsubsection}{Pseudo-residuals}{15}{subsubsection*.10}%
+\contentsline {subsubsection}{Forecast Pseudo-residuals}{15}{subsubsection*.10}%
 \contentsline {subsubsection}{Information criteria}{15}{subsubsection*.11}%
 \contentsline {subsubsection}{Likelihood ratio test}{15}{subsubsection*.12}%
-\contentsline {subsection}{\numberline {3.4.2}Out-of-sample}{15}{subsection.0.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.2}Out-of-sample}{16}{subsection.0.3.4.2}%
 \contentsline {subsubsection}{Root mean square error}{16}{subsubsection*.13}%
 \contentsline {subsubsection}{Mean absolute percentage error}{16}{subsubsection*.14}%
 \contentsline {subsection}{\numberline {3.4.3}Emission forecasting}{16}{subsection.0.3.4.3}%
