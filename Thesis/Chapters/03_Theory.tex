@@ -197,7 +197,7 @@ i.e. $\Gamma_t(i, j)$ is the probability of transitioning to state $j$ at time $
 For the emission sequence $\mathcal{Y}$, each state $i$ has a uniquely defined probability distribution
 $p_i(y_t) = P(Y_t = y_t \mid S_t = i)$. These are collected in the diagonal matrix
 \begin{equation*}
-    P(y_t) =
+    \mathbf{P}(y_t) =
     \begin{pmatrix}
         p_1(y_t) & 0        & \cdots & 0        \\
         0        & p_2(y_t) & \cdots & 0        \\
@@ -208,7 +208,7 @@ $p_i(y_t) = P(Y_t = y_t \mid S_t = i)$. These are collected in the diagonal matr
 The likelihood of the emission sequence is then given by the initial distribution multiplied by
 the transition matrix and the emission matrix at each time step \parencite[Sec.~2.3.2]{zucchini2016},
 \begin{equation}
-    L_T = \pi \Gamma_1 P(y_1) \Gamma_2 P(y_2) \cdots \Gamma_T P(y_T) \mathbf{1}^{T},
+    L_T = \pi \Gamma_1 \mathbf{P}(y_1) \Gamma_2 \mathbf{P}(y_2) \cdots \Gamma_T \mathbf{P}(y_T) \mathbf{1}^{T},
     \label{eq:likelihood}
 \end{equation}
 where $\mathbf{1}$ is a row vector of ones of length $k$.
@@ -216,7 +216,8 @@ where $\mathbf{1}$ is a row vector of ones of length $k$.
 \subsection{Homogeneous HMM: HMM(1)}
 The ordinary HMM is the simplest model implemented in this project and the one most
 commonly used in the literature. The transition probabilities are constant and do not
-depend on time, the observations or any covariates, and neither does the emission density.
+depend on time, the observations or any covariates, and neither does the emission density.\\
+\\
 For this model, we want to estimate the parameters $\theta = \{\Gamma, \mu, \sigma\}$, where
 $\Gamma \in \mathbb{R}^{n \times n}$ is the transition matrix, $\mu \in \mathbb{R}^{n}$ is the
 mean vector of the Gaussian emission density and $\sigma \in \mathbb{R}^{n}$ is the standard
