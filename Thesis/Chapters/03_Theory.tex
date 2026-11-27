@@ -323,7 +323,7 @@ and the emission distribution is autoregressive as in Section~\ref{sec:ar-hmm-th
 This section will present the inference algorithms used in this project to compute 
 the likelihood and to sample paths given a model and an emission sequence. 
 
-\subsection{Likelihood evaluation by the forward algorithm}
+\subsection{Likelihood evaluation by the forward algorithm and MLE}
 %Several methods can be used to estimate the parameters of an HMM, where one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
 %In this project, we will however use the method of maximum likelihood estimation (MLE) 
 %to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
@@ -364,12 +364,20 @@ $p(X_t \mid Y_{1:t-1})$.
 \noindent where $\odot$ denotes element-wise multiplication of vectors.
 The log-likelihood is obtained by summing the log of the step likelihoods:
 \begin{equation}
-    \mathcal{L}(\theta) = \sum_{t=1}^{T} \log f_t .
+    \ell(\theta) = \sum_{t=1}^{T} \log f_t .
 \end{equation}
 Each likelihood step $f_t$ is the sum of the predicted state distribution $u_t$ multiplied by the emission densities $g_t$ for all states, 
 which gives the marginal likelihood of observing $y_t$ given the previous observations $y_{1:t-1}$.
+\bigskip
 
+In litterature, the Baum-Welch algorithm is commonly used to learn parameters of a Hidden Markov Model.\\
+Unfortunately, this require motifying the algorithm for each new class of HMM.
+In this thesis, we will rely on the maximum likelihood estimate instead for learning the parameters of our mode. \\
+This can be defined as
 
+$$
+\hat{\theta} = \arg\min_{\theta} \left(-\ell(\theta)\right)
+$$
 %\subsection{Forward Backward Filtering} 
 %% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 

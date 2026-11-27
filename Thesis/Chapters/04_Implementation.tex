@@ -1,6 +1,300 @@
 \chapter{Methodology}
-This section provides an overview of what environment was used to implement the
-models, what libraries were used and why, and how the classes were designed.
+This section provides the experimental setup of the training, validation and test of the models. \\
+It provides a section on how the model was analyzed and how a the model was used to simulate and estimate the 
+amount of feedback needed to estimate thermal comfort curves.\\ 
+It also goes into detail about the coding envoriment, what libraries were used and why, 
+how the code was designed. For each section, a path to the file will also be mentioned such that 
+the reader can run the files themselves. 
+\section{Model Fitting}
+\subsection{Train-Validation-Test split} 
+Our models are strcutred such that they can learn online and because it is important for the models to be able 
+to predict future occupancy, it has been choosen to split the data up into a training (65\%), validation (15\%) and test set. 
+The split is visualised in Figure~\ref{fig:room_015_split}, 
+\input{Plots/data/room_015_split.tex}
+Here we see that the chrstmas holidays is contained within the training data set. 
+\subsection{Seeding of models}
+The likelihood of an HMM is multimodal, so a single fit from one starting point
+may end in a poor local optimum or in a degenerate solution. Each model is
+therefore fitted from several starting points, and one of the resulting fits is
+selected. The models are fitted as a chain in the order
+HMM $\rightarrow$ HMM($\beta, 1$) $\rightarrow$ AR(1)-HMM $\rightarrow$
+AR(1)-HMM($\beta, 1$), and for every number of states $n$, each model gets
+11 starts: 10 random starts and one seeded start. The seeded start is built
+from the models already selected earlier in the chain. The HMM is first in the
+chain, so its seeded start is instead a fixed start computed from the data.
+Every start is fitted on the training set with L-BFGS for at most 10{,}000
+iterations. The HMM($\beta, 1$) and AR(1)-HMM($\beta, 1$) minimise the negative
+log-likelihood plus a ridge penalty $\lambda \sum \beta^2$ with
+$\lambda = 10^{-2}$, while the other two models minimise the negative
+log-likelihood alone. The search is implemented in
+\texttt{drivers/models/random\_search.py}.
+
+\paragraph{Seeded starts.}
+Let $y_1, \dots, y_T$ be the training observations, $s_y$ their sample standard
+deviation and $\hat{Q}_y(p)$ their empirical $p$-quantile. The seeded starts
+are
+\begin{itemize}
+    \item \textbf{HMM:} the means are placed at evenly spaced quantiles,
+    $\mu_i = \hat{Q}_y(p_i)$ with $p_i$ running from $0.05$ to $0.95$ in $n$
+    equal steps, every state gets the standard deviation $\sigma_i = s_y$, and
+    the transition matrix is $\Gamma = 0.7\, I + \frac{0.3}{n} \mathbf{1}\mathbf{1}^{T}$.
+    \item \textbf{HMM($\beta, 1$):} the emission and the transition matrix of the
+    selected HMM, with the transition matrix used as the intercepts
+    $\tilde{\xi}_{ij}$ and every covariate effect set to $\beta_{ij} = 0.05$.
+    Before the transition matrix is converted to logits, its entries are
+    floored at $10^{-8}$ and the rows renormalised, since an entry that has
+    underflowed to zero would give an infinite logit.
+    \item \textbf{AR(1)-HMM:} the means, standard deviations and transition
+    matrix of the selected HMM, with every AR coefficient set to $\phi_i = 0.05$.
+    \item \textbf{AR(1)-HMM($\beta, 1$):} the emission of the selected AR(1)-HMM
+    combined with the transition (intercepts and $\beta$) of the selected
+    HMM($\beta, 1$).
+\end{itemize}
+
+\paragraph{Random starts.}
+The random starts draw every parameter independently:
+\begin{itemize}
+    \item \textbf{Means:} $n$ probability levels are drawn from
+    $\mathcal{U}(0.02, 0.98)$ and sorted, and the means are the empirical
+    quantiles of the training data at these levels. A small offset of
+    $(i-1) \cdot 10^{-3} s_y$ is added to $\mu_i$, so the means stay strictly
+    increasing as required by \cref{eq:mu-reparam}, even if two levels land
+    on the same quantile.
+    \item \textbf{Standard deviations:} $\sigma_i = s_y \, u_i$ with
+    $u_i \sim \mathcal{U}(0.1, 1)$.
+    \item \textbf{Transition matrix:} a diagonal-heavy random matrix,
+    \begin{equation}
+        \Gamma = 0.8\, I + 0.2\, D, \qquad D_{i\cdot} \sim \operatorname{Dirichlet}(1, \dots, 1),
+    \end{equation}
+    where each row of $D$ is drawn uniformly on the probability simplex, so
+    each row of $\Gamma$ sums to one and has a diagonal entry of at least $0.8$.
+    \item \textbf{AR coefficients} (AR(1) models only): $\phi_i \sim \mathcal{U}(0, 0.95)$.
+    \item \textbf{Covariate effects} ($\beta$ models only): every entry of
+    $\beta_{ij}$ is drawn from $\mathcal{N}(0, 0.5^2)$.
+\end{itemize}
+The random number generator for start $s \in \{0, \dots, 9\}$ of the $m$'th
+model in the chain is seeded with $(n, m, s)$. The random starts are therefore
+reproducible and differ between models and between numbers of states.
+
+\paragraph{Selection rules.}
+Before scoring, starts whose fit has collapsed onto a degenerate solution are
+rejected. A fitted start is rejected if any of the following holds:
+\begin{enumerate}
+    \item the fit raised an error or returned non-finite parameters,
+    \item an AR coefficient satisfies $\phi_i \geq 0.999$, i.e.\ the state has
+    a unit root and behaves as a random walk,
+    \item a standard deviation satisfies $\sigma_i < 1$ ppm, i.e.\ the state
+    has collapsed onto a single point, where the likelihood is unbounded,
+    \item a standard deviation satisfies $\sigma_i > 10^4$ ppm, i.e.\ the state
+    has turned into a flat catch-all state, as the $\text{CO}_2$ level never
+    spans this range,
+    \item two states $i$ and $j$ are duplicates, defined as means that differ by
+    less than 1\%, $|\mu_i - \mu_j| < 0.01 \max(|\mu_i|, |\mu_j|)$, together
+    with standard deviations within a factor of 1.5,
+    $\max(\sigma_i, \sigma_j) / \min(\sigma_i, \sigma_j) < 1.5$,
+    \item the forecasts on the validation set are not finite.
+\end{enumerate}
+The remaining starts are scored on the validation set. For each horizon
+$h \in \mathcal{H} = \{1, 2, 4, 6, 8\}$, i.e.\ from 30 minutes to 4 hours
+ahead, the fitted model makes rolling $h$-step-ahead forecasts over the
+validation set: it filters all observations up to time $t$ and predicts
+$y_{t+h}$, without refitting the parameters. The score of a start is the mean
+RMSE over the horizons,
+\begin{equation}
+    \text{score} = \frac{1}{|\mathcal{H}|} \sum_{h \in \mathcal{H}} \mathrm{RMSE}_h,
+\end{equation}
+and the start with the lowest score is selected. If every start is rejected, the
+search stops with an error. Whether the optimiser reported convergence is not
+used in the selection. The selected fit is saved and used as the seed for the
+following models in the chain, and the test set is only used to evaluate the
+selected fits.
+
+\section{State Characterisation with FFBS Setup}\label{sec:ffbs-setup}
+The hidden states of a fitted model are not observed, so they are characterised
+by sampling state paths from their posterior distribution with FFBS, as
+described in the theory chapter. The analysis is done for the fitted
+AR(1)-HMM($\beta, 1$) and uses the parameters from the training fit without
+refitting. The forward algorithm is run over the whole observed series, i.e.\
+the training, validation and test sets joined into one series
+$y_1, \dots, y_T$, and $P = 100{,}000$ state paths
+$S^{(p)}_{1:T}$, $p = 1, \dots, P$, are drawn from
+$P(S_{1:T} \mid y_{1:T}, \theta)$. Sampling the paths, instead of computing a
+single most likely path, means that every statistic below can be computed per
+path, and the spread across the paths shows how uncertain the statistic is
+because the states are unknown.
+
+For each state $i$ and path $p$, with $\mathds{1}^{(p)}_t(i) = \mathds{1}[S^{(p)}_t = i]$,
+the following statistics are computed:
+\begin{align}
+    \bar{y}^{(p)}_i &= \frac{\sum_{t=1}^{T} y_t\, \mathds{1}^{(p)}_t(i)}{\sum_{t=1}^{T} \mathds{1}^{(p)}_t(i)},
+    &
+    d^{(p)}_i &= \frac{\sum_{t=2}^{T} (y_t - y_{t-1})\, \mathds{1}^{(p)}_t(i)}{\sum_{t=2}^{T} \mathds{1}^{(p)}_t(i)},
+    &
+    \pi^{(p)}_i &= \frac{1}{T} \sum_{t=1}^{T} \mathds{1}^{(p)}_t(i),
+\end{align}
+i.e.\ the mean observed $\text{CO}_2$ level in the state, the mean drift
+$y_t - y_{t-1}$ in the state, which shows whether the $\text{CO}_2$ level
+rises or falls while the room is in the state, and the share of time spent in
+the state. Each statistic is reported as its mean over the paths together with
+the 2.5\% and 97.5\% quantiles across the paths. To also show the spread of
+the drift within a state, the drifts of all paths are pooled into one series,
+in which $y_t - y_{t-1}$ occurs once for every path that is in state $i$ at
+time $t$, and the 25\% and 75\% quantiles of this pooled series are reported.
+
+The posterior state probabilities are estimated by the share of the paths that
+are in each state,
+\begin{equation}
+    \hat{P}(S_t = i \mid y_{1:T}) = \frac{1}{P} \sum_{p=1}^{P} \mathds{1}^{(p)}_t(i).
+\end{equation}
+To show how the states follow the use of the room, these probabilities are
+averaged over the days by time of day, separately for working days and for off
+days, i.e.\ weekends and Danish public holidays as given by the off-day
+covariate.
+
+Finally, the paths are used to estimate how often feedback is given in each
+state. The occupant feedback is binned onto the 30 minute time steps of the
+series, such that $f_t = 1$ if at least one feedback was given in step $t$ and
+$f_t = 0$ otherwise. For each path, the number of feedbacks given in state $i$
+and the probability of feedback given the state are
+\begin{equation}
+    n^{(p)}_i = \sum_{t=1}^{T} f_t\, \mathds{1}^{(p)}_t(i),
+    \qquad
+    p^{(p)}_i = \frac{n^{(p)}_i}{\sum_{t=1}^{T} \mathds{1}^{(p)}_t(i)},
+\end{equation}
+and they are again summarised by the mean and the 2.5\%--97.5\% range across the
+paths. The mean of $p^{(p)}_i$ over the paths is used as the true feedback
+probability of each state in the sample size simulation in
+\cref{sec:sample-size-setup}.
+
+The paths are sampled by \texttt{drivers/simulation/sample\_paths.py}, the
+state statistics and daily profiles are computed by
+\texttt{drivers/simulation/state\_analysis.py}, and the feedback probabilities
+by \texttt{drivers/simulation/feedback\_states.py}.
+
+\section{Thermal Comfort Curve Sample Estimation Setup}\label{sec:sample-size-setup}
+The aim of the simulation study is to determine how many occupant votes are
+needed before the thermal comfort curve of a room can be estimated, and how long
+the room has to be monitored to collect them. Since the true comfort curve of a
+real room is unknown, the question is answered by simulation: $R = 200$
+datasets are simulated from a model with a known comfort curve, the curve is
+estimated from the first $N$ votes of each dataset for a growing $N$, and the
+estimates are compared with the truth.
+
+\paragraph{Simulation of a dataset.}
+Each dataset is simulated one 30 minute time step at a time from the fitted
+AR(1)-HMM($\beta, 1$), until it holds $N_{\max} = 300$ votes:
+\begin{enumerate}
+    \item \textbf{State and $\text{CO}_2$.} The state follows the fitted Markov
+    chain. The first state is drawn from $u_0 \Gamma^{(0)}$ with the uniform
+    initial distribution $u_0$, and the following states from
+    $S_t \mid S_{t-1} = i \sim \Gamma^{(t)}(i, \cdot)$. The covariates of the
+    transition matrices are those of an ordinary Monday-to-Sunday week without
+    holidays, repeated for as many weeks as needed. The $\text{CO}_2$ level is
+    drawn from the AR(1) emission of the state, as described in the theory
+    chapter,
+    \begin{equation}
+        y_t = \mu_{S_t} + \phi_{S_t} (y_{t-1} - \mu_{S_t}) + \sigma_{S_t} \varepsilon_t,
+        \qquad \varepsilon_t \sim \mathcal{N}(0, 1).
+    \end{equation}
+    \item \textbf{Feedback.} Whether feedback is given depends only on the
+    state, $f_t \mid S_t = i \sim \operatorname{Bernoulli}(p_i)$, where $p_i$ is
+    the probability of feedback given state $i$ estimated from the room's
+    sampled state paths in \cref{sec:ffbs-setup}.
+    \item \textbf{Temperature.} The indoor temperature is drawn as
+    $T_t \sim \mathcal{U}(15, 25)$\,°C, independently of the state, the
+    $\text{CO}_2$ level and the feedback.
+    \item \textbf{Vote.} When $f_t = 1$, the occupant perceives the temperature
+    $T_t + \kappa\, \epsilon_t$ with $\epsilon_t \sim \operatorname{Logistic}(0, 1)$
+    and votes the category that the perceived temperature falls in, on the
+    cut-points $c = (17, 19, 21, 23)$\,°C:
+    \begin{equation*}
+        \underbrace{(-\infty, 17)}_{\text{opt0}} \;
+        \underbrace{[17, 19)}_{\text{opt1}} \;
+        \underbrace{[19, 21)}_{\text{opt2 (comfortable)}} \;
+        \underbrace{[21, 23)}_{\text{opt3}} \;
+        \underbrace{[23, \infty)}_{\text{opt4}}.
+    \end{equation*}
+    The scale is $\kappa = 0.55$\,°C, which gives a standard deviation of the
+    perception noise of $\kappa \pi / \sqrt{3} \approx 1$\,°C. This is exactly
+    the ordinal logistic regression model from the theory chapter, with
+    \begin{equation}
+        P(\text{vote} \leq k \mid T_t) = s\!\left( \frac{c_{k+1} - T_t}{\kappa} \right),
+        \qquad k = 0, \dots, 3,
+    \end{equation}
+    i.e.\ slope $\beta = 1/\kappa$ and cut-offs $\tau_k = c_k / \kappa$.
+\end{enumerate}
+The design makes three simplifying assumptions: the temperature is uniform over
+the range of the cut-points, it does not depend on the state of the room, and
+the decision to give feedback does not depend on the temperature.
+Dataset $r = 0, \dots, R-1$ is simulated with the random seed $r$, so the study
+is reproducible.
+
+\paragraph{Estimation.}
+Each dataset is cut at its $N$'th vote, at time step $t_N$, for
+$N = 5, 10, \dots, 300$, and the following quantities are estimated from the
+data up to $t_N$, as an experiment stopped at that point would have to:
+\begin{itemize}
+    \item \textbf{Feedback probabilities.} The states are not observed, so each
+    step's feedback is weighted by the smoothed state probability
+    $\gamma_t(i) = P(S_t = i \mid y_{1:t_N}, \theta)$, computed under the true
+    model from the $\text{CO}_2$ observed up to $t_N$,
+    \begin{equation}
+        \hat{p}_i = \frac{\sum_{t \leq t_N} f_t\, \gamma_t(i)}{\sum_{t \leq t_N} \gamma_t(i)}.
+    \end{equation}
+    The same estimator with $\gamma_t(i)$ replaced by the indicator of the true
+    state, $\mathds{1}[S_t = i]$, is computed as a best case in which the states
+    are known.
+    \item \textbf{Comfort curve.} An ordinal logistic regression is fitted to the
+    (temperature, vote) pairs of the first $N$ votes by maximum likelihood with
+    \texttt{OrderedModel} from \texttt{statsmodels}, with the temperatures
+    centred at 20\,°C. The fitted slope $\hat{\beta}$ and cut-offs
+    $\hat{\tau}_k$ are converted back to temperatures, giving the cut-points
+    $\hat{c}_k = 20 + \hat{\tau}_k / \hat{\beta}$ and the scale
+    $\hat{\kappa} = 1/\hat{\beta}$. The comfort band is the category opt2, with
+    centre $(\hat{c}_2 + \hat{c}_3)/2$ and width $\hat{c}_3 - \hat{c}_2$. The fit
+    is only used once every category has received at least one vote, and a fit
+    that does not converge or has a singular Hessian counts as failed.
+\end{itemize}
+
+\paragraph{Test and power.}
+The comfort curve can be used when its categories can be told apart, i.e.\
+when each of the inner bands opt1, opt2 and opt3 has a width that is
+significantly larger than zero. The width of band $k$ is
+$w_k = c_{k+1} - c_k$, $k = 1, 2, 3$. \texttt{statsmodels} parameterises the
+cut-offs by $\tau_1$ and the log-differences $\log(\tau_{k+1} - \tau_k)$, so
+$\log \hat{w}_k = \log(\hat{\tau}_{k+1} - \hat{\tau}_k) - \log \hat{\beta}$, and
+its standard error $\operatorname{se}(\log \hat{w}_k)$ follows from the
+covariance matrix of the parameter estimates by the delta method. Since
+$\operatorname{se}(\hat{w}_k) \approx \hat{w}_k \operatorname{se}(\log \hat{w}_k)$,
+the Wald statistic is
+\begin{equation}
+    z_k = \frac{\hat{w}_k}{\operatorname{se}(\hat{w}_k)} = \frac{1}{\operatorname{se}(\log \hat{w}_k)},
+\end{equation}
+and the one-sided test of $w_k > 0$ rejects at the 5\% level when
+$z_k > 1.645$. As $\hat{w}_k$ is positive by construction, the test is in
+practice a requirement on the precision of the band widths: a band is
+distinguished when its width has a relative standard error below
+$1/1.645 \approx 0.61$. The bands are all distinguishable when the tests of
+all three bands reject. A failed fit counts as not rejecting.
+
+The power at $N$ is the share of the $R$ datasets in which the test rejects.
+The number of votes needed is the smallest $N$ from which the power stays at
+or above 80\% for all larger $N$ on the grid. It is converted to a monitoring
+time by the mean over the datasets of the time to the $N$'th vote,
+$(t_N + 1)/336$ weeks, as one week holds 336 time steps of 30 minutes. The
+power at the number of feedbacks actually observed in the room is also
+reported.
+
+The vote temperatures do not depend on the state, so the comfort curve
+estimates and the power depend only on the number of votes $N$. The HMM enters
+through the time it takes to collect $N$ votes, which is set by how much time
+the room spends in each state and by the feedback probabilities $p_i$, and
+through the estimation of $\hat{p}_i$, which depends on how well the states can
+be recovered from the $\text{CO}_2$ level.
+
+The simulation is implemented in \texttt{drivers/simulation/sample\_size.py},
+and the plots are made by \texttt{drivers/simulation/plot\_sample\_size.py}.
+
 \section{Coding environment}
 The implementation of the HMM models is in Python 3.11 and is split into two
 parts: a model library, which contains the HMMs themselves, and a set of
@@ -82,9 +376,4 @@ classes.
     dashed arrows a call. Abstract classes are written in italics.}
     \label{fig:class_design}
 \end{figure}
-
-
-\section{Model setup}
-
-\section{Simulation setup} 
 
