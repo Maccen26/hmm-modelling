@@ -442,6 +442,8 @@ Then, for each state in the path, an emission is sampled from the emission densi
 \begin{equation}
     Y_t \mid S_t = i \sim p_i, \quad t = 1, \dots, T.
 \end{equation}
+In this project $p_i$ is the Gaussian density $\mathcal{N}(\mu_i, \sigma_i^2)$ with the fitted
+mean $\mu_i$ and standard deviation $\sigma_i$ of state $i$.
 Repeating this gives any number of independent paths with corresponding emission sequences.
 
 For the autoregressive models, the emission density depends on the previous emission. At
@@ -456,7 +458,7 @@ sampled emission,
 
 \section{Model checking and comparison}
 \subsection{In-sample}
-\subsubsection{Pseudo-residuals}
+\subsubsection{Forecast Pseudo-residuals}
 For assessing the goodness-of-fit, we will use the pseudo-residuals
 defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined as
 \begin{equation}
@@ -464,7 +466,14 @@ defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined a
 \end{equation}
 where $\Phi^{-1}$ is the inverse of the standard normal cumulative distribution function (CDF)
 and $F_{t|t-1}(y_t \mid y_{1:t-1})$ is the one-step-ahead predictive CDF of the observation $y_t$ given
-the previous observations $y_{1:t-1}$. The pseudo-residuals are expected to be
+the previous observations $y_{1:t-1}$. Conditioning on the state, it is the mixture of the
+state-dependent CDFs $F_i$, weighted by the one-step-ahead predictive state distribution,
+\begin{equation}
+    F_{t|t-1}(y_t \mid y_{1:t-1}) = \sum_{i=1}^{k} u_{t|t-1}(i)\, F_i(y_t),
+    \qquad \mathbf{u}_{t|t-1} = \mathbf{u}_{t-1|t-1}\, \Gamma_t,
+\end{equation}
+where $F_i$ is the cumulative distribution function of the emission density $p_i$ associated
+with state $i$. The pseudo-residuals are expected to be
 independently and identically distributed (i.i.d.) standard normal if the model is correctly specified. 
 Therefore, we can use the pseudo-residuals to assess 
 the goodness-of-fit of the model by checking 
@@ -551,26 +560,25 @@ where $\mu_i(T+s)$ replaces $\mu_i$ in the weighted mean at step $s$.
 
 \section{Ordinal logistic regression}
 Let $V \in \{1, \dots, J\}$ be an ordered categorical response with covariate $x$. The
-ordinal logistic regression (proportional odds) model assumes
+ordinal logistic regression (proportional odds) model assumes a continuous latent variable
 \begin{equation}
-    P(V \leq j \mid x) = s(\tau_j - \beta x), \qquad j = 1, \dots, J-1,
+    y^* = \alpha + \beta x + \varepsilon,
 \end{equation}
-where $s(\cdot)$ is the logistic sigmoid from \cref{eq:phi-reparam}, $\beta$ is the slope and
-$\tau_1 < \tau_2 < \dots < \tau_{J-1}$ are the thresholds. The category probabilities are
+where $\alpha$ is an intercept, $\beta$ is the slope and $\varepsilon$ follows a standard
+logistic distribution. The latent variable is mapped to the observed categories by the
+cut-offs $\tau_1 < \tau_2 < \dots < \tau_{J-1}$, such that $V = j$ when
+$\tau_{j-1} < y^* \leq \tau_j$, with $\tau_0 = -\infty$ and $\tau_J = \infty$. The log-odds
+of being in category $j$ or below is then \parencite{ucla_ologit}
+\begin{equation}
+    \ln \frac{P(V \leq j \mid x)}{P(V > j \mid x)} = \tau_j - \alpha - \beta x,
+    \qquad j = 1, \dots, J-1.
+\end{equation}
+Since $\alpha$ and the cut-offs are not separately identifiable, $\alpha$ is absorbed into the
+cut-offs ($\alpha = 0$). The category probabilities are
 \begin{equation}
     P(V = j \mid x) = s(\tau_j - \beta x) - s(\tau_{j-1} - \beta x),
-    \qquad \tau_0 = -\infty,\ \tau_J = \infty.
 \end{equation}
-To keep the thresholds ordered, they are reparameterised as in \cref{eq:mu-reparam},
-$\tau_j = \tau_1 + \sum_{l=2}^{j} \exp(\kappa_l)$. Given observations $(x_n, v_n)$,
-$n = 1, \dots, N$, the parameters are estimated by maximising the log-likelihood
-\begin{equation}
-    \ell(\beta, \tau) = \sum_{n=1}^{N} \ln P(V = v_n \mid x_n)
-\end{equation}
-numerically. The cut-points on the scale of the covariate are then
-\begin{equation}
-    \hat{c}_j = \frac{\hat{\tau}_j}{\hat{\beta}}, \qquad j = 1, \dots, J-1,
-\end{equation}
-which is the value of $x$ where $P(V \leq j \mid x) = 1/2$, i.e.\ the boundary between
-category $j$ and $j+1$. The spread around the cut-points is given by the scale $1/\hat{\beta}$.
+where $s(\cdot)$ is the logistic sigmoid from \cref{eq:phi-reparam}. The slope and cut-offs
+are estimated by maximum likelihood using the \texttt{OrderedModel} class from
+\texttt{statsmodels} \parencite{statsmodels_ordered}.
 
