@@ -381,110 +381,38 @@
       \field{title}{Statistical Modelling of Occupant Behaviour}
       \field{year}{2024}
     \endentry
-    \entry{wiki_aic}{online}{}{}
+    \entry{pawitan2001}{book}{}{}
       \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=b6aea1a416c89509a7df1cbb69249cb6}{%
-           family={{Wikipedia contributors}},
-           familyi={W\bibinitperiod}}}%
+        {{un=0,uniquepart=base,hash=2f754b8386eaccd215c5ae87adce5fa1}{%
+           family={Pawitan},
+           familyi={P\bibinitperiod},
+           given={Yudi},
+           giveni={Y\bibinitperiod},
+           givenun=0}}%
       }
-      \strng{namehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{bibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorbibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authornamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \field{extraname}{1}
+      \list{location}{1}{%
+        {Oxford}%
+      }
+      \list{publisher}{1}{%
+        {Oxford University Press}%
+      }
+      \strng{namehash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{fullhash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{fullhashraw}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{bibnamehash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{authorbibnamehash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{authornamehash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{authorfullhash}{2f754b8386eaccd215c5ae87adce5fa1}
+      \strng{authorfullhashraw}{2f754b8386eaccd215c5ae87adce5fa1}
       \field{sortinit}{1}
       \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{extradate}{1}
       \field{extradatescope}{labelyear}
       \field{labeldatesource}{}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{title}{Akaike information criterion}
-      \field{urlday}{4}
-      \field{urlmonth}{11}
-      \field{urlyear}{2026}
-      \field{year}{2026}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://en.wikipedia.org/wiki/Akaike_information_criterion
-      \endverb
-      \verb{url}
-      \verb https://en.wikipedia.org/wiki/Akaike_information_criterion
-      \endverb
-    \endentry
-    \entry{wiki_bic}{online}{}{}
-      \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=b6aea1a416c89509a7df1cbb69249cb6}{%
-           family={{Wikipedia contributors}},
-           familyi={W\bibinitperiod}}}%
-      }
-      \strng{namehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{bibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorbibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authornamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \field{extraname}{2}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{extradate}{2}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Bayesian information criterion}
-      \field{urlday}{4}
-      \field{urlmonth}{11}
-      \field{urlyear}{2026}
-      \field{year}{2026}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://en.wikipedia.org/wiki/Bayesian_information_criterion
-      \endverb
-      \verb{url}
-      \verb https://en.wikipedia.org/wiki/Bayesian_information_criterion
-      \endverb
-    \endentry
-    \entry{wiki_lrt}{online}{}{}
-      \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=b6aea1a416c89509a7df1cbb69249cb6}{%
-           family={{Wikipedia contributors}},
-           familyi={W\bibinitperiod}}}%
-      }
-      \strng{namehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{fullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{bibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorbibnamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authornamehash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhash}{b6aea1a416c89509a7df1cbb69249cb6}
-      \strng{authorfullhashraw}{b6aea1a416c89509a7df1cbb69249cb6}
-      \field{extraname}{3}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{extradate}{3}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Likelihood-ratio test}
-      \field{urlday}{4}
-      \field{urlmonth}{11}
-      \field{urlyear}{2026}
-      \field{year}{2026}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://en.wikipedia.org/wiki/Likelihood-ratio_test
-      \endverb
-      \verb{url}
-      \verb https://en.wikipedia.org/wiki/Likelihood-ratio_test
-      \endverb
+      \field{isbn}{978-0-19-850765-9}
+      \field{title}{In All Likelihood: Statistical Modelling and Inference Using Likelihood}
+      \field{year}{2001}
     \endentry
     \entry{ucla_ologit}{online}{}{}
       \name{author}{1}{}{%

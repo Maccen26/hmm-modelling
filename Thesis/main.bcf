@@ -2387,9 +2387,9 @@
     <bcf:citekey order="11" intorder="1">moller2024</bcf:citekey>
     <bcf:citekey order="12" intorder="1">zucchini2016</bcf:citekey>
     <bcf:citekey order="13" intorder="1">zucchini2016</bcf:citekey>
-    <bcf:citekey order="14" intorder="1">wiki_aic</bcf:citekey>
-    <bcf:citekey order="15" intorder="1">wiki_bic</bcf:citekey>
-    <bcf:citekey order="16" intorder="1">wiki_lrt</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">zucchini2016</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">zucchini2016</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">pawitan2001</bcf:citekey>
     <bcf:citekey order="17" intorder="1">ucla_ologit</bcf:citekey>
     <bcf:citekey order="18" intorder="1">statsmodels_ordered</bcf:citekey>
     <bcf:citekey order="19" intorder="1">jax2018</bcf:citekey>

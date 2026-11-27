@@ -9,12 +9,12 @@ with the inference algorithms used in this project.
 
 
 \section{Modelling \texorpdfstring{$\text{CO}_2$}{CO2} dynamics}
-This subsection presents the underlying assumed physical model of the $\text{CO}_2$ dynamics of a room, 
-how the system can be descirbed when adding noise and then it will be shown that the process can be described as a discrete-time AR(1) process. 
-A function for the the production rate of the occupants in the room will be presented
+This section presents the underlying assumed physical model of the $\text{CO}_2$ dynamics of a room and
+how the system can be described when noise is added, and then it will be shown that the process can be described as a discrete-time AR(1) process. 
+A function for the production rate of the occupants in the room will also be presented.
 
 \subsection{Mass-balance model and assumptions}
-Due to $\text{CO}_2$ not decaying by itself,
+Since $\text{CO}_2$ does not decay by itself,
 the perfectly mixed mass balance model of a room \parencite{batterman2017, wang1999}
 is given as a first-order ordinary differential equation (ODE) as
 \begin{equation}
@@ -26,11 +26,11 @@ indoor and outdoor $\text{CO}_2$ concentrations (mg$\cdot$m$^{-3}$), $G(t)$ is t
 production rate (mg$\cdot$h$^{-1}$) and $Q$ is the outdoor air flow rate (m$^3\cdot$h$^{-1}$).
 \bigskip
 
-Our sensors report in ppm units, so the perfectly mized mass balance model in \ref{eq:mass-balance} will be rewritten
+The sensors used in this project report in ppm units, so the perfectly mixed mass balance model in \cref{eq:mass-balance} will be rewritten
 to ppm units. 
 
 
-Dividing by \ref{eq:mass-balance} $V$ gives
+Dividing \cref{eq:mass-balance} by $V$ gives
 \begin{equation}
     \frac{d C_{\text{indoor}}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \left( C_{\text{indoor}}(t) - C_{\text{outdoor}}(t) \right).
 \end{equation}
@@ -41,10 +41,10 @@ $d\tilde{C}/dt = dC_{\text{indoor}}/dt$, so
     \frac{d \tilde{C}(t)}{dt} = \frac{G(t)}{V} - \frac{Q}{V} \tilde{C}(t).
 \end{equation}
 
-As ppm denotes parts per million, CO2 ppm can be related with the $\text{CO}_2$ concentration by 
+As ppm denotes parts per million, $\text{CO}_2$ in ppm can be related to the $\text{CO}_2$ concentration by 
 $$
 \text{CO}_2\,[\text{ppm}] = \text{CO}_2 \frac{\text{mg}}{\text{m}^3} \cdot \frac{V_m}{M_{\text{CO}_2}},$$
-with the Molar mass of $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and molar volume of ideal gas $V_m \approx 24.45$ L$\cdot$mol$^{-1}$
+with the molar mass $M_{\text{CO}_2} = 44.01$ g$\cdot$mol$^{-1}$ and the molar volume of an ideal gas $V_m \approx 24.45$ L$\cdot$mol$^{-1}$
 (25$^\circ$C, 1 atm). \\Multiplying by the constant $V_m / M_{\text{CO}_2}$ gives the model in ppm,
 \begin{equation}
     \frac{d \tilde{C}(t)}{dt} = P(t) - \alpha \tilde{C}(t),
@@ -63,7 +63,7 @@ The assumptions in \cref{eq:mass-balance}, and therefore in \cref{eq:ODE}, are t
 \begin{itemize}
     \item The $\text{CO}_2$ in the room is perfectly mixed, meaning that the $\text{CO}_2$ is evenly distributed in the room. This assumes that the sensors are not biased by location.
     \item There are no $\text{CO}_2$ sinks in the room, meaning that the $\text{CO}_2$ is not absorbed by any materials in the room and is only ventilated out of the room.
-    \item The sensors measures $\text{CO}_2$ perfectly and with no errors, meaning each $\text{CO}_2$ reading is the true value occured in the room.
+    \item The sensors measure $\text{CO}_2$ perfectly and without errors, meaning each $\text{CO}_2$ reading is the true value that occurred in the room.
 \end{itemize}
 
 However, it is important to note that the model in \cref{eq:ODE} is a
@@ -72,12 +72,12 @@ there are many factors that can affect the $\text{CO}_2$ levels in a room,
 such as the number of occupants, the activity level of the occupants, 
 the ventilation system, and the outdoor $\text{CO}_2$ levels. \\
 
-\subsection{Modelling $\text{CO}_2$ Production rate}
+\subsection{Modelling $\text{CO}_2$ production rate}
 
 To be able to model the production rate of the occupants in the room, 
-it is assumeed that the production rate $P(t)$ is only dependent on the amount of occupants in the room.
+it is assumed that the production rate $P(t)$ depends only on the number of occupants in the room.
 Let $S(t) = k \in \mathbb{N}$ be the number of occupants of the room
-at time $t$, then we can model the production rate as
+at time $t$. The production rate can then be modelled as
 \begin{equation}
     P(t) = \beta_{S(t)},
 \end{equation}
@@ -90,21 +90,21 @@ This assumption forces $P(t)$ to be a stepwise function.
 %Therefore, the next step to make the model more realistic is to add noise to the system in the form of a stochastic differential equation (SDE), which will be presented in the next subsection.
 
 \subsection{Extension of mass-balance model: Adding noise to the sensors}
-A physical model descibing the $\text{CO}_2$ dynamics of a office room has been established in \cref{eq:ODE}.
-This model has 3 core assumptions which are 1) A perfecly mixed room, 2) No CO2 sinks, 3) No errors in sensors.\\
-Assumption 1 would demand a second sensor in a room to check the difference between readings or another physical model.
-Assumption 2 would also require another proberly also require another physical model (SHOULD BE REVISED). 
+A physical model describing the $\text{CO}_2$ dynamics of an office room has been established in \cref{eq:ODE}.
+This model has three core assumptions: 1) a perfectly mixed room, 2) no $\text{CO}_2$ sinks and 3) no errors in the sensors.\\
+Assumption 1 would demand a second sensor in the room to check the difference between readings, or another physical model.
+Assumption 2 would probably also require another physical model (SHOULD BE REVISED). 
 Assumption 3 of perfect readings can be removed by extending the mass-balance model with a stochastic diffusion term, which 
 models noise in the sensors. \\
 \\
 By adding noise to the system in the form of a linear diffusion term with constant diffusion coefficient $\sigma$,
-the mass-balance ODE can be written as a stochastic differential equation (SDE) on the form
+the mass-balance ODE can be written as a stochastic differential equation (SDE) of the form
 \begin{equation}
     \mathrm{d} \tilde{C}(t) = \left(P(t) - \alpha \tilde{C}(t)\right) \mathrm{d}t + \sigma \, \mathrm{d}W(t),
     \label{eq:sde}
 \end{equation}
-where $W(t)$ is the Wiener process (also called standard Brownian motion). Some properties of a wiener process 
-$W(t)$ is:
+where $W(t)$ is the Wiener process (also called standard Brownian motion). Some properties of a Wiener process 
+$W(t)$ are:
 \begin{itemize}
     \item $W(t) \sim \mathcal{N}(0, t)$
     \item For $a > b$, $W(a) - W(b) \sim \mathcal{N}(0, a-b)$ 
@@ -120,12 +120,12 @@ assumed to be a linear diffusion term with constant diffusion coefficient $\sigm
 as this is the simplest noise to add to the system.\\
 However, one could also add
 a non-linear diffusion term, where the diffusion coefficient is a function of the state of the system.
-But this is out of the scope of this project, as this would require more
+This is, however, out of the scope of this project, as it would require more
 in-depth knowledge of SDEs and stochastic calculus, which is not the focus of this project. 
 \subsection{Discretisation to an AR(1) process}
 Since \cref{eq:sde} is an Ornstein-Uhlenbeck process, a solution is known in closed form
 \parencite[Sec.~1.13.1]{iacus2008}. Sampling it at $t_k = k\Delta t$ with a constant time step $\Delta t$,
-writing $\tilde{C}_k = \tilde{C}(t_k)$ and holding $P$ constant, one can rewrite the process to
+writing $\tilde{C}_k = \tilde{C}(t_k)$ and holding $P$ constant, the process can be rewritten as
 \begin{equation}
     \tilde{C}_{k+1} = \phi\, \tilde{C}_k
         + \mu \left(1 - \phi \right) + e_{k+1},
@@ -138,7 +138,7 @@ The noise term is defined as
     e_{k+1} = \sigma \int_{t_k}^{t_{k+1}} e^{-\alpha (t_{k+1}-u)} \, \mathrm{d}W_u
     \sim \mathcal{N}\!\left(0,\ \frac{\sigma^2}{2\alpha}\left(1 - e^{-2\alpha \Delta t}\right)\right)
 \end{equation}
-where $e_k$ has mean zero, constant variance and are uncorrelated over time.
+where the $e_k$ have mean zero and constant variance and are uncorrelated over time.
 \Cref{eq:ar1} is therefore an AR(1) process with autoregressive coefficient
 $\phi = e^{-\alpha \Delta t}$. \\
 The full derivation is given in Appendix~\ref{app:ar1-proof}.\\
@@ -154,7 +154,7 @@ which is the stationary distribution of the process. \\
 
 %% --------- HMMM ----------
 \section{Hidden Markov models}
-This section will present the underlying statistical models, inference algorithm s and analysis methods. 
+This section will present the underlying statistical models, inference algorithms and analysis methods. 
 
 \subsection{Model structure}
 %% Write some generel theory on HMM
@@ -218,7 +218,7 @@ The ordinary HMM is the simplest model implemented in this project and the one m
 commonly used in the literature. The transition probabilities are constant and do not
 depend on time, the observations or any covariates, and neither does the emission density.\\
 \\
-For this model, we want to estimate the parameters $\theta = \{\Gamma, \mu, \sigma\}$, where
+For this model, the parameters to be estimated are $\theta = \{\Gamma, \mu, \sigma\}$, where
 $\Gamma \in \mathbb{R}^{n \times n}$ is the transition matrix, $\mu \in \mathbb{R}^{n}$ is the
 mean vector of the Gaussian emission density and $\sigma \in \mathbb{R}^{n}$ is the standard
 deviation vector of the Gaussian emission density. Because the Markov chain is finite,
@@ -274,10 +274,10 @@ where $\zeta \in \mathbb{R}^{n}$. The unconstrained parameters $\eta \in \mathbb
 $\xi \in \mathbb{R}^{n \times (n-1)}$ and $\zeta \in \mathbb{R}^{n}$ are therefore the quantities
 that are optimised during the fitting process.
 \subsection{Covariate-dependent transitions: \texorpdfstring{HMM($\beta, 1$)}{HMM(beta)}} \label{sec:hmm(b)-theory}
-In this model, we let the transition probabilities depend on covariates which can include
+In this model, the transition probabilities depend on covariates, which can include
 time-of-day, weekday, type of day, etc. The motivation for this is the assumption
 that the occupancy state of the room is dependent
-on time (or any external covariates in generel), as the room is used for work.  \\
+on time (or any external covariates in general), as the room is used for work.  \\
 
 Let $x_t \in \mathbb{R}^{p}$ be a vector of $p$ covariates at time $t$.
 The transition logits are then defined as
@@ -287,12 +287,12 @@ The transition logits are then defined as
 where $\beta_{ij} \in \mathbb{R}^{p}$ is a vector of regression 
 coefficients for the transition from state $i$ to state $j$ and 
 $\tilde{\xi}_{ij}$ is the intercept term. 
-The transition matrix is then obtained as in \cref{eq:gamma-reparam}, and we now need to denote
-the transition matrix as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i, t)$.
+The transition matrix is then obtained as in \cref{eq:gamma-reparam}, and the transition matrix is now
+denoted as $\Gamma^t_{i,j} = P(S_{t} = j \mid S_{t-1} = i, t)$.
 
 
 \subsection{Autoregressive emissions: AR(1)-HMM}\label{sec:ar-hmm-theory}
-The Autoregressive HMM extends the ordinary HMM by letting the emission
+The autoregressive HMM extends the ordinary HMM by letting the emission
 distribution depend on the previous observation. Conditional on being in state $i$ at time
 $t$, the observation is modelled as
 \begin{equation}
@@ -302,8 +302,8 @@ $t$, the observation is modelled as
 \end{equation}
 Each state therefore has its own AR(1) coefficient $\phi_i \in (-1, 1)$ in addition to a
 mean and a standard deviation. \\
-The transitionmatrix $\Gamma$, the means $\mu$ and the standard deviations $\sigma$ are parameterised
-exactly as in the HMM-model, and the AR coefficients are reparameterised as
+The transition matrix $\Gamma$, the means $\mu$ and the standard deviations $\sigma$ are parameterised
+exactly as in the HMM, and the AR coefficients are reparameterised as
 \begin{equation}
     \phi_i = 2\, s(\psi_i) - 1, \qquad s(z) = \frac{1}{1 + e^{-z}},
     \label{eq:phi-reparam}
@@ -316,18 +316,18 @@ optimiser, with the inverse mapping
 \end{equation}
 \subsection{Combined model: \texorpdfstring{AR(1)-HMM($\beta, 1$)}{AR(1)-HMM(beta)}}
 This model is the combination of the AR(1)-HMM and the HMM($\beta$)-model, 
-where the transition probabilities depend on covariates as in section~\ref{sec:hmm(b)-theory} 
-and the emission distribution is autoregressive as in section~\ref{sec:ar-hmm-theory}.
+where the transition probabilities depend on covariates as in Section~\ref{sec:hmm(b)-theory} 
+and the emission distribution is autoregressive as in Section~\ref{sec:ar-hmm-theory}.
 
 \section{Inference}
-This section will present the inference algorithms used in this project which are used to compute 
-the likelihood and sampling paths giving a model and the emission sequence. 
+This section will present the inference algorithms used in this project to compute 
+the likelihood and to sample paths given a model and an emission sequence. 
 
 \subsection{Likelihood evaluation by the forward algorithm}
 %Several methods can be used to estimate the parameters of an HMM, where one of the more common methods is the Baum-Welch algorithm [\textcolor{red}{MISSING REFERENCE}].\\
 %In this project, we will however use the method of maximum likelihood estimation (MLE) 
 %to estimate the parameters of the HMM with the forward-filtering algorithm [\textcolor{red}{MISSING REFERENCE}]. \\
-The method used to compute the likelihood of a Hidden Markov Model is called 
+The method used to compute the likelihood of a hidden Markov model is called 
 the forward algorithm. 
 The forward algorithm implemented is called recursive filtering
 \parencite{moller2024}, as it constructs the current state distribution
@@ -373,10 +373,10 @@ which gives the marginal likelihood of observing $y_t$ given the previous observ
 %\subsection{Forward Backward Filtering} 
 %% I am unsure if this section is needed. Depends on if I write it into the model diagnostics
 
-\subsection{Posteriour Sampling of State Paths}
-Because the underlying paths of our emission sequence can not be observed and if one would like to do 
-analysis on the underlying path, a method for sampling paths from the posterior distribution will be introduced. 
-The method will be refered to as Forward Filtering Backward Sampling (FFBS). The method is defined in
+\subsection{Posterior Sampling of State Paths}
+Because the underlying paths of the emission sequence cannot be observed, a method for sampling paths 
+from the posterior distribution will be introduced to enable analysis of the underlying path. 
+The method will be referred to as Forward Filtering Backward Sampling (FFBS). The method is defined in
 \textcite[Sec.~7.1.2]{zucchini2016}. 
 \bigskip
 
@@ -402,9 +402,9 @@ The method will be refered to as Forward Filtering Backward Sampling (FFBS). The
 %
 %\paragraph{Corrected derivation.}
 Let $\Gamma^{(t)}_{ji} = P(S_t = i \mid S_{t-1} = j, \theta)$ denote the transition
-from time $t-1$ to time $t$. We sample the last state $S_T$ from the filtered
-distribution $u_{T|T}$, and then recursively, for $t = T, T-1, \dots, 2$, sample
-$S_{t-1}$ given the already sampled $S_t = i$ from the conditional distribution
+from time $t-1$ to time $t$. The last state $S_T$ is sampled from the filtered
+distribution $u_{T|T}$, and then recursively, for $t = T, T-1, \dots, 2$,
+$S_{t-1}$ is sampled given the already sampled $S_t = i$ from the conditional distribution
 $P(S_{t-1} = j \mid S_t = i, O_{1:T}, \theta)$. By the Markov property, the future
 observations $O_{t:T}$ carry no further information about $S_{t-1}$ once $S_t$ is
 known, so
@@ -431,7 +431,7 @@ Note that it still depends on the initial distribution $\pi$ through the forward
 recursion, although this influence decays for large $t$.
 
 \subsection{Generating emission sequences from an HMM}
-This section describes how synthetic data can be generated from a fitted HMM. First a path
+This section describes how synthetic data can be generated from a fitted HMM. First, a path
 $\mathcal{S} = (S_1, \dots, S_T)$ is sampled from the Markov chain, by drawing the first state
 from the initial distribution and each following state from the row of the transition matrix
 belonging to the previous state,
@@ -442,7 +442,7 @@ Then, for each state in the path, an emission is sampled from the emission densi
 \begin{equation}
     Y_t \mid S_t = i \sim p_i, \quad t = 1, \dots, T.
 \end{equation}
-In this project $p_i$ is the Gaussian density $\mathcal{N}(\mu_i, \sigma_i^2)$ with the fitted
+In this project, $p_i$ is the Gaussian density $\mathcal{N}(\mu_i, \sigma_i^2)$ with the fitted
 mean $\mu_i$ and standard deviation $\sigma_i$ of state $i$.
 Repeating this gives any number of independent paths with corresponding emission sequences.
 
@@ -459,8 +459,8 @@ sampled emission,
 \section{Model checking and comparison}
 \subsection{In-sample}
 \subsubsection{Forecast Pseudo-residuals}
-For assessing the goodness-of-fit, we will use the pseudo-residuals
-defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined as
+To assess the goodness-of-fit, the pseudo-residuals
+defined in \textcite[Sec.~7.3]{zucchini2016} are used. The pseudo-residuals are defined as
 \begin{equation}
     r_t = \Phi^{-1}\left(F_{t|t-1}(y_t \mid y_{1:t-1})\right),
 \end{equation}
@@ -475,42 +475,45 @@ state-dependent CDFs $F_i$, weighted by the one-step-ahead predictive state dist
 where $F_i$ is the cumulative distribution function of the emission density $p_i$ associated
 with state $i$. The pseudo-residuals are expected to be
 independently and identically distributed (i.i.d.) standard normal if the model is correctly specified. 
-Therefore, we can use the pseudo-residuals to assess 
+Therefore, the pseudo-residuals can be used to assess 
 the goodness-of-fit of the model by checking 
-if they are normally distributed and uncorrelated. 
+whether they are normally distributed and uncorrelated. 
 
 \subsubsection{Information criteria}
-For comparing the goodness-of-fit of different models,
-we will use the Akaike information criterion (AIC), 
-the Bayesian information criterion (BIC) and the Likelihood ratio test (LRT).
+To compare the goodness-of-fit of different models,
+the Akaike information criterion (AIC), 
+the Bayesian information criterion (BIC) and the likelihood ratio test (LRT) are used.
 Let $\hat{L}$ denote the maximised likelihood of a model, $k$ the number of
 estimated parameters and $T$ the number of observations.
 
-The AIC \parencite{wiki_aic} is defined as
+The AIC \parencite[Sec.~6.1]{zucchini2016} is defined as
 \begin{equation}
     \mathrm{AIC} = 2k - 2\ln \hat{L},
 \end{equation}
-and the BIC \parencite{wiki_bic} as
+and the BIC \parencite[Sec.~6.1]{zucchini2016} as
 \begin{equation}
     \mathrm{BIC} = k \ln T - 2\ln \hat{L}.
 \end{equation}
 Both criteria reward a high likelihood and penalise the number of parameters,
 and the model with the lowest value is preferred. Since $\ln T > 2$ for $T > 7$,
-the BIC penalises additional parameters harder than the AIC and therefore
+the BIC penalises additional parameters more heavily than the AIC and therefore
 tends to favour simpler models.
 
 \subsubsection{Likelihood ratio test}
-The LRT \parencite{wiki_lrt} compares two nested models, where the null model
-with parameter space $\Theta_0$ is a restricted version of the full model with
+The LRT \parencite[Sec.~9.5]{pawitan2001} compares two nested models, where the base model
+with parameter space $\Theta_0$ is a restricted version of the complex model with
 parameter space $\Theta$. The test statistic is
 \begin{equation}
-    \lambda_{LR} = -2\left[\ell(\hat{\theta}_0) - \ell(\hat{\theta})\right],
+    W = 2\left[\ell(\hat{\theta}) - \ell(\hat{\theta}_0)\right] \sim \chi^2_p,
 \end{equation}
-where $\ell(\hat{\theta}_0)$ and $\ell(\hat{\theta})$ are the maximised
-log-likelihoods under the null and the full model, respectively. By Wilks' theorem,
-$\lambda_{LR}$ is asymptotically $\chi^2$-distributed with degrees of freedom
-equal to $\dim\Theta - \dim\Theta_0$, provided the null hypothesis lies in the
-interior of the parameter space. Note that this condition does not hold when
+where $\ell(\hat{\theta})$ and $\ell(\hat{\theta}_0)$ are the maximised
+log-likelihoods of the complex and the base model, respectively, and
+$p = \dim\Theta - \dim\Theta_0$ is the difference in the number of parameters between
+the two models. The p-value is the probability, under the base model, of observing a test statistic at
+least as extreme as the observed $W$, i.e.\ $P(\chi^2_p \geq W)$, and the base model
+is rejected at the 5\% level when $W$ exceeds the 95\% quantile $\chi^2_{p,0.95}$ of the
+$\chi^2_p$ distribution. The $\chi^2_p$ distribution holds asymptotically, provided the
+null hypothesis lies in the interior of the parameter space. Note that this condition does not hold when
 comparing HMMs with different numbers of states, as the smaller model corresponds
 to parameters on the boundary of the larger model's parameter space
 (e.g.\ a transition probability equal to zero). The LRT is therefore only used
@@ -526,7 +529,7 @@ The root mean square error (RMSE) is defined as
     \mathrm{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^{N} \left( y_t - \hat{y}_t \right)^2 },
 \end{equation}
 and measures the typical size of the forecast error in the unit of the data (ppm). Because the
-errors are squared, large errors are penalised harder than small ones.
+errors are squared, large errors are penalised more heavily than small ones.
 
 \subsubsection{Mean absolute percentage error}
 The mean absolute percentage error (MAPE) is defined as
@@ -550,7 +553,7 @@ predicted state probabilities,
 \end{equation}
 For the autoregressive models, the state-dependent means depend on the previous emission,
 so instead of predicting $h$ steps ahead directly, the forecast is computed one step at a time.
-The first step is forecast from the last observed emission $y_T$, this forecast is then used to
+The first step is forecast from the last observed emission $y_T$; this forecast is then used to
 predict the second step, and so on up to step $h$. Each forecast is thus computed recursively
 from the previous forecast or observed emission,
 \begin{equation}
