@@ -430,8 +430,33 @@ transition matrices.
 Note that it still depends on the initial distribution $\pi$ through the forward
 recursion, although this influence decays for large $t$.
 
+\subsection{Generating emission sequences from an HMM}
+This section describes how synthetic data can be generated from a fitted HMM. First a path
+$\mathcal{S} = (S_1, \dots, S_T)$ is sampled from the Markov chain, by drawing the first state
+from the initial distribution and each following state from the row of the transition matrix
+belonging to the previous state,
+\begin{equation}
+    S_1 \sim \pi, \qquad S_t \mid S_{t-1} = i \sim \Gamma_t(i, \cdot), \quad t = 2, \dots, T.
+\end{equation}
+Then, for each state in the path, an emission is sampled from the emission density of that state,
+\begin{equation}
+    Y_t \mid S_t = i \sim p_i, \quad t = 1, \dots, T.
+\end{equation}
+Repeating this gives any number of independent paths with corresponding emission sequences.
+
+For the autoregressive models, the emission density depends on the previous emission. At
+$t = 1$ there is no previous emission, so the state mean is used in its place,
+$y_0 = \mu_{S_1}$, and the following emissions are sampled forward using the previously
+sampled emission,
+\begin{equation}
+    Y_t \mid S_t = i,\, Y_{t-1} = y_{t-1} \sim
+    \mathcal{N}\!\left( \mu_i + \phi_i \left( y_{t-1} - \mu_i \right),\, \sigma_i^2 \right),
+    \quad t = 1, \dots, T.
+\end{equation}
+
 \section{Model checking and comparison}
-\subsection{Pseudo-residuals}
+\subsection{In-sample}
+\subsubsection{Pseudo-residuals}
 For assessing the goodness-of-fit, we will use the pseudo-residuals
 defined in \textcite[Sec.~7.3]{zucchini2016}. The pseudo-residuals are defined as
 \begin{equation}
@@ -445,7 +470,7 @@ Therefore, we can use the pseudo-residuals to assess
 the goodness-of-fit of the model by checking 
 if they are normally distributed and uncorrelated. 
 
-\subsection{Information criteria and likelihood ratio test}
+\subsubsection{Information criteria}
 For comparing the goodness-of-fit of different models,
 we will use the Akaike information criterion (AIC), 
 the Bayesian information criterion (BIC) and the Likelihood ratio test (LRT).
@@ -465,6 +490,7 @@ and the model with the lowest value is preferred. Since $\ln T > 2$ for $T > 7$,
 the BIC penalises additional parameters harder than the AIC and therefore
 tends to favour simpler models.
 
+\subsubsection{Likelihood ratio test}
 The LRT \parencite{wiki_lrt} compares two nested models, where the null model
 with parameter space $\Theta_0$ is a restricted version of the full model with
 parameter space $\Theta$. The test statistic is
@@ -481,16 +507,19 @@ to parameters on the boundary of the larger model's parameter space
 (e.g.\ a transition probability equal to zero). The LRT is therefore only used
 for comparing nested models with the same number of states.
 
-\subsection{Forecast evaluation metrics}
+\subsection{Out-of-sample}
 To evaluate the predictive performance of the models, the forecasts $\hat{y}_t$ are compared
-with the observations $y_t$ over $N$ forecasted time points. The root mean square error (RMSE)
-is defined as
+with the observations $y_t$ over $N$ forecasted time points.
+
+\subsubsection{Root mean square error}
+The root mean square error (RMSE) is defined as
 \begin{equation}
     \mathrm{RMSE} = \sqrt{\frac{1}{N} \sum_{t=1}^{N} \left( y_t - \hat{y}_t \right)^2 },
 \end{equation}
 and measures the typical size of the forecast error in the unit of the data (ppm). Because the
 errors are squared, large errors are penalised harder than small ones.
 
+\subsubsection{Mean absolute percentage error}
 The mean absolute percentage error (MAPE) is defined as
 \begin{equation}
     \mathrm{MAPE} = \frac{100}{N} \sum_{t=1}^{N} \left| \frac{y_t - \hat{y}_t}{y_t} \right|,
@@ -519,4 +548,29 @@ from the previous forecast or observed emission,
     \mu_i(T+s) = \mu_i + \phi_i \left( \hat{y}_{T+s-1} - \mu_i \right), \qquad s = 1, \dots, h, \qquad \hat{y}_T = y_T,
 \end{equation}
 where $\mu_i(T+s)$ replaces $\mu_i$ in the weighted mean at step $s$.
+
+\section{Ordinal logistic regression}
+Let $V \in \{1, \dots, J\}$ be an ordered categorical response with covariate $x$. The
+ordinal logistic regression (proportional odds) model assumes
+\begin{equation}
+    P(V \leq j \mid x) = s(\tau_j - \beta x), \qquad j = 1, \dots, J-1,
+\end{equation}
+where $s(\cdot)$ is the logistic sigmoid from \cref{eq:phi-reparam}, $\beta$ is the slope and
+$\tau_1 < \tau_2 < \dots < \tau_{J-1}$ are the thresholds. The category probabilities are
+\begin{equation}
+    P(V = j \mid x) = s(\tau_j - \beta x) - s(\tau_{j-1} - \beta x),
+    \qquad \tau_0 = -\infty,\ \tau_J = \infty.
+\end{equation}
+To keep the thresholds ordered, they are reparameterised as in \cref{eq:mu-reparam},
+$\tau_j = \tau_1 + \sum_{l=2}^{j} \exp(\kappa_l)$. Given observations $(x_n, v_n)$,
+$n = 1, \dots, N$, the parameters are estimated by maximising the log-likelihood
+\begin{equation}
+    \ell(\beta, \tau) = \sum_{n=1}^{N} \ln P(V = v_n \mid x_n)
+\end{equation}
+numerically. The cut-points on the scale of the covariate are then
+\begin{equation}
+    \hat{c}_j = \frac{\hat{\tau}_j}{\hat{\beta}}, \qquad j = 1, \dots, J-1,
+\end{equation}
+which is the value of $x$ where $P(V \leq j \mid x) = 1/2$, i.e.\ the boundary between
+category $j$ and $j+1$. The spread around the cut-points is given by the scale $1/\hat{\beta}$.
 
